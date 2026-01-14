@@ -1,0 +1,904 @@
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Modal, Linking } from "react-native";
+import { Image } from "expo-image";
+import { useRouter } from "expo-router";
+import {
+  Settings,
+  Bell,
+  Shield,
+  HelpCircle,
+  LogOut,
+  ChevronRight,
+  Mail,
+  Phone,
+  Calendar,
+  Users,
+  Crown,
+  Wrench,
+  X,
+  MessageCircle,
+  FileText,
+  Lock,
+  Eye,
+  BellRing,
+  Building2,
+  Plus,
+  UserPlus,
+} from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
+import Colors from "@/constants/colors";
+import { useAuth } from "@/providers/AuthProvider";
+import { trpc } from "@/lib/trpc";
+import React, { useState } from "react";
+
+interface MenuItemProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle?: string;
+  onPress: () => void;
+  showBorder?: boolean;
+  danger?: boolean;
+}
+
+function MenuItem({ icon, title, subtitle, onPress, showBorder = true, danger = false }: MenuItemProps) {
+  return (
+    <TouchableOpacity
+      style={[styles.menuItem, !showBorder && styles.menuItemNoBorder]}
+      onPress={onPress}
+      activeOpacity={0.7}
+    >
+      <View style={[styles.menuIcon, danger && styles.menuIconDanger]}>{icon}</View>
+      <View style={styles.menuContent}>
+        <Text style={[styles.menuTitle, danger && styles.menuTitleDanger]}>{title}</Text>
+        {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
+      </View>
+      <ChevronRight size={18} color={Colors.textTertiary} />
+    </TouchableOpacity>
+  );
+}
+
+export default function ProfileScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization } = useAuth();
+  
+  const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [helpModalVisible, setHelpModalVisible] = useState(false);
+  const [pushNotifications, setPushNotifications] = useState(true);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+
+  const ministriesQuery = trpc.ministries.list.useQuery();
+  const ministries = ministriesQuery.data || [];
+
+  const userMinistries = ministries.filter((m) => user?.ministries.includes(m.id));
+
+  const handleLogout = () => {
+    if (Platform.OS === "web") {
+      logout();
+      router.replace("/login" as any);
+    } else {
+      Alert.alert("Sign Out", "Are you sure you want to sign out?", [
+        { text: "Cancel", style: "cancel" },
+        {
+          text: "Sign Out",
+          style: "destructive",
+          onPress: async () => {
+            await logout();
+            router.replace("/login" as any);
+          },
+        },
+      ]);
+    }
+  };
+
+  const getRoleBadge = () => {
+    if (isSuperAdmin) return { label: "Super Admin", color: "#7C3AED" };
+    if (isAdmin) return { label: "Admin", color: Colors.primary };
+    if (user?.role === "leader") return { label: "Leader", color: Colors.secondary };
+    return null;
+  };
+
+  const roleBadge = getRoleBadge();
+
+  if (!user) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+        <Text style={styles.title}>Profile</Text>
+      </View>
+
+      <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
+        <View style={styles.profileCard}>
+          <Image source={{ uri: user.avatar }} style={styles.avatar} contentFit="cover" />
+          <View style={styles.nameRow}>
+            <Text style={styles.userName}>{user.name}</Text>
+            {roleBadge && (
+              <View style={[styles.roleBadge, { backgroundColor: roleBadge.color + "20" }]}>
+                <Crown size={12} color={roleBadge.color} />
+                <Text style={[styles.roleBadgeText, { color: roleBadge.color }]}>{roleBadge.label}</Text>
+              </View>
+            )}
+          </View>
+          <Text style={styles.userRole}>{user.role.replace("_", " ").toUpperCase()}</Text>
+
+          <TouchableOpacity 
+            style={styles.editButton}
+            onPress={() => router.push("/edit-profile" as any)}
+            activeOpacity={0.7}
+          >
+            <Text style={styles.editButtonText}>Edit Profile</Text>
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.infoSection}>
+          <View style={styles.infoItem}>
+            <Mail size={18} color={Colors.textSecondary} />
+            <Text style={styles.infoText}>{user.email}</Text>
+          </View>
+          {user.phone && (
+            <View style={styles.infoItem}>
+              <Phone size={18} color={Colors.textSecondary} />
+              <Text style={styles.infoText}>{user.phone}</Text>
+            </View>
+          )}
+          <View style={styles.infoItem}>
+            <Calendar size={18} color={Colors.textSecondary} />
+            <Text style={styles.infoText}>Joined {user.joinedDate}</Text>
+          </View>
+          <View style={styles.infoItem}>
+            <Users size={18} color={Colors.textSecondary} />
+            <Text style={styles.infoText}>{userMinistries.length} ministries</Text>
+          </View>
+        </View>
+
+        {hasOrganization && currentOrganization && (
+          <>
+            <Text style={styles.sectionTitle}>My Church</Text>
+            <TouchableOpacity 
+              style={styles.organizationCard}
+              onPress={() => router.push("/organization" as any)}
+              activeOpacity={0.7}
+            >
+              <View style={styles.organizationIcon}>
+                <Building2 size={24} color={Colors.primary} />
+              </View>
+              <View style={styles.organizationInfo}>
+                <Text style={styles.organizationName}>{currentOrganization.name}</Text>
+                <Text style={styles.organizationSubtitle}>Tap to manage</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+          </>
+        )}
+
+        {!hasOrganization && (
+          <>
+            <Text style={styles.sectionTitle}>Organization</Text>
+            <View style={styles.noOrgCard}>
+              <View style={styles.noOrgIconContainer}>
+                <Building2 size={32} color={Colors.primary} />
+              </View>
+              <Text style={styles.noOrgTitle}>No Church Connected</Text>
+              <Text style={styles.noOrgSubtitle}>
+                Create a new church organization or join an existing one.
+              </Text>
+              <View style={styles.noOrgButtons}>
+                <TouchableOpacity
+                  style={styles.createOrgButton}
+                  onPress={() => router.push("/organization/create" as any)}
+                  activeOpacity={0.7}
+                >
+                  <Plus size={18} color={Colors.textInverse} />
+                  <Text style={styles.createOrgButtonText}>Create Church</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.joinOrgButton}
+                  onPress={() => router.push("/organization/join" as any)}
+                  activeOpacity={0.7}
+                >
+                  <UserPlus size={18} color={Colors.primary} />
+                  <Text style={styles.joinOrgButtonText}>Join Church</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>My Ministries</Text>
+        <View style={styles.ministriesGrid}>
+          {userMinistries.map((ministry) => (
+            <View key={ministry.id} style={styles.ministryBadge}>
+              <View style={[styles.ministryDot, { backgroundColor: ministry.color }]} />
+              <Text style={styles.ministryName}>{ministry.name}</Text>
+            </View>
+          ))}
+          {userMinistries.length === 0 && (
+            <Text style={styles.noMinistries}>Not a member of any ministries yet</Text>
+          )}
+        </View>
+
+        {isAdmin && (
+          <>
+            <Text style={styles.sectionTitle}>Admin</Text>
+            <View style={styles.menuSection}>
+              <MenuItem
+                icon={<Shield size={20} color="#7C3AED" />}
+                title="Admin Dashboard"
+                subtitle="View stats and manage app"
+                onPress={() => router.push("/admin" as any)}
+              />
+              <MenuItem
+                icon={<Wrench size={20} color={Colors.primary} />}
+                title="Admin Settings"
+                subtitle="Configure organization settings"
+                onPress={() => router.push("/settings" as any)}
+                showBorder={false}
+              />
+            </View>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>Settings</Text>
+        <View style={styles.menuSection}>
+          <MenuItem
+            icon={<Settings size={20} color={Colors.primary} />}
+            title="Account Settings"
+            subtitle="Manage your account preferences"
+            onPress={() => router.push("/edit-profile" as any)}
+          />
+          <MenuItem
+            icon={<Bell size={20} color={Colors.primary} />}
+            title="Notifications"
+            subtitle="Configure notification preferences"
+            onPress={() => setNotificationsModalVisible(true)}
+          />
+          <MenuItem
+            icon={<Shield size={20} color={Colors.primary} />}
+            title="Privacy & Security"
+            subtitle="Manage your privacy settings"
+            onPress={() => setPrivacyModalVisible(true)}
+          />
+          <MenuItem
+            icon={<HelpCircle size={20} color={Colors.primary} />}
+            title="Help & Support"
+            subtitle="Get help and contact support"
+            onPress={() => setHelpModalVisible(true)}
+            showBorder={false}
+          />
+        </View>
+
+        <View style={[styles.menuSection, { marginTop: 16 }]}>
+          <MenuItem
+            icon={<LogOut size={20} color={Colors.error} />}
+            title="Sign Out"
+            onPress={handleLogout}
+            showBorder={false}
+            danger
+          />
+        </View>
+
+        <Text style={styles.version}>Version 1.0.0</Text>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      {/* Notifications Modal */}
+      <Modal
+        visible={notificationsModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setNotificationsModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Notification Settings</Text>
+              <TouchableOpacity
+                onPress={() => setNotificationsModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <BellRing size={20} color={Colors.primary} />
+                <View style={styles.settingText}>
+                  <Text style={styles.settingTitle}>Push Notifications</Text>
+                  <Text style={styles.settingSubtitle}>Receive alerts on your device</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggle, pushNotifications && styles.toggleActive]}
+                onPress={() => setPushNotifications(!pushNotifications)}
+              >
+                <View style={[styles.toggleKnob, pushNotifications && styles.toggleKnobActive]} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.settingRow}>
+              <View style={styles.settingInfo}>
+                <Mail size={20} color={Colors.primary} />
+                <View style={styles.settingText}>
+                  <Text style={styles.settingTitle}>Email Notifications</Text>
+                  <Text style={styles.settingSubtitle}>Receive updates via email</Text>
+                </View>
+              </View>
+              <TouchableOpacity
+                style={[styles.toggle, emailNotifications && styles.toggleActive]}
+                onPress={() => setEmailNotifications(!emailNotifications)}
+              >
+                <View style={[styles.toggleKnob, emailNotifications && styles.toggleKnobActive]} />
+              </TouchableOpacity>
+            </View>
+
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                setNotificationsModalVisible(false);
+                if (Platform.OS !== "web") {
+                  Alert.alert("Saved", "Your notification preferences have been updated.");
+                }
+              }}
+            >
+              <Text style={styles.modalButtonText}>Save Preferences</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Privacy Modal */}
+      <Modal
+        visible={privacyModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setPrivacyModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Privacy & Security</Text>
+              <TouchableOpacity
+                onPress={() => setPrivacyModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity style={styles.privacyItem}>
+              <Lock size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>Change Password</Text>
+                <Text style={styles.privacyItemSubtitle}>Update your account password</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.privacyItem}>
+              <Eye size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>Profile Visibility</Text>
+                <Text style={styles.privacyItemSubtitle}>Control who can see your profile</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.privacyItem}>
+              <FileText size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>Privacy Policy</Text>
+                <Text style={styles.privacyItemSubtitle}>Read our privacy policy</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={() => setPrivacyModalVisible(false)}
+            >
+              <Text style={styles.modalButtonTextSecondary}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Help Modal */}
+      <Modal
+        visible={helpModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setHelpModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Help & Support</Text>
+              <TouchableOpacity
+                onPress={() => setHelpModalVisible(false)}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                if (Platform.OS !== "web") {
+                  Linking.openURL("mailto:support@churchconnect.org");
+                }
+              }}
+            >
+              <Mail size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>Email Support</Text>
+                <Text style={styles.privacyItemSubtitle}>support@churchconnect.org</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.privacyItem}>
+              <MessageCircle size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>FAQ</Text>
+                <Text style={styles.privacyItemSubtitle}>Frequently asked questions</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+            
+            <TouchableOpacity style={styles.privacyItem}>
+              <FileText size={20} color={Colors.primary} />
+              <View style={styles.privacyItemText}>
+                <Text style={styles.privacyItemTitle}>Terms of Service</Text>
+                <Text style={styles.privacyItemSubtitle}>Read our terms and conditions</Text>
+              </View>
+              <ChevronRight size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+
+            <View style={styles.helpInfo}>
+              <Text style={styles.helpInfoText}>Need immediate assistance?</Text>
+              <Text style={styles.helpInfoSubtext}>Contact your church office during business hours</Text>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={() => setHelpModalVisible(false)}
+            >
+              <Text style={styles.modalButtonTextSecondary}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  centered: {
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  content: {
+    flex: 1,
+  },
+  contentContainer: {
+    padding: 20,
+  },
+  profileCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  avatar: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    marginBottom: 16,
+  },
+  nameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  userName: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  roleBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    gap: 4,
+  },
+  roleBadgeText: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+  },
+  userRole: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+    letterSpacing: 1,
+  },
+  editButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.primary + "15",
+  },
+  editButtonText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+  infoSection: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+    gap: 12,
+  },
+  infoItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  infoText: {
+    fontSize: 14,
+    color: Colors.text,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    textTransform: "uppercase",
+    letterSpacing: 0.5,
+  },
+  ministriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 8,
+    marginBottom: 24,
+  },
+  ministryBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    gap: 8,
+  },
+  ministryDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  ministryName: {
+    fontSize: 13,
+    fontWeight: "500" as const,
+    color: Colors.text,
+  },
+  noMinistries: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    fontStyle: "italic",
+  },
+  menuSection: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  menuItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  menuItemNoBorder: {
+    borderBottomWidth: 0,
+  },
+  menuIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  menuIconDanger: {
+    backgroundColor: Colors.error + "15",
+  },
+  menuContent: {
+    flex: 1,
+  },
+  menuTitle: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  menuTitleDanger: {
+    color: Colors.error,
+  },
+  menuSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  version: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    textAlign: "center",
+    marginTop: 24,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: "80%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  settingRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  settingInfo: {
+    flexDirection: "row",
+    alignItems: "center",
+    flex: 1,
+    gap: 12,
+  },
+  settingText: {
+    flex: 1,
+  },
+  settingTitle: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  settingSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  toggle: {
+    width: 50,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: Colors.surfaceSecondary,
+    padding: 2,
+    justifyContent: "center",
+  },
+  toggleActive: {
+    backgroundColor: Colors.primary,
+  },
+  toggleKnob: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.textInverse,
+  },
+  toggleKnobActive: {
+    alignSelf: "flex-end",
+  },
+  modalButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 24,
+  },
+  modalButtonSecondary: {
+    backgroundColor: Colors.surfaceSecondary,
+  },
+  modalButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.textInverse,
+  },
+  modalButtonTextSecondary: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  privacyItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+    gap: 12,
+  },
+  privacyItemText: {
+    flex: 1,
+  },
+  privacyItemTitle: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  privacyItemSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  helpInfo: {
+    backgroundColor: Colors.primary + "10",
+    borderRadius: 12,
+    padding: 16,
+    marginTop: 16,
+    alignItems: "center",
+  },
+  helpInfoText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+  helpInfoSubtext: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 4,
+    textAlign: "center",
+  },
+  organizationCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+  },
+  organizationIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  organizationInfo: {
+    flex: 1,
+  },
+  organizationName: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  organizationSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  noOrgCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 24,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  noOrgIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  noOrgTitle: {
+    fontSize: 18,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  noOrgSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    marginBottom: 20,
+    lineHeight: 20,
+  },
+  noOrgButtons: {
+    flexDirection: "row",
+    gap: 12,
+    width: "100%",
+  },
+  createOrgButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  createOrgButtonText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.textInverse,
+  },
+  joinOrgButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 6,
+    backgroundColor: Colors.primary + "15",
+    borderRadius: 12,
+    paddingVertical: 12,
+  },
+  joinOrgButtonText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+});

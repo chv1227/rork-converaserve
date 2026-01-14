@@ -1,0 +1,839 @@
+import React, { useState, useEffect, useCallback } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+  Alert,
+  RefreshControl,
+  Modal,
+} from 'react-native';
+import { Image } from 'expo-image';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
+import {
+  ArrowLeft,
+  Building2,
+  Users,
+  UserPlus,
+  Settings,
+  Shield,
+  Crown,
+  ChevronRight,
+  Check,
+  X,
+  UserMinus,
+  Edit3,
+} from 'lucide-react-native';
+import Colors from '@/constants/colors';
+import { useAuth } from '@/providers/AuthProvider';
+import {
+  getOrganizationMembers,
+  getPendingRequests,
+  updateMemberRole,
+  approveMemberRequest,
+  rejectMemberRequest,
+  removeMember,
+  getUserMembership,
+  OrganizationMember,
+  OrganizationMembership,
+} from '@/lib/supabase-organizations';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+
+type RoleType = OrganizationMembership['role'];
+
+const ROLE_LABELS: Record<RoleType, string> = {
+  super_admin: 'Super Admin',
+  organization_admin: 'Admin',
+  leader: 'Leader',
+  member: 'Member',
+};
+
+const ROLE_COLORS: Record<RoleType, string> = {
+  super_admin: Colors.error,
+  organization_admin: Colors.warning,
+  leader: Colors.secondary,
+  member: Colors.primary,
+};
+
+export default function OrganizationAdminScreen() {
+  const router = useRouter();
+  const queryClient = useQueryClient();
+  const { currentOrganization, user } = useAuth();
+  
+  const [canManage, setCanManage] = useState(false);
+  const [isSuperAdmin, setIsSuperAdmin] = useState(false);
+  const [checkingPermission, setCheckingPermission] = useState(true);
+  const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
+  const [showRoleModal, setShowRoleModal] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
+
+  const orgId = currentOrganization?.id || '';
+
+  useEffect(() => {
+    const checkPermission = async () => {
+      if (!orgId) {
+        setCheckingPermission(false);
+        return;
+      }
+
+      try {
+        const membership = await getUserMembership(orgId);
+        const hasPermission = membership && 
+          (membership.role === 'super_admin' || membership.role === 'organization_admin');
+        setCanManage(hasPermission ?? false);
+        setIsSuperAdmin(membership?.role === 'super_admin');
+      } catch (error) {
+        console.error('Error checking permission:', error);
+        setCanManage(false);
+      }
+      setCheckingPermission(false);
+    };
+
+    checkPermission();
+  }, [orgId]);
+
+  const membersQuery = useQuery({
+    queryKey: ['organization-members', orgId],
+    queryFn: () => getOrganizationMembers(orgId),
+    enabled: !!orgId && canManage,
+  });
+
+  const pendingQuery = useQuery({
+    queryKey: ['pending-requests', orgId],
+    queryFn: () => getPendingRequests(orgId),
+    enabled: !!orgId && canManage,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: ({ membershipId }: { membershipId: string }) =>
+      approveMemberRequest(orgId, membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      Alert.alert('Success', 'Member request approved');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message);
+    },
+  });
+
+  const rejectMutation = useMutation({
+    mutationFn: ({ membershipId }: { membershipId: string }) =>
+      rejectMemberRequest(orgId, membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
+      Alert.alert('Success', 'Member request rejected');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message);
+    },
+  });
+
+  const updateRoleMutation = useMutation({
+    mutationFn: ({ membershipId, newRole }: { membershipId: string; newRole: RoleType }) =>
+      updateMemberRole(orgId, membershipId, newRole),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      setShowRoleModal(false);
+      setSelectedMember(null);
+      Alert.alert('Success', 'Member role updated');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message);
+    },
+  });
+
+  const removeMutation = useMutation({
+    mutationFn: ({ membershipId }: { membershipId: string }) =>
+      removeMember(orgId, membershipId),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      Alert.alert('Success', 'Member removed');
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message);
+    },
+  });
+
+  const { refetch: refetchMembers } = membersQuery;
+  const { refetch: refetchPending } = pendingQuery;
+
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([
+      refetchMembers(),
+      refetchPending(),
+    ]);
+    setRefreshing(false);
+  }, [refetchMembers, refetchPending]);
+
+  const handleApprove = (membershipId: string) => {
+    Alert.alert('Approve Request', 'Are you sure you want to approve this member?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Approve', onPress: () => approveMutation.mutate({ membershipId }) },
+    ]);
+  };
+
+  const handleReject = (membershipId: string) => {
+    Alert.alert('Reject Request', 'Are you sure you want to reject this request?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Reject', style: 'destructive', onPress: () => rejectMutation.mutate({ membershipId }) },
+    ]);
+  };
+
+  const handleRemove = (member: OrganizationMember) => {
+    if (member.userId === user?.id) {
+      Alert.alert('Error', 'You cannot remove yourself');
+      return;
+    }
+    Alert.alert('Remove Member', `Are you sure you want to remove ${member.name}?`, [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => removeMutation.mutate({ membershipId: member.id }) },
+    ]);
+  };
+
+  const handleRoleChange = (member: OrganizationMember) => {
+    if (member.userId === user?.id) {
+      Alert.alert('Error', 'You cannot change your own role');
+      return;
+    }
+    setSelectedMember(member);
+    setShowRoleModal(true);
+  };
+
+  const selectRole = (role: RoleType) => {
+    if (!selectedMember) return;
+    updateRoleMutation.mutate({ membershipId: selectedMember.id, newRole: role });
+  };
+
+  const members = membersQuery.data || [];
+  const pendingRequests = pendingQuery.data || [];
+
+  if (checkingPermission) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.loadingContainer}>
+          <ActivityIndicator size="large" color={Colors.primary} />
+          <Text style={styles.loadingText}>Checking permissions...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!currentOrganization) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Church Admin</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Building2 size={64} color={Colors.textTertiary} />
+          <Text style={styles.errorTitle}>No Church Selected</Text>
+          <Text style={styles.errorText}>Please select a church first</Text>
+          <TouchableOpacity
+            style={styles.errorButton}
+            onPress={() => router.push('/organization')}
+          >
+            <Text style={styles.errorButtonText}>Select Church</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!canManage) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+            <ArrowLeft size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Church Admin</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.errorContainer}>
+          <Shield size={64} color={Colors.textTertiary} />
+          <Text style={styles.errorTitle}>Permission Denied</Text>
+          <Text style={styles.errorText}>Only admins can access this panel</Text>
+          <TouchableOpacity style={styles.errorButton} onPress={() => router.back()}>
+            <Text style={styles.errorButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  return (
+    <SafeAreaView style={styles.container}>
+      <View style={styles.header}>
+        <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
+          <ArrowLeft size={24} color={Colors.text} />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Church Admin</Text>
+        <TouchableOpacity
+          style={styles.editButton}
+          onPress={() => router.push('/organization/edit')}
+        >
+          <Edit3 size={20} color={Colors.primary} />
+        </TouchableOpacity>
+      </View>
+
+      <ScrollView
+        style={styles.scrollView}
+        contentContainerStyle={styles.scrollContent}
+        refreshControl={
+          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+        }
+      >
+        <View style={styles.orgCard}>
+          <Image
+            source={{ uri: currentOrganization.logo || `https://ui-avatars.com/api/?name=${encodeURIComponent(currentOrganization.name)}&background=1A7B74&color=fff` }}
+            style={styles.orgLogo}
+            contentFit="cover"
+          />
+          <View style={styles.orgInfo}>
+            <Text style={styles.orgName}>{currentOrganization.name}</Text>
+            <Text style={styles.orgDescription} numberOfLines={2}>
+              {currentOrganization.description}
+            </Text>
+          </View>
+        </View>
+
+        <View style={styles.statsRow}>
+          <View style={styles.statCard}>
+            <Users size={24} color={Colors.primary} />
+            <Text style={styles.statNumber}>{members.length}</Text>
+            <Text style={styles.statLabel}>Members</Text>
+          </View>
+          <View style={styles.statCard}>
+            <UserPlus size={24} color={Colors.warning} />
+            <Text style={styles.statNumber}>{pendingRequests.length}</Text>
+            <Text style={styles.statLabel}>Pending</Text>
+          </View>
+        </View>
+
+        <View style={styles.quickActions}>
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={() => router.push('/organization/edit')}
+          >
+            <View style={styles.actionIcon}>
+              <Settings size={20} color={Colors.primary} />
+            </View>
+            <View style={styles.actionContent}>
+              <Text style={styles.actionTitle}>Edit Church Profile</Text>
+              <Text style={styles.actionSubtitle}>Update name, description, logo</Text>
+            </View>
+            <ChevronRight size={20} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        </View>
+
+        {pendingRequests.length > 0 && (
+          <>
+            <Text style={styles.sectionTitle}>Pending Requests</Text>
+            <View style={styles.membersList}>
+              {pendingRequests.map((request) => (
+                <View key={request.id} style={styles.memberCard}>
+                  <Image
+                    source={{ uri: request.avatar }}
+                    style={styles.memberAvatar}
+                    contentFit="cover"
+                  />
+                  <View style={styles.memberInfo}>
+                    <Text style={styles.memberName}>{request.name}</Text>
+                    <Text style={styles.memberEmail}>{request.email}</Text>
+                  </View>
+                  <View style={styles.pendingActions}>
+                    <TouchableOpacity
+                      style={styles.approveButton}
+                      onPress={() => handleApprove(request.id)}
+                      disabled={approveMutation.isPending}
+                    >
+                      <Check size={18} color="#FFF" />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.rejectButton}
+                      onPress={() => handleReject(request.id)}
+                      disabled={rejectMutation.isPending}
+                    >
+                      <X size={18} color="#FFF" />
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ))}
+            </View>
+          </>
+        )}
+
+        <Text style={styles.sectionTitle}>Members ({members.length})</Text>
+        <View style={styles.membersList}>
+          {membersQuery.isLoading ? (
+            <ActivityIndicator size="small" color={Colors.primary} />
+          ) : members.length === 0 ? (
+            <Text style={styles.emptyText}>No members yet</Text>
+          ) : (
+            members.map((member) => (
+              <View key={member.id} style={styles.memberCard}>
+                <Image
+                  source={{ uri: member.avatar }}
+                  style={styles.memberAvatar}
+                  contentFit="cover"
+                />
+                <View style={styles.memberInfo}>
+                  <View style={styles.memberNameRow}>
+                    <Text style={styles.memberName}>{member.name}</Text>
+                    {member.role === 'super_admin' && (
+                      <Crown size={14} color={Colors.warning} />
+                    )}
+                  </View>
+                  <View style={styles.memberRoleRow}>
+                    <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[member.role] + '20' }]}>
+                      <Text style={[styles.roleText, { color: ROLE_COLORS[member.role] }]}>
+                        {ROLE_LABELS[member.role]}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+                {member.userId !== user?.id && isSuperAdmin && (
+                  <View style={styles.memberActions}>
+                    <TouchableOpacity
+                      style={styles.memberActionButton}
+                      onPress={() => handleRoleChange(member)}
+                    >
+                      <Shield size={18} color={Colors.primary} />
+                    </TouchableOpacity>
+                    <TouchableOpacity
+                      style={styles.memberActionButton}
+                      onPress={() => handleRemove(member)}
+                    >
+                      <UserMinus size={18} color={Colors.error} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+              </View>
+            ))
+          )}
+        </View>
+
+        <View style={{ height: 100 }} />
+      </ScrollView>
+
+      <Modal
+        visible={showRoleModal}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setShowRoleModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Change Role</Text>
+              <TouchableOpacity onPress={() => setShowRoleModal(false)} style={styles.modalClose}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            {selectedMember && (
+              <View style={styles.selectedMemberInfo}>
+                <Image
+                  source={{ uri: selectedMember.avatar }}
+                  style={styles.selectedMemberAvatar}
+                  contentFit="cover"
+                />
+                <Text style={styles.selectedMemberName}>{selectedMember.name}</Text>
+              </View>
+            )}
+
+            <View style={styles.roleOptions}>
+              {(['member', 'leader', 'organization_admin', 'super_admin'] as RoleType[]).map((role) => (
+                <TouchableOpacity
+                  key={role}
+                  style={[
+                    styles.roleOption,
+                    selectedMember?.role === role && styles.roleOptionSelected,
+                  ]}
+                  onPress={() => selectRole(role)}
+                  disabled={updateRoleMutation.isPending}
+                >
+                  <View style={[styles.roleOptionIcon, { backgroundColor: ROLE_COLORS[role] + '20' }]}>
+                    {role === 'super_admin' ? (
+                      <Crown size={20} color={ROLE_COLORS[role]} />
+                    ) : (
+                      <Shield size={20} color={ROLE_COLORS[role]} />
+                    )}
+                  </View>
+                  <View style={styles.roleOptionContent}>
+                    <Text style={styles.roleOptionTitle}>{ROLE_LABELS[role]}</Text>
+                    <Text style={styles.roleOptionDescription}>
+                      {role === 'super_admin' && 'Full control over the organization'}
+                      {role === 'organization_admin' && 'Can manage members and content'}
+                      {role === 'leader' && 'Can create and manage groups'}
+                      {role === 'member' && 'Basic membership access'}
+                    </Text>
+                  </View>
+                  {selectedMember?.role === role && (
+                    <Check size={20} color={Colors.primary} />
+                  )}
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+        </View>
+      </Modal>
+    </SafeAreaView>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingText: {
+    marginTop: 16,
+    fontSize: 16,
+    color: Colors.textSecondary,
+  },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
+  },
+  backButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  headerTitle: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  placeholder: {
+    width: 44,
+  },
+  editButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  scrollView: {
+    flex: 1,
+  },
+  scrollContent: {
+    padding: 20,
+  },
+  orgCard: {
+    flexDirection: 'row',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+    alignItems: 'center',
+  },
+  orgLogo: {
+    width: 64,
+    height: 64,
+    borderRadius: 16,
+  },
+  orgInfo: {
+    flex: 1,
+    marginLeft: 16,
+  },
+  orgName: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  orgDescription: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  statsRow: {
+    flexDirection: 'row',
+    gap: 12,
+    marginBottom: 20,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: 'center',
+    gap: 8,
+  },
+  statNumber: {
+    fontSize: 28,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  statLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    textTransform: 'uppercase',
+  },
+  quickActions: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  actionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+  },
+  actionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  actionContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  actionTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  actionSubtitle: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  membersList: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 24,
+  },
+  memberCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  memberAvatar: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+  },
+  memberInfo: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  memberNameRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  memberName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  memberEmail: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  memberRoleRow: {
+    marginTop: 4,
+  },
+  roleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  roleText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+  },
+  memberActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  memberActionButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pendingActions: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  approveButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.success,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  rejectButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.error,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  emptyText: {
+    padding: 24,
+    textAlign: 'center',
+    color: Colors.textSecondary,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 32,
+  },
+  errorTitle: {
+    fontSize: 20,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginTop: 16,
+  },
+  errorText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    marginTop: 8,
+  },
+  errorButton: {
+    marginTop: 24,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 20,
+  },
+  errorButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFF',
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.5)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: '80%',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  modalClose: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  selectedMemberInfo: {
+    alignItems: 'center',
+    marginBottom: 24,
+  },
+  selectedMemberAvatar: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    marginBottom: 12,
+  },
+  selectedMemberName: {
+    fontSize: 18,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  roleOptions: {
+    gap: 12,
+  },
+  roleOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 16,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: 'transparent',
+  },
+  roleOptionSelected: {
+    borderColor: Colors.primary,
+  },
+  roleOptionIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  roleOptionContent: {
+    flex: 1,
+    marginLeft: 12,
+  },
+  roleOptionTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  roleOptionDescription: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+});

@@ -1,0 +1,262 @@
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { Stack, useRouter, useSegments } from "expo-router";
+import * as SplashScreen from "expo-splash-screen";
+import { useEffect, ReactNode, useState } from "react";
+import { GestureHandlerRootView } from "react-native-gesture-handler";
+import { StatusBar } from "expo-status-bar";
+import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+
+import Colors from "@/constants/colors";
+import { trpc, trpcClient } from "@/lib/trpc";
+import { AuthProvider, useAuth } from "@/providers/AuthProvider";
+import { DataProvider } from "@/providers/DataProvider";
+
+SplashScreen.preventAutoHideAsync();
+
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      retry: 1,
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+    },
+    mutations: {
+      retry: 0,
+    },
+  },
+});
+
+function AuthGate({ children }: { children: ReactNode }) {
+  const { isLoading, isAuthenticated } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
+  const [isNavigating, setIsNavigating] = useState(false);
+
+  useEffect(() => {
+    if (isLoading || isNavigating) return;
+
+    const inAuthGroup = segments[0] === "login" || segments[0] === "register";
+    const inOrganizationGroup = segments[0] === "organization";
+
+    if (!isAuthenticated && !inAuthGroup && !inOrganizationGroup) {
+      console.log("AuthGate: Not authenticated, redirecting to login");
+      setIsNavigating(true);
+      setTimeout(() => {
+        router.replace("/login" as any);
+        setIsNavigating(false);
+      }, 100);
+    } else if (isAuthenticated && segments[0] === "login") {
+      console.log("AuthGate: Authenticated on login page, redirecting to home");
+      setIsNavigating(true);
+      setTimeout(() => {
+        router.replace("/(tabs)");
+        setIsNavigating(false);
+      }, 100);
+    }
+  }, [isLoading, isAuthenticated, segments, router, isNavigating]);
+
+  if (isLoading) {
+    return (
+      <View style={styles.loadingContainer}>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading...</Text>
+      </View>
+    );
+  }
+
+  return <>{children}</>;
+}
+
+function RootLayoutNav() {
+  return (
+    <Stack screenOptions={{ headerBackTitle: "Back" }}>
+      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="login" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="register" 
+        options={{ 
+          headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="modal" 
+        options={{ 
+          presentation: "modal",
+          headerShown: true,
+          headerTitle: "Details",
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.text,
+        }} 
+      />
+      <Stack.Screen 
+        name="settings" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="group/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="admin/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin/users" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin/groups" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin/moderation" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="edit-profile" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="worship/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="worship/player" 
+        options={{ 
+          headerShown: false,
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="worship/manage" 
+        options={{ 
+          headerShown: false,
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="worship/edit-song" 
+        options={{ 
+          headerShown: false,
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin/requests" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="organization/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="organization/create" 
+        options={{ 
+          headerShown: false,
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="organization/join" 
+        options={{ 
+          headerShown: false,
+          presentation: "modal",
+        }} 
+      />
+      <Stack.Screen 
+        name="organization/edit" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="organization/admin" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+    </Stack>
+  );
+}
+
+function AppContent() {
+  return (
+    <AuthProvider>
+      <DataProvider>
+        <AuthGate>
+          <RootLayoutNav />
+        </AuthGate>
+      </DataProvider>
+    </AuthProvider>
+  );
+}
+
+export default function RootLayout() {
+  useEffect(() => {
+    SplashScreen.hideAsync();
+  }, []);
+
+  return (
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <StatusBar style="dark" />
+      <QueryClientProvider client={queryClient}>
+        <trpc.Provider client={trpcClient} queryClient={queryClient}>
+          <AppContent />
+        </trpc.Provider>
+      </QueryClientProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+const styles = StyleSheet.create({
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: Colors.background,
+  },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+});
