@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,9 @@ import {
   ActivityIndicator,
   Alert,
   Platform,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
 } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Stack, Href } from "expo-router";
@@ -21,18 +24,32 @@ import {
   Plus,
   Music,
   Heart,
-  Baby,
-  HandHeart,
-  Video,
+  Sparkles,
   MessageCircle,
   Play,
+  MessageSquare,
+  Clock,
+  MapPin,
+  X,
+  Send,
+  Megaphone,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
-import EventCard from "@/components/EventCard";
-import { Event } from "@/types";
+import DiscussionCard from "@/components/DiscussionCard";
+import PrayerRequestCard from "@/components/PrayerRequestCard";
+import MemberCard from "@/components/MemberCard";
+import {
+  getMinistryById,
+  getMembersForMinistry,
+  getDiscussionsForMinistry,
+  getPrayerRequestsForMinistry,
+  getEventsForMinistry,
+  getAnnouncementsForMinistry,
+} from "@/mocks/ministryData";
+import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement } from "@/types";
 
 type IconComponentType = React.ComponentType<{ size: number; color: string }>;
 
@@ -40,10 +57,10 @@ const iconMap: Record<string, IconComponentType> = {
   Music,
   Users,
   Heart,
-  Baby,
-  HandHeart,
-  Video,
+  Sparkles,
 };
+
+type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'events';
 
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -52,21 +69,44 @@ export default function GroupDetailScreen() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
+  const [activeTab, setActiveTab] = useState<TabType>('about');
+  const [showDiscussionModal, setShowDiscussionModal] = useState(false);
+  const [showPrayerModal, setShowPrayerModal] = useState(false);
+  const [newDiscussionTitle, setNewDiscussionTitle] = useState("");
+  const [newDiscussionContent, setNewDiscussionContent] = useState("");
+  const [newPrayerTitle, setNewPrayerTitle] = useState("");
+  const [newPrayerContent, setNewPrayerContent] = useState("");
+  const [isAnonymousPrayer, setIsAnonymousPrayer] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  const isDefaultMinistry = id?.startsWith('worship-') || id?.startsWith('prayer-') || id?.startsWith('deacon-') || id?.startsWith('children');
+
+  const mockMinistry = useMemo(() => isDefaultMinistry ? getMinistryById(id || '') : null, [isDefaultMinistry, id]);
+  const mockDiscussions = useMemo(() => isDefaultMinistry ? getDiscussionsForMinistry(id || '') : [], [isDefaultMinistry, id]);
+  const mockPrayerRequests = useMemo(() => isDefaultMinistry ? getPrayerRequestsForMinistry(id || '') : [], [isDefaultMinistry, id]);
+  const mockEvents = useMemo(() => isDefaultMinistry ? getEventsForMinistry(id || '') : [], [isDefaultMinistry, id]);
+  const mockAnnouncements = useMemo(() => isDefaultMinistry ? getAnnouncementsForMinistry(id || '') : [], [isDefaultMinistry, id]);
+
   const ministryQuery = trpc.ministries.getById.useQuery(
     { id: id || "" },
-    { enabled: !!id }
+    { enabled: !!id && !isDefaultMinistry }
   );
 
   const eventsQuery = trpc.events.list.useQuery(
     { ministryId: id || "" },
-    { enabled: !!id }
+    { enabled: !!id && !isDefaultMinistry }
   );
 
-  const ministry = ministryQuery.data;
-  const events = eventsQuery.data || [];
+  const ministry = isDefaultMinistry ? mockMinistry : ministryQuery.data;
+  const events = isDefaultMinistry ? mockEvents : (eventsQuery.data || []);
+  const members = useMemo(() => isDefaultMinistry ? getMembersForMinistry(id || '') : [], [isDefaultMinistry, id]);
+  const discussions = isDefaultMinistry ? mockDiscussions : [];
+  const prayerRequests = isDefaultMinistry ? mockPrayerRequests : [];
+  const announcements = isDefaultMinistry ? mockAnnouncements : [];
+
   const isMember = useMemo(
-    () => user?.ministries.includes(id || "") || false,
-    [user?.ministries, id]
+    () => user?.ministries.includes(id || "") || isDefaultMinistry,
+    [user?.ministries, id, isDefaultMinistry]
   );
 
   const joinMutation = trpc.ministries.join.useMutation({
@@ -100,14 +140,18 @@ export default function GroupDetailScreen() {
 
   const onRefresh = useCallback(() => {
     console.log("Refreshing group detail...");
-    ministryQuery.refetch();
-    eventsQuery.refetch();
-  }, [ministryQuery, eventsQuery]);
+    setIsRefreshing(true);
+    if (!isDefaultMinistry) {
+      ministryQuery.refetch();
+      eventsQuery.refetch();
+    }
+    setTimeout(() => setIsRefreshing(false), 1000);
+  }, [ministryQuery, eventsQuery, isDefaultMinistry]);
 
   const handleJoinLeave = () => {
     if (!id) return;
 
-    if (isMember) {
+    if (isMember && !isDefaultMinistry) {
       if (Platform.OS === "web") {
         leaveMutation.mutate({ ministryId: id });
       } else {
@@ -120,14 +164,47 @@ export default function GroupDetailScreen() {
           },
         ]);
       }
-    } else {
+    } else if (!isDefaultMinistry) {
       joinMutation.mutate({ ministryId: id });
+    } else {
+      Alert.alert("Joined!", "You are now a member of this ministry.");
     }
   };
 
-  const IconComponent = ministry ? iconMap[ministry.icon] || Users : Users;
-  const isLoading = ministryQuery.isLoading;
+  const handlePostDiscussion = () => {
+    if (!newDiscussionTitle.trim() || !newDiscussionContent.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+    Alert.alert("Success", "Your discussion has been posted!");
+    setShowDiscussionModal(false);
+    setNewDiscussionTitle("");
+    setNewDiscussionContent("");
+  };
+
+  const handlePostPrayer = () => {
+    if (!newPrayerTitle.trim() || !newPrayerContent.trim()) {
+      Alert.alert("Error", "Please fill in all fields");
+      return;
+    }
+    Alert.alert("Success", "Your prayer request has been shared!");
+    setShowPrayerModal(false);
+    setNewPrayerTitle("");
+    setNewPrayerContent("");
+    setIsAnonymousPrayer(false);
+  };
+
+  const IconComponent = ministry ? (iconMap[ministry.icon] || Users) : Users;
+  const isLoading = !isDefaultMinistry && ministryQuery.isLoading;
   const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
+
+  const tabs: { key: TabType; label: string; icon: React.ComponentType<{ size: number; color: string }> }[] = [
+    { key: 'about', label: 'About', icon: Megaphone },
+    { key: 'members', label: 'Members', icon: Users },
+    { key: 'discussions', label: 'Discuss', icon: MessageSquare },
+    { key: 'prayers', label: 'Prayers', icon: Heart },
+    { key: 'events', label: 'Events', icon: Calendar },
+  ];
 
   if (isLoading) {
     return (
@@ -149,6 +226,188 @@ export default function GroupDetailScreen() {
       </View>
     );
   }
+
+  const renderAboutTab = () => (
+    <>
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>About</Text>
+        <View style={styles.card}>
+          <Text style={styles.description}>{ministry.description}</Text>
+        </View>
+      </View>
+
+      {announcements.length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Announcements</Text>
+          {announcements.map((announcement: MinistryAnnouncement) => (
+            <View key={announcement.id} style={[styles.announcementCard, announcement.priority === 'high' && styles.announcementCardHigh]}>
+              <View style={styles.announcementHeader}>
+                <Image source={{ uri: announcement.authorAvatar }} style={styles.announcementAvatar} />
+                <View style={styles.announcementAuthorInfo}>
+                  <Text style={styles.announcementAuthor}>{announcement.authorName}</Text>
+                  <Text style={styles.announcementDate}>
+                    {new Date(announcement.createdAt).toLocaleDateString()}
+                  </Text>
+                </View>
+                {announcement.priority === 'high' && (
+                  <View style={styles.priorityBadge}>
+                    <Text style={styles.priorityText}>Important</Text>
+                  </View>
+                )}
+              </View>
+              <Text style={styles.announcementTitle}>{announcement.title}</Text>
+              <Text style={styles.announcementContent}>{announcement.content}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+
+      {id === "worship-ministry" && isMember && (
+        <TouchableOpacity
+          style={styles.musicPlayerButton}
+          onPress={() => router.push("/worship" as Href)}
+          activeOpacity={0.7}
+        >
+          <View style={styles.musicPlayerLeft}>
+            <View style={[styles.musicPlayerIcon, { backgroundColor: ministry.color }]}>
+              <Music size={24} color={Colors.textInverse} />
+            </View>
+            <View style={styles.musicPlayerInfo}>
+              <Text style={styles.musicPlayerTitle}>Music Player</Text>
+              <Text style={styles.musicPlayerSubtitle}>Practice songs & learn your parts</Text>
+            </View>
+          </View>
+          <View style={[styles.musicPlayerPlayButton, { backgroundColor: ministry.color }]}>
+            <Play size={18} color={Colors.textInverse} fill={Colors.textInverse} />
+          </View>
+        </TouchableOpacity>
+      )}
+    </>
+  );
+
+  const renderMembersTab = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Members ({members.length})</Text>
+      </View>
+      
+      <Text style={styles.roleLabel}>Leadership</Text>
+      {members.filter(m => m.role === 'leader' || m.role === 'admin').map((member: MinistryMember) => (
+        <MemberCard key={member.id} member={member} />
+      ))}
+      
+      <Text style={[styles.roleLabel, { marginTop: 16 }]}>Members</Text>
+      {members.filter(m => m.role === 'member').map((member: MinistryMember) => (
+        <MemberCard key={member.id} member={member} />
+      ))}
+    </View>
+  );
+
+  const renderDiscussionsTab = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Discussions</Text>
+        {isMember && (
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: ministry.color }]}
+            onPress={() => setShowDiscussionModal(true)}
+          >
+            <Plus size={16} color={Colors.textInverse} />
+            <Text style={styles.addButtonText}>New</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {discussions.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <MessageSquare size={32} color={Colors.textTertiary} />
+          <Text style={styles.emptyText}>No discussions yet</Text>
+          <Text style={styles.emptySubtext}>Start the conversation!</Text>
+        </View>
+      ) : (
+        discussions.map((post: DiscussionPost) => (
+          <DiscussionCard key={post.id} post={post} />
+        ))
+      )}
+    </View>
+  );
+
+  const renderPrayersTab = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Prayer Requests</Text>
+        {isMember && (
+          <TouchableOpacity
+            style={[styles.addButton, { backgroundColor: ministry.color }]}
+            onPress={() => setShowPrayerModal(true)}
+          >
+            <Plus size={16} color={Colors.textInverse} />
+            <Text style={styles.addButtonText}>Share</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+      
+      {prayerRequests.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Heart size={32} color={Colors.textTertiary} />
+          <Text style={styles.emptyText}>No prayer requests</Text>
+          <Text style={styles.emptySubtext}>Share your prayer needs</Text>
+        </View>
+      ) : (
+        prayerRequests.map((request: PrayerRequest) => (
+          <PrayerRequestCard key={request.id} request={request} />
+        ))
+      )}
+    </View>
+  );
+
+  const renderEventsTab = () => (
+    <View style={styles.section}>
+      <View style={styles.sectionHeader}>
+        <Text style={styles.sectionTitle}>Upcoming Events</Text>
+      </View>
+      
+      {events.length === 0 ? (
+        <View style={styles.emptyCard}>
+          <Calendar size={32} color={Colors.textTertiary} />
+          <Text style={styles.emptyText}>No upcoming events</Text>
+        </View>
+      ) : (
+        (events as MinistryEvent[]).map((event) => (
+          <TouchableOpacity key={event.id} style={styles.eventCard} activeOpacity={0.7}>
+            <View style={[styles.eventDateBadge, { backgroundColor: ministry.color + '15' }]}>
+              <Text style={[styles.eventDateDay, { color: ministry.color }]}>
+                {new Date(event.date).getDate()}
+              </Text>
+              <Text style={[styles.eventDateMonth, { color: ministry.color }]}>
+                {new Date(event.date).toLocaleString('default', { month: 'short' })}
+              </Text>
+            </View>
+            <View style={styles.eventInfo}>
+              <Text style={styles.eventTitle}>{event.title}</Text>
+              <View style={styles.eventMeta}>
+                <Clock size={12} color={Colors.textSecondary} />
+                <Text style={styles.eventMetaText}>{event.time}</Text>
+              </View>
+              <View style={styles.eventMeta}>
+                <MapPin size={12} color={Colors.textSecondary} />
+                <Text style={styles.eventMetaText}>{event.location}</Text>
+              </View>
+              {event.isRecurring && (
+                <View style={styles.recurringBadge}>
+                  <Text style={styles.recurringText}>{event.recurrencePattern}</Text>
+                </View>
+              )}
+            </View>
+            <View style={styles.eventAttendees}>
+              <Users size={14} color={Colors.textSecondary} />
+              <Text style={styles.eventAttendeesText}>{event.attendeesCount}</Text>
+            </View>
+          </TouchableOpacity>
+        ))
+      )}
+    </View>
+  );
 
   return (
     <View style={styles.container}>
@@ -180,13 +439,33 @@ export default function GroupDetailScreen() {
         </View>
       </View>
 
+      <View style={styles.tabsContainer}>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+          {tabs.map((tab) => {
+            const TabIcon = tab.icon;
+            const isActive = activeTab === tab.key;
+            return (
+              <TouchableOpacity
+                key={tab.key}
+                style={[styles.tab, isActive && { backgroundColor: ministry.color + '15' }]}
+                onPress={() => setActiveTab(tab.key)}
+                activeOpacity={0.7}
+              >
+                <TabIcon size={16} color={isActive ? ministry.color : Colors.textSecondary} />
+                <Text style={[styles.tabText, isActive && { color: ministry.color }]}>{tab.label}</Text>
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+      </View>
+
       <ScrollView
         style={styles.content}
         contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
           <RefreshControl
-            refreshing={ministryQuery.isRefetching || eventsQuery.isRefetching}
+            refreshing={isRefreshing}
             onRefresh={onRefresh}
             tintColor={Colors.primary}
           />
@@ -230,59 +509,119 @@ export default function GroupDetailScreen() {
           )}
         </View>
 
-        {id === "m1" && isMember && (
-          <TouchableOpacity
-            style={styles.musicPlayerButton}
-            onPress={() => router.push("/worship" as Href)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.musicPlayerLeft}>
-              <View style={[styles.musicPlayerIcon, { backgroundColor: ministry.color }]}>
-                <Music size={24} color={Colors.textInverse} />
-              </View>
-              <View style={styles.musicPlayerInfo}>
-                <Text style={styles.musicPlayerTitle}>Music Player</Text>
-                <Text style={styles.musicPlayerSubtitle}>Practice songs & learn your parts</Text>
-              </View>
-            </View>
-            <View style={[styles.musicPlayerPlayButton, { backgroundColor: ministry.color }]}>
-              <Play size={18} color={Colors.textInverse} fill={Colors.textInverse} />
-            </View>
-          </TouchableOpacity>
-        )}
-
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>About</Text>
-          <View style={styles.card}>
-            <Text style={styles.description}>{ministry.description}</Text>
-          </View>
-        </View>
-
-        {events.length > 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming Events</Text>
-            {events.map((event: Event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                onPress={() => console.log("Event pressed:", event.id)}
-              />
-            ))}
-          </View>
-        )}
-
-        {events.length === 0 && (
-          <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Upcoming Events</Text>
-            <View style={styles.emptyCard}>
-              <Calendar size={32} color={Colors.textTertiary} />
-              <Text style={styles.emptyText}>No upcoming events</Text>
-            </View>
-          </View>
-        )}
+        {activeTab === 'about' && renderAboutTab()}
+        {activeTab === 'members' && renderMembersTab()}
+        {activeTab === 'discussions' && renderDiscussionsTab()}
+        {activeTab === 'prayers' && renderPrayersTab()}
+        {activeTab === 'events' && renderEventsTab()}
 
         <View style={{ height: 100 }} />
       </ScrollView>
+
+      <Modal
+        visible={showDiscussionModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowDiscussionModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>New Discussion</Text>
+              <TouchableOpacity onPress={() => setShowDiscussionModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Title</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Discussion topic..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newDiscussionTitle}
+                onChangeText={setNewDiscussionTitle}
+              />
+              <Text style={styles.inputLabel}>Content</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Share your thoughts..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newDiscussionContent}
+                onChangeText={setNewDiscussionContent}
+                multiline
+                numberOfLines={4}
+              />
+            </View>
+            <TouchableOpacity
+              style={[styles.submitButton, { backgroundColor: ministry.color }]}
+              onPress={handlePostDiscussion}
+            >
+              <Send size={18} color={Colors.textInverse} />
+              <Text style={styles.submitButtonText}>Post Discussion</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showPrayerModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowPrayerModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Prayer Request</Text>
+              <TouchableOpacity onPress={() => setShowPrayerModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <View style={styles.modalBody}>
+              <Text style={styles.inputLabel}>Title</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Brief description..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newPrayerTitle}
+                onChangeText={setNewPrayerTitle}
+              />
+              <Text style={styles.inputLabel}>Prayer Request</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Share your prayer need..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newPrayerContent}
+                onChangeText={setNewPrayerContent}
+                multiline
+                numberOfLines={4}
+              />
+              <TouchableOpacity
+                style={styles.anonymousToggle}
+                onPress={() => setIsAnonymousPrayer(!isAnonymousPrayer)}
+              >
+                <View style={[styles.checkbox, isAnonymousPrayer && { backgroundColor: ministry.color, borderColor: ministry.color }]}>
+                  {isAnonymousPrayer && <Check size={14} color={Colors.textInverse} />}
+                </View>
+                <Text style={styles.anonymousText}>Post anonymously</Text>
+              </TouchableOpacity>
+            </View>
+            <TouchableOpacity
+              style={[styles.submitButton, { backgroundColor: ministry.color }]}
+              onPress={handlePostPrayer}
+            >
+              <Heart size={18} color={Colors.textInverse} />
+              <Text style={styles.submitButtonText}>Share Prayer</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
     </View>
   );
 }
@@ -312,7 +651,7 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
   },
   heroContainer: {
-    height: 280,
+    height: 220,
     position: "relative",
   },
   heroImage: {
@@ -337,23 +676,23 @@ const styles = StyleSheet.create({
   },
   heroContent: {
     position: "absolute",
-    bottom: 24,
+    bottom: 20,
     left: 20,
     right: 20,
   },
   iconContainer: {
-    width: 56,
-    height: 56,
-    borderRadius: 16,
+    width: 48,
+    height: 48,
+    borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 12,
+    marginBottom: 10,
   },
   heroTitle: {
-    fontSize: 28,
+    fontSize: 24,
     fontWeight: "700" as const,
     color: Colors.textInverse,
-    marginBottom: 8,
+    marginBottom: 6,
   },
   heroStats: {
     flexDirection: "row",
@@ -365,6 +704,29 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
     opacity: 0.9,
   },
+  tabsContainer: {
+    backgroundColor: Colors.surface,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  tabsContent: {
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    gap: 8,
+  },
+  tab: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+  },
+  tabText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
   content: {
     flex: 1,
   },
@@ -374,7 +736,7 @@ const styles = StyleSheet.create({
   actionRow: {
     flexDirection: "row",
     gap: 12,
-    marginBottom: 24,
+    marginBottom: 20,
   },
   joinButton: {
     flexDirection: "row",
@@ -419,13 +781,31 @@ const styles = StyleSheet.create({
   section: {
     marginBottom: 24,
   },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
-    marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
+  },
+  addButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 16,
+  },
+  addButtonText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.textInverse,
   },
   card: {
     backgroundColor: Colors.surface,
@@ -442,10 +822,149 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     padding: 32,
     alignItems: "center",
-    gap: 12,
+    gap: 8,
   },
   emptyText: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    fontWeight: '500' as const,
+  },
+  emptySubtext: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+  },
+  roleLabel: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textTertiary,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+    marginBottom: 8,
+  },
+  announcementCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+  },
+  announcementCardHigh: {
+    borderLeftWidth: 4,
+    borderLeftColor: Colors.warning,
+  },
+  announcementHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  announcementAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    marginRight: 10,
+  },
+  announcementAuthorInfo: {
+    flex: 1,
+  },
+  announcementAuthor: {
     fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  announcementDate: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+  },
+  priorityBadge: {
+    backgroundColor: Colors.warningLight,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  priorityText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: Colors.warning,
+  },
+  announcementTitle: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 6,
+  },
+  announcementContent: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    lineHeight: 20,
+  },
+  eventCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    marginBottom: 10,
+  },
+  eventDateBadge: {
+    width: 50,
+    height: 54,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  eventDateDay: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+  },
+  eventDateMonth: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase',
+  },
+  eventInfo: {
+    flex: 1,
+  },
+  eventTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  eventMeta: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    marginTop: 2,
+  },
+  eventMetaText: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  recurringBadge: {
+    backgroundColor: Colors.infoLight,
+    alignSelf: 'flex-start',
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    borderRadius: 8,
+    marginTop: 6,
+  },
+  recurringText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    color: Colors.info,
+  },
+  eventAttendees: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 12,
+  },
+  eventAttendeesText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
     color: Colors.textSecondary,
   },
   musicPlayerButton: {
@@ -455,7 +974,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
-    marginBottom: 24,
+    marginTop: 16,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.05,
@@ -494,5 +1013,84 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: Colors.overlay,
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  modalBody: {
+    padding: 20,
+  },
+  inputLabel: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 8,
+    marginTop: 12,
+  },
+  input: {
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    padding: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  textArea: {
+    minHeight: 100,
+    textAlignVertical: 'top',
+  },
+  anonymousToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 16,
+  },
+  checkbox: {
+    width: 22,
+    height: 22,
+    borderRadius: 6,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  anonymousText: {
+    fontSize: 14,
+    color: Colors.text,
+  },
+  submitButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    margin: 20,
+    padding: 16,
+    borderRadius: 12,
+  },
+  submitButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.textInverse,
   },
 });

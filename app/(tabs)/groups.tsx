@@ -1,12 +1,45 @@
 import { useCallback, useState, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
-import { AlertCircle, Plus, X, Music, Heart, BookOpen, Users, Coffee, Sparkles } from "lucide-react-native";
+import { AlertCircle, Plus, X, Music, Heart, BookOpen, Users, Coffee, Sparkles, ChevronRight, Calendar, MessageSquare } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import MinistryCard from "@/components/MinistryCard";
+import { defaultMinistries, getEventsForMinistry, getMembersForMinistry } from "@/mocks/ministryData";
+
+const MINISTRY_SECTIONS = [
+  { 
+    id: 'worship-ministry', 
+    title: 'Worship Ministry',
+    icon: Music,
+    color: '#6366F1',
+    description: 'Leading worship through music and song'
+  },
+  { 
+    id: 'prayer-ministry', 
+    title: 'Prayer Ministry',
+    icon: Heart,
+    color: '#8B5CF6',
+    description: 'Interceding for our church family'
+  },
+  { 
+    id: 'deacon-board', 
+    title: 'Deacon Board',
+    icon: Users,
+    color: '#0EA5E9',
+    description: 'Serving the practical needs of the church'
+  },
+  { 
+    id: 'childrens-ministry', 
+    title: "Children's Ministry",
+    icon: Sparkles,
+    color: '#F59E0B',
+    description: 'Nurturing young hearts with faith'
+  },
+];
 
 export default function GroupsScreen() {
   const insets = useSafeAreaInsets();
@@ -107,6 +140,69 @@ export default function GroupsScreen() {
     }
   };
 
+  const renderMinistrySectionCard = (section: typeof MINISTRY_SECTIONS[0]) => {
+    const ministry = defaultMinistries.find(m => m.id === section.id);
+    const members = getMembersForMinistry(section.id);
+    const events = getEventsForMinistry(section.id);
+    const upcomingEvent = events[0];
+    const IconComponent = section.icon;
+
+    return (
+      <TouchableOpacity
+        key={section.id}
+        style={styles.sectionCard}
+        onPress={() => router.push(`/group/${section.id}` as Href)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.sectionCardHeader}>
+          <View style={[styles.sectionIconContainer, { backgroundColor: section.color + '15' }]}>
+            <IconComponent size={24} color={section.color} />
+          </View>
+          <View style={styles.sectionCardInfo}>
+            <Text style={styles.sectionCardTitle}>{section.title}</Text>
+            <Text style={styles.sectionCardDescription} numberOfLines={1}>
+              {section.description}
+            </Text>
+          </View>
+          <ChevronRight size={20} color={Colors.textTertiary} />
+        </View>
+
+        <View style={styles.sectionCardStats}>
+          <View style={styles.statItem}>
+            <Users size={14} color={Colors.textSecondary} />
+            <Text style={styles.statText}>{ministry?.memberCount || members.length} members</Text>
+          </View>
+          {upcomingEvent && (
+            <View style={styles.statItem}>
+              <Calendar size={14} color={Colors.textSecondary} />
+              <Text style={styles.statText} numberOfLines={1}>{upcomingEvent.title}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={styles.sectionCardMembers}>
+          {members.slice(0, 4).map((member, index) => (
+            <Image
+              key={member.id}
+              source={{ uri: member.avatar }}
+              style={[
+                styles.memberAvatar,
+                { marginLeft: index > 0 ? -10 : 0, zIndex: 4 - index }
+              ]}
+            />
+          ))}
+          {members.length > 4 && (
+            <View style={[styles.memberAvatar, styles.memberAvatarMore, { marginLeft: -10 }]}>
+              <Text style={styles.memberAvatarMoreText}>+{members.length - 4}</Text>
+            </View>
+          )}
+        </View>
+
+        <View style={[styles.sectionCardAccent, { backgroundColor: section.color }]} />
+      </TouchableOpacity>
+    );
+  };
+
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -141,6 +237,15 @@ export default function GroupsScreen() {
           </TouchableOpacity>
         )}
 
+        <Text style={styles.sectionTitle}>Church Ministries</Text>
+        <Text style={styles.sectionSubtitle}>
+          Join a ministry to connect, serve, and grow together
+        </Text>
+
+        <View style={styles.ministrySections}>
+          {MINISTRY_SECTIONS.map(renderMinistrySectionCard)}
+        </View>
+
         {isLoading && ministries.length === 0 && currentOrganization && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />
@@ -150,7 +255,7 @@ export default function GroupsScreen() {
         {currentOrganization && (
           <>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>My Ministries</Text>
+              <Text style={styles.sectionTitleSmall}>My Ministries</Text>
               <TouchableOpacity
                 style={styles.createButton}
                 onPress={() => setShowCreateModal(true)}
@@ -161,7 +266,9 @@ export default function GroupsScreen() {
             </View>
             {userMinistries.length === 0 && (
               <View style={styles.emptySection}>
+                <MessageSquare size={24} color={Colors.textTertiary} />
                 <Text style={styles.emptyText}>You haven&apos;t joined any ministries yet</Text>
+                <Text style={styles.emptySubtext}>Tap on a ministry above to join</Text>
               </View>
             )}
             {userMinistries.map((ministry) => (
@@ -179,8 +286,8 @@ export default function GroupsScreen() {
 
         {currentOrganization && otherMinistries.length > 0 && (
           <>
-            <Text style={[styles.sectionTitleExplore, userMinistries.length > 0 && { marginTop: 24 }]}>
-              Explore Ministries
+            <Text style={[styles.sectionTitleSmall, userMinistries.length > 0 && { marginTop: 24 }]}>
+              Explore More
             </Text>
             {otherMinistries.map((ministry) => {
               const isPending = pendingMinistryIds.has(ministry.id);
@@ -347,26 +454,114 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
+  sectionTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  sectionSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginBottom: 16,
+  },
+  ministrySections: {
+    marginBottom: 24,
+  },
+  sectionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.05,
+    shadowRadius: 8,
+    elevation: 2,
+    overflow: 'hidden',
+  },
+  sectionCardHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 12,
+  },
+  sectionIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  sectionCardInfo: {
+    flex: 1,
+  },
+  sectionCardTitle: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  sectionCardDescription: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  sectionCardStats: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginBottom: 12,
+  },
+  statItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  statText: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  sectionCardMembers: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  memberAvatar: {
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    borderWidth: 2,
+    borderColor: Colors.surface,
+  },
+  memberAvatarMore: {
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  memberAvatarMoreText: {
+    fontSize: 11,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
+  sectionCardAccent: {
+    position: 'absolute',
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 4,
+  },
   sectionHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
   },
-  sectionTitle: {
+  sectionTitleSmall: {
     fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
-  },
-  sectionTitleExplore: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.textSecondary,
     marginBottom: 12,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
   },
   createButton: {
     flexDirection: "row",
@@ -385,13 +580,19 @@ const styles = StyleSheet.create({
   emptySection: {
     backgroundColor: Colors.surfaceSecondary,
     borderRadius: 12,
-    padding: 20,
+    padding: 24,
     alignItems: "center",
     marginBottom: 16,
   },
   emptyText: {
     color: Colors.textSecondary,
     fontSize: 14,
+    marginTop: 8,
+  },
+  emptySubtext: {
+    color: Colors.textTertiary,
+    fontSize: 12,
+    marginTop: 4,
   },
   setupBanner: {
     backgroundColor: Colors.primaryLight,

@@ -127,3 +127,71 @@ export interface LyricLine {
   endTime: number;
   order: number;
 }
+
+export type MinistryRole = 'leader' | 'admin' | 'member';
+
+export interface MinistryMember {
+  id: string;
+  name: string;
+  avatar: string;
+  role: MinistryRole;
+  joinedAt: string;
+  email?: string;
+  phone?: string;
+}
+
+export interface DiscussionPost {
+  id: string;
+  ministryId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorRole: MinistryRole;
+  title: string;
+  content: string;
+  createdAt: string;
+  likesCount: number;
+  commentsCount: number;
+  isPinned: boolean;
+}
+
+export interface PrayerRequest {
+  id: string;
+  ministryId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  title: string;
+  content: string;
+  createdAt: string;
+  prayerCount: number;
+  isAnonymous: boolean;
+  isAnswered: boolean;
+}
+
+export interface MinistryAnnouncement {
+  id: string;
+  ministryId: string;
+  authorId: string;
+  authorName: string;
+  authorAvatar: string;
+  authorRole: MinistryRole;
+  title: string;
+  content: string;
+  createdAt: string;
+  priority: 'high' | 'normal' | 'low';
+}
+
+export interface MinistryEvent {
+  id: string;
+  ministryId: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  location: string;
+  attendeesCount: number;
+  maxAttendees?: number;
+  isRecurring: boolean;
+  recurrencePattern?: string;
+}
