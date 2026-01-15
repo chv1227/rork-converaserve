@@ -25,6 +25,11 @@ function sanitizeUser(user: DbUser): SafeUser {
   return safeUser;
 }
 
+const SUPER_ADMIN_EMAILS = [
+  "chv1227@gmail.com",
+  "coreytmoss@gmail.com",
+];
+
 export const authRouter = createTRPCRouter({
   login: publicProcedure
     .input(loginSchema)
@@ -75,6 +80,12 @@ export const authRouter = createTRPCRouter({
             code: "FORBIDDEN",
             message: "Your account has been deactivated. Please contact an administrator.",
           });
+        }
+
+        if (SUPER_ADMIN_EMAILS.includes(user.email.toLowerCase()) && user.role !== "super_admin") {
+          console.log("Promoting user to super_admin:", user.email);
+          await persistentDb.users.update(user.id, { role: "super_admin" });
+          user.role = "super_admin";
         }
 
         const token = generateSecureToken();
@@ -151,13 +162,14 @@ export const authRouter = createTRPCRouter({
         }
         
         const userId = generateId();
+        const isSuperAdmin = SUPER_ADMIN_EMAILS.includes(input.email.toLowerCase());
         const newUser: DbUser = {
           id: userId,
           email: input.email.toLowerCase(),
           password: hashedPassword,
           name: input.name,
           avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=0F766E&color=fff`,
-          role: "member",
+          role: isSuperAdmin ? "super_admin" : "member",
           ministries: [],
           phone: input.phone,
           joinedDate: new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" }),
