@@ -45,6 +45,17 @@ export const defaultMinistries: Ministry[] = [
   },
 ];
 
+export const ministryMissionStatements: Record<string, string> = {
+  'worship-ministry': 'Our mission is to lead God\'s people into His presence through authentic worship, skillful musicianship, and heartfelt praise. We seek to glorify God, edify the church, and create an atmosphere where lives are transformed through encountering Jesus. We are committed to excellence in preparation, unity in spirit, and humility in service as we minister before the Lord.',
+  'prayer-ministry': 'We exist to cultivate a culture of prayer throughout our church family, believing that prayer is the foundation of all spiritual transformation. Our mission is to intercede faithfully for our congregation, community, and world while equipping believers to develop deeper prayer lives. We stand in the gap, bringing the needs of others before God\'s throne of grace.',
+  'deacon-board': 'Called to serve as the hands and feet of Christ, our mission is to meet the practical and spiritual needs of our congregation and community. We support pastoral leadership, steward church resources with integrity, extend compassion to those in need, and ensure the smooth operation of church ministries. We serve joyfully, lead humbly, and give generously.',
+  'childrens-ministry': 'Our mission is to partner with families in raising the next generation of faithful disciples. We create engaging, age-appropriate environments where children discover God\'s love, learn biblical truth, and develop a personal relationship with Jesus Christ. We believe every child matters to God, and we are committed to nurturing their spiritual growth with creativity, care, and consistency.',
+};
+
+export const getMissionStatement = (ministryId: string): string => {
+  return ministryMissionStatements[ministryId] || '';
+};
+
 export const ministryMembers: Record<string, MinistryMember[]> = {
   'worship-ministry': [
     { id: 'wm1', name: 'James Wilson', avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face', role: 'leader', joinedAt: '2023-01-15', email: 'james@church.org' },

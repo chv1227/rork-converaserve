@@ -33,6 +33,9 @@ import {
   X,
   Send,
   Megaphone,
+  Mail,
+  Star,
+  Shield,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { trpc } from "@/lib/trpc";
@@ -48,6 +51,7 @@ import {
   getPrayerRequestsForMinistry,
   getEventsForMinistry,
   getAnnouncementsForMinistry,
+  getMissionStatement,
 } from "@/mocks/ministryData";
 import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement } from "@/types";
 
@@ -86,6 +90,7 @@ export default function GroupDetailScreen() {
   const mockPrayerRequests = useMemo(() => isDefaultMinistry ? getPrayerRequestsForMinistry(id || '') : [], [isDefaultMinistry, id]);
   const mockEvents = useMemo(() => isDefaultMinistry ? getEventsForMinistry(id || '') : [], [isDefaultMinistry, id]);
   const mockAnnouncements = useMemo(() => isDefaultMinistry ? getAnnouncementsForMinistry(id || '') : [], [isDefaultMinistry, id]);
+  const missionStatement = useMemo(() => isDefaultMinistry ? getMissionStatement(id || '') : '', [isDefaultMinistry, id]);
 
   const ministryQuery = trpc.ministries.getById.useQuery(
     { id: id || "" },
@@ -103,6 +108,7 @@ export default function GroupDetailScreen() {
   const discussions = isDefaultMinistry ? mockDiscussions : [];
   const prayerRequests = isDefaultMinistry ? mockPrayerRequests : [];
   const announcements = isDefaultMinistry ? mockAnnouncements : [];
+  const leaders = useMemo(() => members.filter(m => m.role === 'leader' || m.role === 'admin'), [members]);
 
   const isMember = useMemo(
     () => user?.ministries.includes(id || "") || isDefaultMinistry,
@@ -227,13 +233,63 @@ export default function GroupDetailScreen() {
     );
   }
 
+  const handleMessageLeader = (leaderId: string) => {
+    router.push(`/chat/${leaderId}` as Href);
+  };
+
   const renderAboutTab = () => (
     <>
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>About</Text>
-        <View style={styles.card}>
-          <Text style={styles.description}>{ministry.description}</Text>
+        <View style={styles.missionHeader}>
+          <View style={[styles.missionIconContainer, { backgroundColor: ministry.color + '15' }]}>
+            <Star size={20} color={ministry.color} />
+          </View>
+          <Text style={styles.missionTitle}>Our Mission</Text>
         </View>
+        <View style={[styles.missionCard, { borderLeftColor: ministry.color }]}>
+          <Text style={styles.missionText}>
+            {missionStatement || ministry.description}
+          </Text>
+        </View>
+      </View>
+
+      <View style={styles.section}>
+        <View style={styles.leadersHeader}>
+          <View style={[styles.leadersIconContainer, { backgroundColor: ministry.color + '15' }]}>
+            <Shield size={20} color={ministry.color} />
+          </View>
+          <Text style={styles.leadersTitle}>Leadership</Text>
+        </View>
+        
+        {leaders.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Users size={32} color={Colors.textTertiary} />
+            <Text style={styles.emptyText}>No leaders assigned yet</Text>
+          </View>
+        ) : (
+          <View style={styles.leadersGrid}>
+            {leaders.map((leader: MinistryMember) => (
+              <View key={leader.id} style={styles.leaderCard}>
+                <Image source={{ uri: leader.avatar }} style={styles.leaderAvatar} />
+                <View style={styles.leaderInfo}>
+                  <Text style={styles.leaderName}>{leader.name}</Text>
+                  <View style={[styles.leaderRoleBadge, { backgroundColor: ministry.color + '15' }]}>
+                    <Text style={[styles.leaderRoleText, { color: ministry.color }]}>
+                      {leader.role === 'leader' ? 'Ministry Leader' : 'Admin'}
+                    </Text>
+                  </View>
+                </View>
+                <TouchableOpacity
+                  style={[styles.messageLeaderButton, { backgroundColor: ministry.color }]}
+                  onPress={() => handleMessageLeader(leader.id)}
+                  activeOpacity={0.7}
+                >
+                  <Mail size={18} color={Colors.textInverse} />
+                </TouchableOpacity>
+              </View>
+            ))}
+          </View>
+        )}
       </View>
 
       {announcements.length > 0 && (
@@ -816,6 +872,101 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.text,
     lineHeight: 24,
+  },
+  missionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  missionIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  missionTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  missionCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 18,
+    borderLeftWidth: 4,
+  },
+  missionText: {
+    fontSize: 15,
+    color: Colors.text,
+    lineHeight: 24,
+    fontStyle: 'italic' as const,
+  },
+  leadersHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginBottom: 12,
+  },
+  leadersIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  leadersTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  leadersGrid: {
+    gap: 12,
+  },
+  leaderCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 14,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.04,
+    shadowRadius: 6,
+    elevation: 2,
+  },
+  leaderAvatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 14,
+  },
+  leaderInfo: {
+    flex: 1,
+  },
+  leaderName: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  leaderRoleBadge: {
+    alignSelf: 'flex-start',
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  leaderRoleText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+  },
+  messageLeaderButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   emptyCard: {
     backgroundColor: Colors.surface,
