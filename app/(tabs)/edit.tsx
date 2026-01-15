@@ -14,7 +14,7 @@ import {
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { Building2, Check, Camera, MapPin, Phone, Mail, Globe, AlertCircle, Plus } from 'lucide-react-native';
+import { Building2, Check, Camera, MapPin, Phone, Mail, Globe, AlertCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { updateOrganization, getUserMembership } from '@/lib/supabase-organizations';
@@ -164,20 +164,7 @@ export default function EditChurchTab() {
         <View style={styles.emptyContainer}>
           <Building2 size={64} color={Colors.textTertiary} />
           <Text style={styles.emptyTitle}>No Church Connected</Text>
-          <Text style={styles.emptyText}>Create or join a church to manage it here</Text>
-          <TouchableOpacity
-            style={styles.primaryButton}
-            onPress={() => router.push('/organization/create')}
-          >
-            <Plus size={20} color="#FFF" />
-            <Text style={styles.primaryButtonText}>Create Church</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.secondaryButton}
-            onPress={() => router.push('/organization/join')}
-          >
-            <Text style={styles.secondaryButtonText}>Join Existing Church</Text>
-          </TouchableOpacity>
+          <Text style={styles.emptyText}>Connect to a church to manage it here</Text>
         </View>
       </SafeAreaView>
     );

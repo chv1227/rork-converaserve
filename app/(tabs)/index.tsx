@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Search, AlertCircle } from "lucide-react-native";
+import { Bell, Search } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -14,7 +14,7 @@ import SectionHeader from "@/components/SectionHeader";
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, currentOrganization } = useAuth();
+  const { user } = useAuth();
   const { 
     isLoading, 
     isRefreshing, 
@@ -82,21 +82,6 @@ export default function HomeScreen() {
           <RefreshControl refreshing={localRefreshing || isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
         }
       >
-        {!currentOrganization && (
-          <TouchableOpacity
-            style={styles.setupBanner}
-            onPress={() => router.push("/organization" as Href)}
-          >
-            <View style={styles.setupBannerContent}>
-              <AlertCircle size={24} color={Colors.primary} />
-              <View style={styles.setupBannerText}>
-                <Text style={styles.setupBannerTitle}>Set Up Your Church</Text>
-                <Text style={styles.setupBannerSubtitle}>Create or join a church to get started</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={[styles.quickAction, { backgroundColor: Colors.primary }]}

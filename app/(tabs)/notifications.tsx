@@ -86,7 +86,7 @@ const MOCK_NOTIFICATIONS: Notification[] = [
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { currentOrganization } = useAuth();
+  useAuth();
   const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
   const [isLoading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
@@ -275,23 +275,6 @@ export default function NotificationsScreen() {
           />
         }
       >
-        {!currentOrganization && (
-          <TouchableOpacity
-            style={styles.setupBanner}
-            onPress={() => router.push("/organization" as Href)}
-          >
-            <View style={styles.setupBannerContent}>
-              <AlertCircle size={24} color={Colors.primary} />
-              <View style={styles.setupBannerText}>
-                <Text style={styles.setupBannerTitle}>Set Up Your Church</Text>
-                <Text style={styles.setupBannerSubtitle}>
-                  Create or join a church to receive notifications
-                </Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-
         {isLoading ? (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />

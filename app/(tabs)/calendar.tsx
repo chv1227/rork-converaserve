@@ -1,8 +1,8 @@
 import { useState, useCallback, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, ChevronRight, AlertCircle } from "lucide-react-native";
-import { useRouter, Href } from "expo-router";
+import { ChevronLeft, ChevronRight } from "lucide-react-native";
+
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
@@ -10,7 +10,6 @@ import EventCard from "@/components/EventCard";
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
-  const router = useRouter();
   const { currentOrganization } = useAuth();
   const { events, isLoading, isRefreshing, refresh } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -107,21 +106,6 @@ export default function CalendarScreen() {
           />
         }
       >
-        {!currentOrganization && (
-          <TouchableOpacity
-            style={styles.setupBanner}
-            onPress={() => router.push("/organization" as Href)}
-          >
-            <View style={styles.setupBannerContent}>
-              <AlertCircle size={24} color={Colors.primary} />
-              <View style={styles.setupBannerText}>
-                <Text style={styles.setupBannerTitle}>Set Up Your Church</Text>
-                <Text style={styles.setupBannerSubtitle}>Create or join a church to see events</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-
         {isLoading && events.length === 0 && currentOrganization && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />

@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, 
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
-import { AlertCircle, Plus, X, Music, Heart, BookOpen, Users, Coffee, Sparkles, ChevronRight, Calendar, MessageSquare } from "lucide-react-native";
+import { Plus, X, Music, Heart, BookOpen, Users, Coffee, Sparkles, ChevronRight, Calendar, MessageSquare } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
@@ -222,21 +222,6 @@ export default function GroupsScreen() {
           />
         }
       >
-        {!currentOrganization && (
-          <TouchableOpacity
-            style={styles.setupBanner}
-            onPress={() => router.push("/organization" as Href)}
-          >
-            <View style={styles.setupBannerContent}>
-              <AlertCircle size={24} color={Colors.primary} />
-              <View style={styles.setupBannerText}>
-                <Text style={styles.setupBannerTitle}>Set Up Your Church</Text>
-                <Text style={styles.setupBannerSubtitle}>Create or join a church to see groups</Text>
-              </View>
-            </View>
-          </TouchableOpacity>
-        )}
-
         <Text style={styles.sectionTitle}>Church Ministries</Text>
         <Text style={styles.sectionSubtitle}>
           Join a ministry to connect, serve, and grow together

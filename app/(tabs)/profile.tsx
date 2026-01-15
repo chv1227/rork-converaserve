@@ -21,8 +21,6 @@ import {
   Eye,
   BellRing,
   Building2,
-  Plus,
-  UserPlus,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -175,39 +173,6 @@ export default function ProfileScreen() {
               </View>
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
-          </>
-        )}
-
-        {!hasOrganization && (
-          <>
-            <Text style={styles.sectionTitle}>Organization</Text>
-            <View style={styles.noOrgCard}>
-              <View style={styles.noOrgIconContainer}>
-                <Building2 size={32} color={Colors.primary} />
-              </View>
-              <Text style={styles.noOrgTitle}>No Church Connected</Text>
-              <Text style={styles.noOrgSubtitle}>
-                Create a new church organization or join an existing one.
-              </Text>
-              <View style={styles.noOrgButtons}>
-                <TouchableOpacity
-                  style={styles.createOrgButton}
-                  onPress={() => router.push("/organization/create" as any)}
-                  activeOpacity={0.7}
-                >
-                  <Plus size={18} color={Colors.textInverse} />
-                  <Text style={styles.createOrgButtonText}>Create Church</Text>
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.joinOrgButton}
-                  onPress={() => router.push("/organization/join" as any)}
-                  activeOpacity={0.7}
-                >
-                  <UserPlus size={18} color={Colors.primary} />
-                  <Text style={styles.joinOrgButtonText}>Join Church</Text>
-                </TouchableOpacity>
-              </View>
-            </View>
           </>
         )}
 

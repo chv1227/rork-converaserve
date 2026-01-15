@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, FlatList, RefreshControl, ActivityIndicator } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
-import { MessageCircle, AlertCircle } from "lucide-react-native";
+import { MessageCircle } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
@@ -57,20 +57,6 @@ export default function MessagesScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           <>
-            {!currentOrganization && (
-              <TouchableOpacity
-                style={styles.setupBanner}
-                onPress={() => router.push("/organization" as Href)}
-              >
-                <View style={styles.setupBannerContent}>
-                  <AlertCircle size={24} color={Colors.primary} />
-                  <View style={styles.setupBannerText}>
-                    <Text style={styles.setupBannerTitle}>Set Up Your Church</Text>
-                    <Text style={styles.setupBannerSubtitle}>Create or join a church to see messages</Text>
-                  </View>
-                </View>
-              </TouchableOpacity>
-            )}
             {isLoading && conversations.length === 0 && currentOrganization && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color={Colors.primary} />
