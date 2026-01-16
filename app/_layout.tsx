@@ -4,7 +4,7 @@ import * as SplashScreen from "expo-splash-screen";
 import { useEffect, ReactNode, useState } from "react";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
-import { View, ActivityIndicator, StyleSheet, Text } from "react-native";
+import { View, ActivityIndicator, StyleSheet, Text, Platform } from "react-native";
 
 import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
@@ -232,7 +232,16 @@ function AppContent() {
 
 export default function RootLayout() {
   useEffect(() => {
-    SplashScreen.hideAsync();
+    const hideSplash = async () => {
+      try {
+        if (Platform.OS !== 'web') {
+          await SplashScreen.hideAsync();
+        }
+      } catch (error) {
+        console.log('SplashScreen.hideAsync error (can be safely ignored):', error);
+      }
+    };
+    hideSplash();
   }, []);
 
   return (
