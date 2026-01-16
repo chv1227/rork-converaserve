@@ -48,6 +48,7 @@ export const messagesRouter = createTRPCRouter({
       const conversations = await persistentDb.conversations.findByOrganization(input.organizationId);
       
       const userConversations = conversations.filter((c) => {
+        if (c.isArchived) return false;
         if (c.ministryId && ctx.user.ministries.includes(c.ministryId)) {
           return true;
         }
@@ -60,7 +61,32 @@ export const messagesRouter = createTRPCRouter({
         return false;
       });
       
-      const sorted = userConversations.sort((a, b) => {
+      // For direct messages, resolve the correct name and avatar for the other participant
+      const users = await persistentDb.users.getAll();
+      const userMap = new Map(users.map(u => [u.id, u]));
+      
+      const processedConversations = await Promise.all(
+        userConversations.map(async (c) => {
+          if (c.type === 'direct') {
+            const participants = c.participantIds || c.memberIds || [];
+            const otherUserId = participants.find((id: string) => id !== ctx.user.id);
+            
+            if (otherUserId) {
+              const otherUser = userMap.get(otherUserId);
+              if (otherUser) {
+                return {
+                  ...c,
+                  name: otherUser.name,
+                  avatar: otherUser.avatar,
+                };
+              }
+            }
+          }
+          return c;
+        })
+      );
+      
+      const sorted = processedConversations.sort((a, b) => {
         const timeA = a.lastMessageTimestamp ? new Date(a.lastMessageTimestamp).getTime() : 0;
         const timeB = b.lastMessageTimestamp ? new Date(b.lastMessageTimestamp).getTime() : 0;
         return timeB - timeA;
@@ -142,6 +168,23 @@ export const messagesRouter = createTRPCRouter({
           code: "FORBIDDEN",
           message: "You don't have access to this conversation",
         });
+      }
+      
+      // For direct messages, resolve the correct name and avatar for the other participant
+      if (conversation.type === 'direct') {
+        const participants = conversation.participantIds || conversation.memberIds || [];
+        const otherUserId = participants.find((id: string) => id !== ctx.user.id);
+        
+        if (otherUserId) {
+          const otherUser = await persistentDb.users.findById(otherUserId);
+          if (otherUser) {
+            return {
+              ...conversation,
+              name: otherUser.name,
+              avatar: otherUser.avatar,
+            };
+          }
+        }
       }
       
       return conversation;
