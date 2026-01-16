@@ -54,7 +54,10 @@ export default function HomeScreen() {
             <TouchableOpacity style={styles.iconButton}>
               <Search size={22} color={Colors.text} />
             </TouchableOpacity>
-            <TouchableOpacity style={styles.iconButton}>
+            <TouchableOpacity 
+              style={styles.iconButton}
+              onPress={() => router.push("/(tabs)/notifications" as Href)}
+            >
               <Bell size={22} color={Colors.text} />
               {totalUnread > 0 && (
                 <View style={styles.notificationBadge}>
