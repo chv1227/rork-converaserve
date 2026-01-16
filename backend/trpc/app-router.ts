@@ -9,6 +9,7 @@ import { notificationsRouter } from "./routes/notifications";
 import { messagesRouter } from "./routes/messages";
 import { songsRouter } from "./routes/songs";
 import { organizationsRouter } from "./routes/organizations";
+import { givingRouter } from "./routes/giving";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -21,6 +22,7 @@ export const appRouter = createTRPCRouter({
   messages: messagesRouter,
   songs: songsRouter,
   organizations: organizationsRouter,
+  giving: givingRouter,
 });
 
 export type AppRouter = typeof appRouter;

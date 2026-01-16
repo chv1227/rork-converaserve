@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Search } from "lucide-react-native";
+import { Bell, Search, Heart } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -91,11 +91,14 @@ export default function HomeScreen() {
             <Text style={styles.quickActionSubtitle}>{upcomingEvents.length} this week</Text>
           </TouchableOpacity>
           <TouchableOpacity
-            style={[styles.quickAction, { backgroundColor: Colors.secondary }]}
-            onPress={() => router.push("/(tabs)/groups" as Href)}
+            style={[styles.quickAction, styles.givingAction]}
+            onPress={() => router.push("/giving" as Href)}
           >
-            <Text style={styles.quickActionTitle}>My Groups</Text>
-            <Text style={styles.quickActionSubtitle}>{userMinistries.length} ministries</Text>
+            <View style={styles.givingIconContainer}>
+              <Heart size={18} color="#FFFFFF" />
+            </View>
+            <Text style={styles.quickActionTitle}>Giving</Text>
+            <Text style={styles.quickActionSubtitle}>Tithes & Offerings</Text>
           </TouchableOpacity>
         </View>
 
@@ -261,6 +264,18 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 16,
     borderRadius: 16,
+  },
+  givingAction: {
+    backgroundColor: Colors.secondary,
+  },
+  givingIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 4,
   },
   quickActionTitle: {
     fontSize: 16,

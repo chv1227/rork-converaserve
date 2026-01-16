@@ -227,3 +227,49 @@ export interface MinistryEvent {
   isRecurring: boolean;
   recurrencePattern?: string;
 }
+
+export type GivingType = 'tithe' | 'offering';
+export type GivingFrequency = 'one_time' | 'weekly' | 'bi_weekly' | 'monthly';
+export type GivingStatus = 'pending' | 'completed' | 'failed' | 'cancelled';
+
+export interface Donation {
+  id: string;
+  userId: string;
+  organizationId: string;
+  type: GivingType;
+  amount: number;
+  currency: string;
+  frequency: GivingFrequency;
+  note?: string;
+  status: GivingStatus;
+  paymentMethod?: string;
+  transactionId?: string;
+  nextScheduledDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface RecurringGiving {
+  id: string;
+  userId: string;
+  organizationId: string;
+  type: GivingType;
+  amount: number;
+  currency: string;
+  frequency: GivingFrequency;
+  note?: string;
+  isActive: boolean;
+  nextDate: string;
+  lastProcessedDate?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface GivingStats {
+  totalGiven: number;
+  totalTithes: number;
+  totalOfferings: number;
+  thisMonthTotal: number;
+  thisYearTotal: number;
+  donationCount: number;
+}

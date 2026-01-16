@@ -1,5 +1,5 @@
 import { DbUser, Session, Notification, WorkflowRequest, ReportedContent, ActivityLog, Invitation } from "./index";
-import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership } from "@/types";
+import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving } from "@/types";
 
 const DB_ENDPOINT = process.env.EXPO_PUBLIC_RORK_DB_ENDPOINT;
 const DB_NAMESPACE = process.env.EXPO_PUBLIC_RORK_DB_NAMESPACE;
@@ -29,6 +29,8 @@ const memoryStore: Record<string, Record<string, unknown>> = {
   reportedContent: {},
   activityLogs: {},
   invitations: {},
+  donations: {},
+  recurringGiving: {},
 };
 
 function getMemoryCollection<T>(collection: string): T[] {
@@ -695,6 +697,90 @@ export const persistentDb = {
 
     async getAll(): Promise<Invitation[]> {
       return queryCollection<Invitation>("invitations");
+    }
+  },
+
+  donations: {
+    async findById(id: string): Promise<Donation | null> {
+      const result = await dbRequest<Donation>("GET", "donations", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByUser(userId: string): Promise<Donation[]> {
+      return queryCollection<Donation>("donations", { userId });
+    },
+
+    async findByOrganization(organizationId: string): Promise<Donation[]> {
+      return queryCollection<Donation>("donations", { organizationId });
+    },
+
+    async findByUserAndOrg(userId: string, organizationId: string): Promise<Donation[]> {
+      const donations = await queryCollection<Donation>("donations", { userId });
+      return donations.filter(d => d.organizationId === organizationId);
+    },
+
+    async create(donation: Donation): Promise<Donation | null> {
+      console.log("DB: Creating donation for user:", donation.userId);
+      const result = await dbRequest<Donation>("POST", "donations", donation.id, donation);
+      return result.success ? donation : null;
+    },
+
+    async update(id: string, updates: Partial<Donation>): Promise<Donation | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      const result = await dbRequest<Donation>("PUT", "donations", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async getAll(): Promise<Donation[]> {
+      return queryCollection<Donation>("donations");
+    }
+  },
+
+  recurringGiving: {
+    async findById(id: string): Promise<RecurringGiving | null> {
+      const result = await dbRequest<RecurringGiving>("GET", "recurringGiving", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByUser(userId: string): Promise<RecurringGiving[]> {
+      return queryCollection<RecurringGiving>("recurringGiving", { userId });
+    },
+
+    async findByUserAndOrg(userId: string, organizationId: string): Promise<RecurringGiving[]> {
+      const recurring = await queryCollection<RecurringGiving>("recurringGiving", { userId });
+      return recurring.filter(r => r.organizationId === organizationId);
+    },
+
+    async findActiveByUser(userId: string): Promise<RecurringGiving[]> {
+      const recurring = await this.findByUser(userId);
+      return recurring.filter(r => r.isActive);
+    },
+
+    async create(recurring: RecurringGiving): Promise<RecurringGiving | null> {
+      console.log("DB: Creating recurring giving for user:", recurring.userId);
+      const result = await dbRequest<RecurringGiving>("POST", "recurringGiving", recurring.id, recurring);
+      return result.success ? recurring : null;
+    },
+
+    async update(id: string, updates: Partial<RecurringGiving>): Promise<RecurringGiving | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      const result = await dbRequest<RecurringGiving>("PUT", "recurringGiving", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "recurringGiving", id);
+      return result.success;
+    },
+
+    async getAll(): Promise<RecurringGiving[]> {
+      return queryCollection<RecurringGiving>("recurringGiving");
     }
   }
 };
