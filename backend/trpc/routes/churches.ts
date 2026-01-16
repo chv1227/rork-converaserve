@@ -101,6 +101,14 @@ export const churchesRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       console.log("Churches: Creating new church:", input.name);
 
+      // Only admins can create churches
+      if (ctx.user.role !== "admin" && ctx.user.role !== "super_admin") {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only administrators can create churches",
+        });
+      }
+
       const existingChurches = await persistentDb.churches.getAll();
       const duplicate = existingChurches.find(
         (c) => c.name.toLowerCase() === input.name.toLowerCase() &&

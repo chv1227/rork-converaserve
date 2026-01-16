@@ -28,6 +28,7 @@ import {
   Youtube,
   ChevronDown,
   ChevronUp,
+  ShieldX,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
@@ -66,7 +67,7 @@ const COUNTRIES = [
 
 export default function CreateChurchScreen() {
   const router = useRouter();
-  const { isAuthenticated } = useAuth();
+  const { isAuthenticated, isAdmin } = useAuth();
   
   const [name, setName] = useState('');
   const [denomination, setDenomination] = useState('');
@@ -161,6 +162,11 @@ export default function CreateChurchScreen() {
       return;
     }
 
+    if (!isAdmin) {
+      Alert.alert('Access Denied', 'Only administrators can create churches.');
+      return;
+    }
+
     if (!validateForm()) return;
 
     const socialLinks: { facebook?: string; instagram?: string; twitter?: string; youtube?: string } = {};
@@ -186,10 +192,42 @@ export default function CreateChurchScreen() {
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
     });
   }, [
-    isAuthenticated, validateForm, createMutation, name, denomination, description,
+    isAuthenticated, isAdmin, validateForm, createMutation, name, denomination, description,
     address, city, state, zip, country, email, phone, website, logo, bannerImage,
     facebook, instagram, twitter, youtube, router
   ]);
+
+  if (!isAdmin) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <TouchableOpacity
+            style={styles.backButton}
+            onPress={() => router.back()}
+          >
+            <ArrowLeft size={24} color={Colors.text} />
+          </TouchableOpacity>
+          <Text style={styles.headerTitle}>Create Church</Text>
+          <View style={styles.placeholder} />
+        </View>
+        <View style={styles.accessDeniedContainer}>
+          <View style={styles.accessDeniedIcon}>
+            <ShieldX size={48} color={Colors.error} />
+          </View>
+          <Text style={styles.accessDeniedTitle}>Access Restricted</Text>
+          <Text style={styles.accessDeniedText}>
+            Only administrators can create new churches. Please contact an administrator if you need to register a church.
+          </Text>
+          <TouchableOpacity
+            style={styles.backHomeButton}
+            onPress={() => router.back()}
+          >
+            <Text style={styles.backHomeButtonText}>Go Back</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  }
 
   return (
     <SafeAreaView style={styles.container}>
@@ -828,5 +866,45 @@ const styles = StyleSheet.create({
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 18,
+  },
+  accessDeniedContainer: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 32,
+  },
+  accessDeniedIcon: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.error + '15',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+  },
+  accessDeniedTitle: {
+    fontSize: 24,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 12,
+    textAlign: 'center',
+  },
+  accessDeniedText: {
+    fontSize: 16,
+    color: Colors.textSecondary,
+    textAlign: 'center',
+    lineHeight: 24,
+    marginBottom: 32,
+  },
+  backHomeButton: {
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 32,
+    paddingVertical: 14,
+    borderRadius: 12,
+  },
+  backHomeButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: '#FFF',
   },
 });
