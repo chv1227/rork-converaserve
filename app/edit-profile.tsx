@@ -10,16 +10,24 @@ import {
   Platform,
   KeyboardAvoidingView,
   ActivityIndicator,
+  Modal,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Camera, User, Phone, Mail, Users, Check } from "lucide-react-native";
+import { ArrowLeft, Camera, User, Phone, Mail, Users, Check, ImageIcon, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
 import { Ministry } from "@/types";
 import { getMinistryColor } from "@/constants/ministryColors";
+import {
+  pickImageFromCamera,
+  pickImageFromGallery,
+  showImagePickerOptions,
+  PickedImage,
+} from "@/lib/image-picker";
+import { uploadProfileImage } from "@/lib/supabase-storage";
 
 const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
@@ -40,6 +48,9 @@ export default function EditProfileScreen() {
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
   const [selectedMinistries, setSelectedMinistries] = useState<string[]>(user?.ministries || []);
+  const [pendingImage, setPendingImage] = useState<PickedImage | null>(null);
+  const [showPreviewModal, setShowPreviewModal] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   const ministriesQuery = trpc.ministries.list.useQuery();
   const availableMinistries = ministriesQuery.data || [];
@@ -106,7 +117,94 @@ export default function EditProfileScreen() {
 
   const selectAvatar = (url: string) => {
     setAvatar(url);
+    setPendingImage(null);
     setShowAvatarPicker(false);
+  };
+
+  const handleTakePhoto = async () => {
+    console.log("Taking photo...");
+    const result = await pickImageFromCamera();
+    if (result.success && result.image) {
+      console.log("Photo captured, showing preview");
+      setPendingImage(result.image);
+      setShowPreviewModal(true);
+    } else if (result.error && result.error !== "Canceled") {
+      if (Platform.OS === "web") {
+        alert(result.error);
+      } else {
+        Alert.alert("Error", result.error);
+      }
+    }
+  };
+
+  const handleChooseFromLibrary = async () => {
+    console.log("Opening gallery...");
+    const result = await pickImageFromGallery();
+    if (result.success && result.image) {
+      console.log("Image selected, showing preview");
+      setPendingImage(result.image);
+      setShowPreviewModal(true);
+    } else if (result.error && result.error !== "Canceled") {
+      if (Platform.OS === "web") {
+        alert(result.error);
+      } else {
+        Alert.alert("Error", result.error);
+      }
+    }
+  };
+
+  const handleImagePickerPress = () => {
+    if (Platform.OS === "web") {
+      handleChooseFromLibrary();
+    } else {
+      showImagePickerOptions(handleTakePhoto, handleChooseFromLibrary);
+    }
+  };
+
+  const handleConfirmImage = async () => {
+    if (!pendingImage || !user) return;
+
+    console.log("Uploading profile image...");
+    setIsUploading(true);
+
+    try {
+      const result = await uploadProfileImage(user.id, pendingImage);
+
+      if (result.success && result.url) {
+        console.log("Image uploaded successfully:", result.url);
+        setAvatar(result.url);
+        setPendingImage(null);
+        setShowPreviewModal(false);
+        setShowAvatarPicker(false);
+
+        if (Platform.OS === "web") {
+          alert("Photo updated successfully!");
+        } else {
+          Alert.alert("Success", "Photo updated successfully!");
+        }
+      } else {
+        console.error("Upload failed:", result.error);
+        if (Platform.OS === "web") {
+          alert(result.error || "Failed to upload image");
+        } else {
+          Alert.alert("Upload Failed", result.error || "Failed to upload image");
+        }
+      }
+    } catch (error) {
+      console.error("Upload error:", error);
+      if (Platform.OS === "web") {
+        alert("Failed to upload image. Please try again.");
+      } else {
+        Alert.alert("Error", "Failed to upload image. Please try again.");
+      }
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
+  const handleCancelPreview = () => {
+    setPendingImage(null);
+    setShowPreviewModal(false);
   };
 
   if (!user) {
@@ -158,7 +256,7 @@ export default function EditProfileScreen() {
           <View style={styles.avatarSection}>
             <TouchableOpacity
               style={styles.avatarContainer}
-              onPress={() => setShowAvatarPicker(!showAvatarPicker)}
+              onPress={handleImagePickerPress}
               activeOpacity={0.8}
             >
               <Image source={{ uri: avatar }} style={styles.avatar} contentFit="cover" />
@@ -167,6 +265,28 @@ export default function EditProfileScreen() {
               </View>
             </TouchableOpacity>
             <Text style={styles.changePhotoText}>Tap to change photo</Text>
+            
+            <View style={styles.photoOptionsRow}>
+              <TouchableOpacity
+                style={styles.photoOptionButton}
+                onPress={handleImagePickerPress}
+                activeOpacity={0.7}
+              >
+                <Camera size={18} color={Colors.primary} />
+                <Text style={styles.photoOptionText}>
+                  {Platform.OS === "web" ? "Upload Photo" : "Take Photo"}
+                </Text>
+              </TouchableOpacity>
+              
+              <TouchableOpacity
+                style={styles.photoOptionButton}
+                onPress={() => setShowAvatarPicker(!showAvatarPicker)}
+                activeOpacity={0.7}
+              >
+                <ImageIcon size={18} color={Colors.primary} />
+                <Text style={styles.photoOptionText}>Choose Avatar</Text>
+              </TouchableOpacity>
+            </View>
           </View>
 
           {showAvatarPicker && (
@@ -298,6 +418,72 @@ export default function EditProfileScreen() {
           <View style={{ height: 100 }} />
         </ScrollView>
       </KeyboardAvoidingView>
+
+      <Modal
+        visible={showPreviewModal}
+        transparent={true}
+        animationType="fade"
+        onRequestClose={handleCancelPreview}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.previewModal}>
+            <View style={styles.previewHeader}>
+              <Text style={styles.previewTitle}>Preview Photo</Text>
+              <TouchableOpacity
+                style={styles.closeButton}
+                onPress={handleCancelPreview}
+                activeOpacity={0.7}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.previewImageContainer}>
+              {pendingImage && (
+                <Image
+                  source={{ uri: pendingImage.uri }}
+                  style={styles.previewImage}
+                  contentFit="cover"
+                />
+              )}
+            </View>
+
+            <Text style={styles.previewHint}>
+              This will be your new profile picture
+            </Text>
+
+            <View style={styles.previewActions}>
+              <TouchableOpacity
+                style={styles.cancelButton}
+                onPress={handleCancelPreview}
+                activeOpacity={0.7}
+                disabled={isUploading}
+              >
+                <Text style={styles.cancelButtonText}>Cancel</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  styles.confirmButton,
+                  isUploading && styles.confirmButtonDisabled,
+                ]}
+                onPress={handleConfirmImage}
+                activeOpacity={0.7}
+                disabled={isUploading}
+              >
+                {isUploading ? (
+                  <ActivityIndicator size="small" color="#fff" />
+                ) : (
+                  <>
+                    <Check size={18} color="#fff" />
+                    <Text style={styles.confirmButtonText}>Use Photo</Text>
+                  </>
+                )}
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -387,6 +573,27 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.primary,
     marginTop: 8,
+    fontWeight: "500" as const,
+  },
+  photoOptionsRow: {
+    flexDirection: "row" as const,
+    gap: 12,
+    marginTop: 16,
+  },
+  photoOptionButton: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 6,
+    backgroundColor: Colors.primary + "15",
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: Colors.primary + "30",
+  },
+  photoOptionText: {
+    fontSize: 13,
+    color: Colors.primary,
     fontWeight: "500" as const,
   },
   avatarPicker: {
@@ -537,7 +744,92 @@ const styles = StyleSheet.create({
     width: 16,
     height: 16,
     borderRadius: 8,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.7)",
+    justifyContent: "center" as const,
+    alignItems: "center" as const,
+    padding: 20,
+  },
+  previewModal: {
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    width: "100%" as const,
+    maxWidth: 360,
+    padding: 20,
+  },
+  previewHeader: {
+    flexDirection: "row" as const,
+    justifyContent: "space-between" as const,
+    alignItems: "center" as const,
+    marginBottom: 20,
+  },
+  previewTitle: {
+    fontSize: 18,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  closeButton: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    backgroundColor: Colors.background,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  previewImageContainer: {
+    alignItems: "center" as const,
+    marginBottom: 16,
+  },
+  previewImage: {
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    borderWidth: 4,
+    borderColor: Colors.primary + "30",
+  },
+  previewHint: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: "center" as const,
+    marginBottom: 20,
+  },
+  previewActions: {
+    flexDirection: "row" as const,
+    gap: 12,
+  },
+  cancelButton: {
+    flex: 1,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.background,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  cancelButtonText: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: Colors.textSecondary,
+  },
+  confirmButton: {
+    flex: 1,
+    flexDirection: "row" as const,
+    paddingVertical: 14,
+    borderRadius: 12,
+    backgroundColor: Colors.primary,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    gap: 8,
+  },
+  confirmButtonDisabled: {
+    opacity: 0.7,
+  },
+  confirmButtonText: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: "#fff",
   },
 });
