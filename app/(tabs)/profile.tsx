@@ -27,6 +27,7 @@ import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
 import React, { useState } from "react";
+import { MinistryLegend, MinistryDots } from "@/components/MinistryIndicators";
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -114,7 +115,14 @@ export default function ProfileScreen() {
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
         <View style={styles.profileCard}>
-          <Image source={{ uri: user.avatar }} style={styles.avatar} contentFit="cover" />
+          <View style={styles.avatarWrapper}>
+            <Image source={{ uri: user.avatar }} style={styles.avatar} contentFit="cover" />
+            {userMinistries.length > 0 && (
+              <View style={styles.avatarMinistryDots}>
+                <MinistryDots ministries={userMinistries} maxDots={4} size="medium" />
+              </View>
+            )}
+          </View>
           <View style={styles.nameRow}>
             <Text style={styles.userName}>{user.name}</Text>
             {roleBadge && (
@@ -188,6 +196,10 @@ export default function ProfileScreen() {
             <Text style={styles.noMinistries}>Not a member of any ministries yet</Text>
           )}
         </View>
+
+        {ministries.length > 0 && (
+          <MinistryLegend ministries={ministries} />
+        )}
 
         {isAdmin && (
           <>
@@ -486,11 +498,23 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
   },
+  avatarWrapper: {
+    position: 'relative',
+    marginBottom: 16,
+  },
   avatar: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 16,
+  },
+  avatarMinistryDots: {
+    position: 'absolute',
+    bottom: 0,
+    right: -8,
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingHorizontal: 4,
+    paddingVertical: 2,
   },
   nameRow: {
     flexDirection: "row",
