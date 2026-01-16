@@ -639,7 +639,7 @@ export default function GroupDetailScreen() {
           )}
         </View>
 
-        {renderEventsSection()}
+        {activeTab === 'about' && renderEventsSection()}
 
         {activeTab === 'about' && renderAboutTab()}
         {activeTab === 'members' && renderMembersTab()}
