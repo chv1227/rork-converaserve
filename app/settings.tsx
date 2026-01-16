@@ -229,7 +229,7 @@ export default function SettingsScreen() {
           >
             <UsersRound size={24} color={Colors.secondary} />
             <Text style={styles.statNumber}>{totalMinistries}</Text>
-            <Text style={styles.statLabel}>Groups</Text>
+            <Text style={styles.statLabel}>Ministries</Text>
           </TouchableOpacity>
         </View>
 
@@ -285,8 +285,8 @@ export default function SettingsScreen() {
         <View style={styles.menuSection}>
           <AdminMenuItem
             icon={<UsersRound size={20} color={Colors.primary} />}
-            title="Manage Groups"
-            subtitle="View and manage groups"
+            title="Manage Ministries"
+            subtitle="View and manage ministries"
             onPress={() => handleNavigation("/admin/groups")}
           />
           <AdminMenuItem
@@ -443,7 +443,7 @@ export default function SettingsScreen() {
             </View>
 
             <View style={styles.inputGroup}>
-              <Text style={styles.inputLabel}>Assign to Groups (Optional)</Text>
+              <Text style={styles.inputLabel}>Assign to Ministries (Optional)</Text>
               <View style={styles.ministriesSelector}>
                 {ministries.map((ministry) => (
                   <TouchableOpacity

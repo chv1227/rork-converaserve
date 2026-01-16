@@ -198,7 +198,7 @@ export default function AdminDashboard() {
           />
           <StatCard
             icon={<UsersRound size={20} color="#8B5CF6" />}
-            label="Groups"
+            label="Ministries"
             value={stats?.totalMinistries || 0}
             color="#8B5CF6"
             onPress={() => router.push("/admin/groups" as any)}
@@ -237,8 +237,8 @@ export default function AdminDashboard() {
           />
           <QuickAction
             icon={<UsersRound size={20} color={Colors.primary} />}
-            title="Group Management"
-            subtitle="Manage groups and members"
+            title="Ministry Management"
+            subtitle="Manage ministries and members"
             onPress={() => router.push("/admin/groups" as any)}
           />
           <QuickAction

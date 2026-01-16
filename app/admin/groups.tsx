@@ -147,7 +147,7 @@ export default function GroupManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries();
       if (Platform.OS !== "web") {
-        Alert.alert("Success", "Group deleted successfully");
+        Alert.alert("Success", "Ministry deleted successfully");
       }
     },
     onError: (error) => {
@@ -159,7 +159,7 @@ export default function GroupManagement() {
     onSuccess: () => {
       queryClient.invalidateQueries();
       if (Platform.OS !== "web") {
-        Alert.alert("Success", "Member removed from group");
+        Alert.alert("Success", "Member removed from ministry");
       }
     },
     onError: (error) => {
@@ -178,7 +178,7 @@ export default function GroupManagement() {
       deleteMinistryMutation.mutate({ ministryId: groupId });
     } else {
       Alert.alert(
-        "Delete Group",
+        "Delete Ministry",
         `Are you sure you want to delete "${groupName}"? This action cannot be undone.`,
         [
           { text: "Cancel", style: "cancel" },
@@ -200,7 +200,7 @@ export default function GroupManagement() {
     } else {
       Alert.alert(
         "Remove Member",
-        `Are you sure you want to remove ${userName} from this group?`,
+        `Are you sure you want to remove ${userName} from this ministry?`,
         [
           { text: "Cancel", style: "cancel" },
           {
@@ -238,8 +238,8 @@ export default function GroupManagement() {
             <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
-            <Text style={styles.title}>Group Management</Text>
-            <Text style={styles.subtitle}>{ministriesQuery.data?.length || 0} groups</Text>
+            <Text style={styles.title}>Ministry Management</Text>
+            <Text style={styles.subtitle}>{ministriesQuery.data?.length || 0} ministries</Text>
           </View>
         </View>
 
@@ -247,7 +247,7 @@ export default function GroupManagement() {
           <Search size={18} color={Colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
-            placeholder="Search groups..."
+            placeholder="Search ministries..."
             placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
@@ -331,7 +331,7 @@ export default function GroupManagement() {
           ) : (
             <View style={styles.emptyMembers}>
               <Users size={40} color={Colors.textTertiary} />
-              <Text style={styles.emptyText}>No members in this group</Text>
+              <Text style={styles.emptyText}>No members in this ministry</Text>
             </View>
           )}
         </View>
