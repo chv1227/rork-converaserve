@@ -64,7 +64,7 @@ const iconMap: Record<string, IconComponentType> = {
   Sparkles,
 };
 
-type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'events' | 'music';
+type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'music';
 
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -210,7 +210,6 @@ export default function GroupDetailScreen() {
       { key: 'members', label: 'Members', icon: Users },
       { key: 'discussions', label: 'Discuss', icon: MessageSquare },
       { key: 'prayers', label: 'Prayers', icon: Heart },
-      { key: 'events', label: 'Events', icon: Calendar },
     ];
 
     if (id === 'worship-ministry' && isMember) {
@@ -409,50 +408,75 @@ export default function GroupDetailScreen() {
     </View>
   );
 
-  const renderEventsTab = () => (
-    <View style={styles.section}>
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Upcoming Events</Text>
+  const renderEventsSection = () => (
+    <View style={styles.eventsTopSection}>
+      <View style={styles.eventsTopHeader}>
+        <View style={[styles.eventsTopIconContainer, { backgroundColor: ministry.color + '15' }]}>
+          <Calendar size={20} color={ministry.color} />
+        </View>
+        <Text style={styles.eventsTopTitle}>Upcoming Events</Text>
+        <View style={styles.eventsCountBadge}>
+          <Text style={styles.eventsCountText}>{events.length}</Text>
+        </View>
       </View>
       
       {events.length === 0 ? (
-        <View style={styles.emptyCard}>
-          <Calendar size={32} color={Colors.textTertiary} />
-          <Text style={styles.emptyText}>No upcoming events</Text>
+        <View style={styles.eventsEmptyCard}>
+          <Calendar size={28} color={Colors.textTertiary} />
+          <Text style={styles.eventsEmptyText}>No upcoming events</Text>
+          <Text style={styles.eventsEmptySubtext}>Check back later for new events</Text>
         </View>
       ) : (
-        (events as MinistryEvent[]).map((event) => (
-          <TouchableOpacity key={event.id} style={styles.eventCard} activeOpacity={0.7}>
-            <View style={[styles.eventDateBadge, { backgroundColor: ministry.color + '15' }]}>
-              <Text style={[styles.eventDateDay, { color: ministry.color }]}>
-                {new Date(event.date).getDate()}
-              </Text>
-              <Text style={[styles.eventDateMonth, { color: ministry.color }]}>
-                {new Date(event.date).toLocaleString('default', { month: 'short' })}
-              </Text>
-            </View>
-            <View style={styles.eventInfo}>
-              <Text style={styles.eventTitle}>{event.title}</Text>
-              <View style={styles.eventMeta}>
-                <Clock size={12} color={Colors.textSecondary} />
-                <Text style={styles.eventMetaText}>{event.time}</Text>
+        <View style={styles.eventsListContainer}>
+          {(events as MinistryEvent[]).slice(0, 3).map((event, index) => (
+            <TouchableOpacity 
+              key={event.id} 
+              style={[
+                styles.eventCardTop,
+                index === 0 && { borderLeftColor: ministry.color, borderLeftWidth: 3 }
+              ]} 
+              activeOpacity={0.7}
+            >
+              <View style={[styles.eventDateBadgeTop, { backgroundColor: ministry.color + '12' }]}>
+                <Text style={[styles.eventDateDayTop, { color: ministry.color }]}>
+                  {new Date(event.date).getDate()}
+                </Text>
+                <Text style={[styles.eventDateMonthTop, { color: ministry.color }]}>
+                  {new Date(event.date).toLocaleString('default', { month: 'short' })}
+                </Text>
               </View>
-              <View style={styles.eventMeta}>
-                <MapPin size={12} color={Colors.textSecondary} />
-                <Text style={styles.eventMetaText}>{event.location}</Text>
-              </View>
-              {event.isRecurring && (
-                <View style={styles.recurringBadge}>
-                  <Text style={styles.recurringText}>{event.recurrencePattern}</Text>
+              <View style={styles.eventInfoTop}>
+                <Text style={styles.eventTitleTop}>{event.title}</Text>
+                <View style={styles.eventMetaRow}>
+                  <View style={styles.eventMetaTop}>
+                    <Clock size={11} color={Colors.textSecondary} />
+                    <Text style={styles.eventMetaTextTop}>{event.time}</Text>
+                  </View>
+                  <View style={styles.eventMetaTop}>
+                    <MapPin size={11} color={Colors.textSecondary} />
+                    <Text style={styles.eventMetaTextTop} numberOfLines={1}>{event.location}</Text>
+                  </View>
                 </View>
-              )}
-            </View>
-            <View style={styles.eventAttendees}>
-              <Users size={14} color={Colors.textSecondary} />
-              <Text style={styles.eventAttendeesText}>{event.attendeesCount}</Text>
-            </View>
-          </TouchableOpacity>
-        ))
+                {event.isRecurring && (
+                  <View style={styles.recurringBadgeTop}>
+                    <Text style={styles.recurringTextTop}>{event.recurrencePattern}</Text>
+                  </View>
+                )}
+              </View>
+              <View style={[styles.eventAttendeesTop, { backgroundColor: ministry.color + '10' }]}>
+                <Users size={12} color={ministry.color} />
+                <Text style={[styles.eventAttendeesTextTop, { color: ministry.color }]}>{event.attendeesCount}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+          {events.length > 3 && (
+            <TouchableOpacity style={styles.viewAllEventsButton} activeOpacity={0.7}>
+              <Text style={[styles.viewAllEventsText, { color: ministry.color }]}>
+                View all {events.length} events
+              </Text>
+            </TouchableOpacity>
+          )}
+        </View>
       )}
     </View>
   );
@@ -615,11 +639,12 @@ export default function GroupDetailScreen() {
           )}
         </View>
 
+        {renderEventsSection()}
+
         {activeTab === 'about' && renderAboutTab()}
         {activeTab === 'members' && renderMembersTab()}
         {activeTab === 'discussions' && renderDiscussionsTab()}
         {activeTab === 'prayers' && renderPrayersTab()}
-        {activeTab === 'events' && renderEventsTab()}
         {activeTab === 'music' && renderMusicTab()}
 
         <View style={{ height: 100 }} />
@@ -1098,76 +1123,145 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
   },
-  eventCard: {
+  eventsTopSection: {
+    marginBottom: 24,
+    backgroundColor: Colors.surface,
+    borderRadius: 20,
+    padding: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 10,
+    elevation: 3,
+  },
+  eventsTopHeader: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 14,
-    marginBottom: 10,
+    marginBottom: 14,
   },
-  eventDateBadge: {
-    width: 50,
-    height: 54,
-    borderRadius: 12,
+  eventsTopIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
     alignItems: 'center',
     justifyContent: 'center',
-    marginRight: 14,
+    marginRight: 10,
   },
-  eventDateDay: {
-    fontSize: 20,
+  eventsTopTitle: {
+    flex: 1,
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  eventsCountBadge: {
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  eventsCountText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
+  eventsEmptyCard: {
+    alignItems: 'center',
+    paddingVertical: 24,
+    gap: 6,
+  },
+  eventsEmptyText: {
+    fontSize: 15,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+  },
+  eventsEmptySubtext: {
+    fontSize: 13,
+    color: Colors.textTertiary,
+  },
+  eventsListContainer: {
+    gap: 10,
+  },
+  eventCardTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 14,
+    padding: 12,
+  },
+  eventDateBadgeTop: {
+    width: 46,
+    height: 50,
+    borderRadius: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+  },
+  eventDateDayTop: {
+    fontSize: 18,
     fontWeight: '700' as const,
   },
-  eventDateMonth: {
-    fontSize: 11,
+  eventDateMonthTop: {
+    fontSize: 10,
     fontWeight: '600' as const,
     textTransform: 'uppercase',
   },
-  eventInfo: {
+  eventInfoTop: {
     flex: 1,
   },
-  eventTitle: {
-    fontSize: 15,
+  eventTitleTop: {
+    fontSize: 14,
     fontWeight: '600' as const,
     color: Colors.text,
     marginBottom: 4,
   },
-  eventMeta: {
+  eventMetaRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+  },
+  eventMetaTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    marginTop: 2,
+    gap: 3,
   },
-  eventMetaText: {
-    fontSize: 12,
+  eventMetaTextTop: {
+    fontSize: 11,
     color: Colors.textSecondary,
+    maxWidth: 100,
   },
-  recurringBadge: {
+  recurringBadgeTop: {
     backgroundColor: Colors.infoLight,
     alignSelf: 'flex-start',
-    paddingHorizontal: 8,
+    paddingHorizontal: 6,
     paddingVertical: 2,
-    borderRadius: 8,
-    marginTop: 6,
+    borderRadius: 6,
+    marginTop: 4,
   },
-  recurringText: {
-    fontSize: 10,
+  recurringTextTop: {
+    fontSize: 9,
     fontWeight: '600' as const,
     color: Colors.info,
   },
-  eventAttendees: {
+  eventAttendeesTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 4,
-    backgroundColor: Colors.surfaceSecondary,
-    paddingHorizontal: 10,
-    paddingVertical: 6,
-    borderRadius: 12,
+    gap: 3,
+    paddingHorizontal: 8,
+    paddingVertical: 5,
+    borderRadius: 10,
+    marginLeft: 8,
   },
-  eventAttendeesText: {
-    fontSize: 13,
+  eventAttendeesTextTop: {
+    fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+  },
+  viewAllEventsButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+  },
+  viewAllEventsText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
   musicPlayerButton: {
     flexDirection: "row",
