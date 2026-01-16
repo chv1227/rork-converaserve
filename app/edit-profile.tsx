@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -13,11 +13,13 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
-import { ArrowLeft, Camera, User, Phone, Mail } from "lucide-react-native";
+import { ArrowLeft, Camera, User, Phone, Mail, Users, Check } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
+import { Ministry } from "@/types";
+import { getMinistryColor } from "@/constants/ministryColors";
 
 const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
@@ -37,6 +39,24 @@ export default function EditProfileScreen() {
   const [phone, setPhone] = useState(user?.phone || "");
   const [avatar, setAvatar] = useState(user?.avatar || "");
   const [showAvatarPicker, setShowAvatarPicker] = useState(false);
+  const [selectedMinistries, setSelectedMinistries] = useState<string[]>(user?.ministries || []);
+
+  const ministriesQuery = trpc.ministries.list.useQuery();
+  const availableMinistries = ministriesQuery.data || [];
+
+  useEffect(() => {
+    if (user?.ministries) {
+      setSelectedMinistries(user.ministries);
+    }
+  }, [user?.ministries]);
+
+  const toggleMinistry = (ministryId: string) => {
+    setSelectedMinistries((prev) =>
+      prev.includes(ministryId)
+        ? prev.filter((id) => id !== ministryId)
+        : [...prev, ministryId]
+    );
+  };
 
   const updateProfileMutation = trpc.auth.updateProfile.useMutation({
     onSuccess: async (updatedUser) => {
@@ -45,6 +65,7 @@ export default function EditProfileScreen() {
         name: updatedUser.name,
         phone: updatedUser.phone,
         avatar: updatedUser.avatar,
+        ministries: updatedUser.ministries,
       });
       
       if (Platform.OS === "web") {
@@ -79,6 +100,7 @@ export default function EditProfileScreen() {
       name: name.trim(),
       phone: phone.trim() || undefined,
       avatar: avatar || undefined,
+      ministries: selectedMinistries,
     });
   };
 
@@ -213,6 +235,56 @@ export default function EditProfileScreen() {
                 />
               </View>
             </View>
+          </View>
+
+          <View style={styles.ministrySection}>
+            <View style={styles.ministrySectionHeader}>
+              <Users size={20} color={Colors.primary} />
+              <Text style={styles.ministrySectionTitle}>Ministry Affiliations</Text>
+            </View>
+            <Text style={styles.ministrySectionSubtitle}>
+              Select the ministries you are part of. These will appear as colored dots on your profile.
+            </Text>
+            
+            {ministriesQuery.isLoading ? (
+              <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 16 }} />
+            ) : availableMinistries.length === 0 ? (
+              <Text style={styles.noMinistriesText}>No ministries available</Text>
+            ) : (
+              <View style={styles.ministriesGrid}>
+                {availableMinistries.map((ministry: Ministry) => {
+                  const isSelected = selectedMinistries.includes(ministry.id);
+                  const color = ministry.color || getMinistryColor(ministry.name, ministry.id);
+                  return (
+                    <TouchableOpacity
+                      key={ministry.id}
+                      style={[
+                        styles.ministryChip,
+                        isSelected && { backgroundColor: color + "20", borderColor: color },
+                      ]}
+                      onPress={() => toggleMinistry(ministry.id)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.ministryDot, { backgroundColor: color }]} />
+                      <Text
+                        style={[
+                          styles.ministryChipText,
+                          isSelected && { color: color, fontWeight: "600" as const },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {ministry.name}
+                      </Text>
+                      {isSelected && (
+                        <View style={[styles.checkIcon, { backgroundColor: color }]}>
+                          <Check size={10} color="#fff" />
+                        </View>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            )}
           </View>
 
           <View style={styles.infoCard}>
@@ -405,5 +477,67 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     lineHeight: 20,
+  },
+  ministrySection: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 24,
+  },
+  ministrySectionHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
+    marginBottom: 8,
+  },
+  ministrySectionTitle: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  ministrySectionSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 16,
+  },
+  noMinistriesText: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    fontStyle: "italic",
+    textAlign: "center",
+    paddingVertical: 16,
+  },
+  ministriesGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  ministryChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderRadius: 20,
+    backgroundColor: Colors.background,
+    borderWidth: 1.5,
+    borderColor: Colors.borderLight,
+    gap: 8,
+  },
+  ministryDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  ministryChipText: {
+    fontSize: 13,
+    color: Colors.text,
+  },
+  checkIcon: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
   },
 });

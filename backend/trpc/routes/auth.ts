@@ -313,6 +313,7 @@ export const authRouter = createTRPCRouter({
         name: z.string().min(2).optional(),
         phone: z.string().optional(),
         avatar: z.string().url().optional(),
+        ministries: z.array(z.string()).optional(),
       })
     )
     .mutation(async ({ ctx, input }) => {
@@ -320,6 +321,7 @@ export const authRouter = createTRPCRouter({
       if (input.name) updates.name = input.name;
       if (input.phone !== undefined) updates.phone = input.phone;
       if (input.avatar) updates.avatar = input.avatar;
+      if (input.ministries !== undefined) updates.ministries = input.ministries;
 
       const updatedUser = await persistentDb.users.update(ctx.user.id, updates);
       

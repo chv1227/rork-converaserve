@@ -24,6 +24,7 @@ import {
   UserX,
   Calendar,
   Megaphone,
+  Palette,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -246,6 +247,12 @@ export default function AdminDashboard() {
             subtitle="Review reported content"
             onPress={() => router.push("/admin/moderation" as any)}
             badge={stats?.pendingReports}
+          />
+          <QuickAction
+            icon={<Palette size={20} color={Colors.primary} />}
+            title="Ministry Colors"
+            subtitle="Manage ministry categories & colors"
+            onPress={() => router.push("/admin/ministries" as any)}
           />
           <QuickAction
             icon={<Settings size={20} color={Colors.primary} />}
