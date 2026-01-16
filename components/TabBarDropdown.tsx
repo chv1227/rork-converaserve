@@ -33,8 +33,8 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
 
   const dropdownItems: DropdownItem[] = [
     {
-      id: 'groups',
-      label: 'Groups',
+      id: 'ministries',
+      label: 'Ministries',
       icon: <Users size={20} color={Colors.text} />,
       route: '/(tabs)/groups' as Href,
     },
