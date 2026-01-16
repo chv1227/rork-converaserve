@@ -24,7 +24,6 @@ import {
   UserX,
   Calendar,
   Megaphone,
-  Palette,
   Church,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
@@ -202,7 +201,7 @@ export default function AdminDashboard() {
             label="Ministries"
             value={stats?.totalMinistries || 0}
             color="#8B5CF6"
-            onPress={() => router.push("/admin/groups" as any)}
+            onPress={() => router.push("/admin/ministries" as any)}
           />
           <StatCard
             icon={<AlertTriangle size={20} color="#F59E0B" />}
@@ -239,8 +238,8 @@ export default function AdminDashboard() {
           <QuickAction
             icon={<UsersRound size={20} color={Colors.primary} />}
             title="Ministry Management"
-            subtitle="Manage ministries and members"
-            onPress={() => router.push("/admin/groups" as any)}
+            subtitle="Create, edit, and manage ministries"
+            onPress={() => router.push("/admin/ministries" as any)}
           />
           <QuickAction
             icon={<AlertTriangle size={20} color={Colors.warning} />}
@@ -248,12 +247,6 @@ export default function AdminDashboard() {
             subtitle="Review reported content"
             onPress={() => router.push("/admin/moderation" as any)}
             badge={stats?.pendingReports}
-          />
-          <QuickAction
-            icon={<Palette size={20} color={Colors.primary} />}
-            title="Ministry Colors"
-            subtitle="Manage ministry categories & colors"
-            onPress={() => router.push("/admin/ministries" as any)}
           />
           <QuickAction
             icon={<Church size={20} color={Colors.primary} />}
