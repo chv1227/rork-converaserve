@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Href } from 'expo-router';
-import { Users, Calendar, Settings, Bell, Grid3X3, ChevronUp } from 'lucide-react-native';
+import { Users, Calendar, Settings, Bell, MoreHorizontal, ChevronUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 interface DropdownItem {
@@ -122,7 +122,7 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
         activeOpacity={0.7}
       >
         <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
-          <Grid3X3 size={24} color={isActive ? Colors.primary : Colors.textTertiary} />
+          <MoreHorizontal size={24} color={isActive ? Colors.primary : Colors.textTertiary} />
         </View>
         <View style={styles.labelRow}>
           <Text style={[styles.triggerLabel, isActive && styles.triggerLabelActive]}>
