@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Href } from 'expo-router';
-import { Users, Calendar, Settings, Bell, MoreHorizontal, ChevronUp } from 'lucide-react-native';
+import { Users, Calendar, Bell, MoreHorizontal, ChevronUp } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 interface DropdownItem {
@@ -44,12 +44,7 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
       icon: <Calendar size={20} color={Colors.text} />,
       route: '/(tabs)/calendar' as Href,
     },
-    {
-      id: 'edit',
-      label: 'Edit',
-      icon: <Settings size={20} color={Colors.text} />,
-      route: '/(tabs)/edit' as Href,
-    },
+
     {
       id: 'alerts',
       label: 'Alerts',
