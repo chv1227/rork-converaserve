@@ -64,7 +64,7 @@ const iconMap: Record<string, IconComponentType> = {
   Sparkles,
 };
 
-type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'events';
+type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'events' | 'music';
 
 export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -204,13 +204,24 @@ export default function GroupDetailScreen() {
   const isLoading = !isDefaultMinistry && ministryQuery.isLoading;
   const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
 
-  const tabs: { key: TabType; label: string; icon: React.ComponentType<{ size: number; color: string }> }[] = [
-    { key: 'about', label: 'About', icon: Megaphone },
-    { key: 'members', label: 'Members', icon: Users },
-    { key: 'discussions', label: 'Discuss', icon: MessageSquare },
-    { key: 'prayers', label: 'Prayers', icon: Heart },
-    { key: 'events', label: 'Events', icon: Calendar },
-  ];
+  const tabs = useMemo(() => {
+    const baseTabs: { key: TabType; label: string; icon: React.ComponentType<{ size: number; color: string }> }[] = [
+      { key: 'about', label: 'About', icon: Megaphone },
+      { key: 'members', label: 'Members', icon: Users },
+      { key: 'discussions', label: 'Discuss', icon: MessageSquare },
+      { key: 'prayers', label: 'Prayers', icon: Heart },
+      { key: 'events', label: 'Events', icon: Calendar },
+    ];
+
+    if (id === 'worship-ministry' && isMember) {
+      return [
+        ...baseTabs.slice(0, 1),
+        { key: 'music' as TabType, label: 'Music', icon: Music },
+        ...baseTabs.slice(1),
+      ];
+    }
+    return baseTabs;
+  }, [id, isMember]);
 
   if (isLoading) {
     return (
@@ -318,26 +329,7 @@ export default function GroupDetailScreen() {
         </View>
       )}
 
-      {id === "worship-ministry" && isMember && (
-        <TouchableOpacity
-          style={styles.musicPlayerButton}
-          onPress={() => router.push("/worship" as Href)}
-          activeOpacity={0.7}
-        >
-          <View style={styles.musicPlayerLeft}>
-            <View style={[styles.musicPlayerIcon, { backgroundColor: ministry.color }]}>
-              <Music size={24} color={Colors.textInverse} />
-            </View>
-            <View style={styles.musicPlayerInfo}>
-              <Text style={styles.musicPlayerTitle}>Music Player</Text>
-              <Text style={styles.musicPlayerSubtitle}>Practice songs & learn your parts</Text>
-            </View>
-          </View>
-          <View style={[styles.musicPlayerPlayButton, { backgroundColor: ministry.color }]}>
-            <Play size={18} color={Colors.textInverse} fill={Colors.textInverse} />
-          </View>
-        </TouchableOpacity>
-      )}
+      
     </>
   );
 
@@ -465,6 +457,64 @@ export default function GroupDetailScreen() {
     </View>
   );
 
+  const renderMusicTab = () => (
+    <View style={styles.section}>
+      <View style={styles.musicTabHeader}>
+        <View style={[styles.musicTabIconContainer, { backgroundColor: ministry.color + '15' }]}>
+          <Music size={24} color={ministry.color} />
+        </View>
+        <View style={styles.musicTabHeaderText}>
+          <Text style={styles.musicTabTitle}>Worship Music</Text>
+          <Text style={styles.musicTabSubtitle}>Practice songs & learn your vocal parts</Text>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={[styles.musicPlayerCard, { borderLeftColor: ministry.color }]}
+        onPress={() => router.push("/worship" as Href)}
+        activeOpacity={0.7}
+      >
+        <View style={[styles.musicPlayerCardIcon, { backgroundColor: ministry.color }]}>
+          <Play size={28} color={Colors.textInverse} fill={Colors.textInverse} />
+        </View>
+        <View style={styles.musicPlayerCardInfo}>
+          <Text style={styles.musicPlayerCardTitle}>Open Music Player</Text>
+          <Text style={styles.musicPlayerCardDesc}>Browse and play worship songs</Text>
+        </View>
+      </TouchableOpacity>
+
+      <View style={styles.musicFeatures}>
+        <View style={styles.musicFeatureItem}>
+          <View style={[styles.musicFeatureIcon, { backgroundColor: '#EC489915' }]}>
+            <Music size={18} color="#EC4899" />
+          </View>
+          <View style={styles.musicFeatureText}>
+            <Text style={styles.musicFeatureTitle}>Vocal Parts</Text>
+            <Text style={styles.musicFeatureDesc}>Soprano, Alto, Tenor, Bass</Text>
+          </View>
+        </View>
+        <View style={styles.musicFeatureItem}>
+          <View style={[styles.musicFeatureIcon, { backgroundColor: '#3B82F615' }]}>
+            <MessageSquare size={18} color="#3B82F6" />
+          </View>
+          <View style={styles.musicFeatureText}>
+            <Text style={styles.musicFeatureTitle}>Lyrics Display</Text>
+            <Text style={styles.musicFeatureDesc}>Follow along with synced lyrics</Text>
+          </View>
+        </View>
+        <View style={styles.musicFeatureItem}>
+          <View style={[styles.musicFeatureIcon, { backgroundColor: '#10B98115' }]}>
+            <Calendar size={18} color="#10B981" />
+          </View>
+          <View style={styles.musicFeatureText}>
+            <Text style={styles.musicFeatureTitle}>Practice Anytime</Text>
+            <Text style={styles.musicFeatureDesc}>Access songs on the go</Text>
+          </View>
+        </View>
+      </View>
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -570,6 +620,7 @@ export default function GroupDetailScreen() {
         {activeTab === 'discussions' && renderDiscussionsTab()}
         {activeTab === 'prayers' && renderPrayersTab()}
         {activeTab === 'events' && renderEventsTab()}
+        {activeTab === 'music' && renderMusicTab()}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -1164,6 +1215,98 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     justifyContent: "center",
     alignItems: "center",
+  },
+  musicTabHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 20,
+  },
+  musicTabIconContainer: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  musicTabHeaderText: {
+    flex: 1,
+  },
+  musicTabTitle: {
+    fontSize: 20,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  musicTabSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  musicPlayerCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    marginBottom: 20,
+    borderLeftWidth: 4,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.08,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  musicPlayerCardIcon: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 16,
+  },
+  musicPlayerCardInfo: {
+    flex: 1,
+  },
+  musicPlayerCardTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+  },
+  musicPlayerCardDesc: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  musicFeatures: {
+    gap: 12,
+  },
+  musicFeatureItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 16,
+  },
+  musicFeatureIcon: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 14,
+  },
+  musicFeatureText: {
+    flex: 1,
+  },
+  musicFeatureTitle: {
+    fontSize: 15,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  musicFeatureDesc: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
