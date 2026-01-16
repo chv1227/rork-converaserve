@@ -24,7 +24,6 @@ import {
   Plus,
   Music,
   Heart,
-  Sparkles,
   Play,
   MessageSquare,
   Clock,
@@ -57,15 +56,6 @@ import {
   getMissionStatement,
 } from "@/mocks/ministryData";
 import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement, Poll, PollOption } from "@/types";
-
-type IconComponentType = React.ComponentType<{ size: number; color: string }>;
-
-const iconMap: Record<string, IconComponentType> = {
-  Music,
-  Users,
-  Heart,
-  Sparkles,
-};
 
 type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'music';
 
@@ -359,7 +349,6 @@ export default function GroupDetailScreen() {
     ]);
   };
 
-  const IconComponent = ministry ? (iconMap[ministry.icon] || Users) : Users;
   const isLoading = !isDefaultMinistry && ministryQuery.isLoading;
   const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
 
@@ -716,9 +705,6 @@ export default function GroupDetailScreen() {
         </View>
 
         <View style={styles.heroContent}>
-          <View style={[styles.iconContainer, { backgroundColor: ministry.color }]}>
-            <IconComponent size={28} color={Colors.textInverse} />
-          </View>
           <Text style={styles.heroTitle}>{ministry.name}</Text>
           <View style={styles.heroStats}>
             <Users size={16} color={Colors.textInverse} />
@@ -1229,14 +1215,6 @@ const styles = StyleSheet.create({
     bottom: 20,
     left: 20,
     right: 20,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 10,
   },
   heroTitle: {
     fontSize: 24,
