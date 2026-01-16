@@ -220,7 +220,10 @@ export const conversations: Conversation[] = [
     lastMessageTime: '10:32 AM',
     unreadCount: 3,
     isGroup: true,
+    type: 'ministry',
     members: ['James Wilson', 'Emily Brown', 'Sarah Johnson', '+8 others'],
+    ministryId: 'm1',
+    ministryColor: '#0F766E',
   },
   {
     id: 'c2',
@@ -231,6 +234,7 @@ export const conversations: Conversation[] = [
     lastMessageTime: '9:15 AM',
     unreadCount: 0,
     isGroup: false,
+    type: 'direct',
   },
   {
     id: 'c3',
@@ -241,6 +245,7 @@ export const conversations: Conversation[] = [
     lastMessageTime: 'Yesterday',
     unreadCount: 5,
     isGroup: true,
+    type: 'group',
     members: ['Marcus Lee', 'Jessica Taylor', 'Sarah Johnson', '+4 others'],
   },
   {
@@ -252,6 +257,7 @@ export const conversations: Conversation[] = [
     lastMessageTime: 'Yesterday',
     unreadCount: 0,
     isGroup: false,
+    type: 'direct',
   },
   {
     id: 'c5',
@@ -262,6 +268,7 @@ export const conversations: Conversation[] = [
     lastMessageTime: 'Monday',
     unreadCount: 0,
     isGroup: true,
+    type: 'group',
     members: ['David Park', 'Maria Garcia', 'Sarah Johnson', '+12 others'],
   },
 ];

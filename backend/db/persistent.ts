@@ -476,9 +476,24 @@ export const persistentDb = {
       return queryCollection<Message>("messages", { conversationId });
     },
 
+    async findById(id: string): Promise<Message | null> {
+      const result = await dbRequest<Message>("GET", "messages", id);
+      return result.success && result.data ? result.data : null;
+    },
+
     async create(message: Message): Promise<Message | null> {
       const result = await dbRequest<Message>("POST", "messages", message.id, message);
       return result.success ? message : null;
+    },
+
+    async update(id: string, updates: Partial<Message>): Promise<Message | null> {
+      const messages = await queryCollection<Message>("messages");
+      const existing = messages.find(m => m.id === id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates };
+      const result = await dbRequest<Message>("PUT", "messages", id, updated);
+      return result.success ? updated : null;
     },
 
     async getAll(): Promise<Message[]> {

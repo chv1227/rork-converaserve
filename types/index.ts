@@ -64,13 +64,18 @@ export interface Announcement {
 
 export interface Message {
   id: string;
+  conversationId: string;
   content: string;
   senderId: string;
   senderName: string;
   senderAvatar: string;
   timestamp: string;
   isRead: boolean;
+  readBy?: string[];
+  messageType?: 'text' | 'image' | 'system';
 }
+
+export type ConversationType = 'direct' | 'group' | 'ministry';
 
 export interface Conversation {
   id: string;
@@ -79,11 +84,38 @@ export interface Conversation {
   avatar: string;
   lastMessage: string;
   lastMessageTime: string;
+  lastMessageTimestamp?: string;
   unreadCount: number;
   isGroup: boolean;
+  type: ConversationType;
   members?: string[];
+  memberIds?: string[];
+  participantIds?: string[];
   ministryId?: string;
   ministryColor?: string;
+  createdBy?: string;
+  createdAt?: string;
+  updatedAt?: string;
+  isArchived?: boolean;
+  isMuted?: boolean;
+}
+
+export interface ConversationParticipant {
+  id: string;
+  conversationId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  joinedAt: string;
+  lastReadAt?: string;
+  role?: 'admin' | 'member';
+}
+
+export interface DirectMessageRequest {
+  recipientId: string;
+  recipientName: string;
+  recipientAvatar: string;
+  organizationId: string;
 }
 
 export interface User {

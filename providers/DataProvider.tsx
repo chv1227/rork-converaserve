@@ -6,13 +6,12 @@ import { Ministry, Event, Announcement, Conversation } from "@/types";
 import { 
   events as mockEvents, 
   announcements as mockAnnouncements,
-  conversations as mockConversations,
 } from "@/mocks/data";
+import { trpc } from "@/lib/trpc";
 
 const MINISTRIES_KEY = "app_ministries_v2";
 const EVENTS_KEY = "app_events_v1";
 const ANNOUNCEMENTS_KEY = "app_announcements_v1";
-const CONVERSATIONS_KEY = "app_conversations_v1";
 const MINISTRY_MEMBERSHIPS_KEY = "app_ministry_memberships_v1";
 
 interface MinistryMembership {
@@ -26,7 +25,6 @@ interface DataState {
   ministries: Ministry[];
   events: Event[];
   announcements: Announcement[];
-  conversations: Conversation[];
   ministryMemberships: MinistryMembership[];
   isLoading: boolean;
   isRefreshing: boolean;
@@ -34,17 +32,32 @@ interface DataState {
 }
 
 export const [DataProvider, useData] = createContextHook(() => {
-  const { currentOrganization, user } = useAuth();
+  const { currentOrganization, user, isAuthenticated } = useAuth();
   const [state, setState] = useState<DataState>({
     ministries: [],
     events: [],
     announcements: [],
-    conversations: [],
     ministryMemberships: [],
     isLoading: true,
     isRefreshing: false,
     error: null,
   });
+
+  const conversationsQuery = trpc.messages.getAllUserConversations.useQuery(
+    { organizationId: currentOrganization?.id || "" },
+    { 
+      enabled: !!currentOrganization?.id && isAuthenticated,
+      refetchInterval: 5000,
+    }
+  );
+
+  const totalUnreadQuery = trpc.messages.getTotalUnread.useQuery(
+    { organizationId: currentOrganization?.id },
+    { 
+      enabled: !!currentOrganization?.id && isAuthenticated,
+      refetchInterval: 5000,
+    }
+  );
 
   useEffect(() => {
     const loadData = async () => {
@@ -56,20 +69,17 @@ export const [DataProvider, useData] = createContextHook(() => {
           storedMinistries,
           storedEvents,
           storedAnnouncements,
-          storedConversations,
           storedMemberships,
         ] = await Promise.all([
           AsyncStorage.getItem(MINISTRIES_KEY),
           AsyncStorage.getItem(EVENTS_KEY),
           AsyncStorage.getItem(ANNOUNCEMENTS_KEY),
-          AsyncStorage.getItem(CONVERSATIONS_KEY),
           AsyncStorage.getItem(MINISTRY_MEMBERSHIPS_KEY),
         ]);
 
         let ministries: Ministry[] = storedMinistries ? JSON.parse(storedMinistries) : [];
         let events: Event[] = storedEvents ? JSON.parse(storedEvents) : mockEvents;
         let announcements: Announcement[] = storedAnnouncements ? JSON.parse(storedAnnouncements) : mockAnnouncements;
-        let conversations: Conversation[] = storedConversations ? JSON.parse(storedConversations) : mockConversations;
         let memberships: MinistryMembership[] = storedMemberships ? JSON.parse(storedMemberships) : [];
 
         if (!storedMinistries) {
@@ -78,14 +88,12 @@ export const [DataProvider, useData] = createContextHook(() => {
         }
         if (!storedEvents) await AsyncStorage.setItem(EVENTS_KEY, JSON.stringify(events));
         if (!storedAnnouncements) await AsyncStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
-        if (!storedConversations) await AsyncStorage.setItem(CONVERSATIONS_KEY, JSON.stringify(conversations));
         if (!storedMemberships) await AsyncStorage.setItem(MINISTRY_MEMBERSHIPS_KEY, JSON.stringify(memberships));
 
         setState({
           ministries,
           events,
           announcements,
-          conversations,
           ministryMemberships: memberships,
           isLoading: false,
           isRefreshing: false,
@@ -99,7 +107,6 @@ export const [DataProvider, useData] = createContextHook(() => {
           ministries: [],
           events: mockEvents,
           announcements: mockAnnouncements,
-          conversations: mockConversations,
           ministryMemberships: [],
           isLoading: false,
           isRefreshing: false,
@@ -115,11 +122,13 @@ export const [DataProvider, useData] = createContextHook(() => {
     console.log("DataProvider: Refreshing data...");
     setState(prev => ({ ...prev, isRefreshing: true }));
     
-    await new Promise(resolve => setTimeout(resolve, 500));
+    await conversationsQuery.refetch();
+    await totalUnreadQuery.refetch();
+    await new Promise(resolve => setTimeout(resolve, 300));
     
     setState(prev => ({ ...prev, isRefreshing: false }));
     console.log("DataProvider: Refresh complete");
-  }, []);
+  }, [conversationsQuery, totalUnreadQuery]);
 
   const organizationMinistries = useMemo(() => {
     if (!currentOrganization) return [];
@@ -165,9 +174,13 @@ export const [DataProvider, useData] = createContextHook(() => {
     return state.events.filter(e => e.date === dateStr);
   }, [state.events]);
 
+  const conversations = useMemo<Conversation[]>(() => {
+    return conversationsQuery.data || [];
+  }, [conversationsQuery.data]);
+
   const getTotalUnread = useCallback(() => {
-    return state.conversations.reduce((total, conv) => total + conv.unreadCount, 0);
-  }, [state.conversations]);
+    return totalUnreadQuery.data || 0;
+  }, [totalUnreadQuery.data]);
 
   const joinMinistry = useCallback(async (ministryId: string) => {
     if (!user) return { success: false, message: "Not logged in" };
@@ -287,13 +300,17 @@ export const [DataProvider, useData] = createContextHook(() => {
     return membership?.role || null;
   }, [user, state.ministryMemberships]);
 
+  const refetchConversations = useCallback(() => {
+    return conversationsQuery.refetch();
+  }, [conversationsQuery]);
+
   return {
     ministries: organizationMinistries,
     events: state.events,
     announcements: state.announcements,
-    conversations: state.conversations,
+    conversations,
     isLoading: state.isLoading,
-    isRefreshing: state.isRefreshing,
+    isRefreshing: state.isRefreshing || conversationsQuery.isRefetching,
     error: state.error,
     refresh,
     getUpcomingEvents,
@@ -309,5 +326,6 @@ export const [DataProvider, useData] = createContextHook(() => {
     deleteMinistry,
     isMinistryMember,
     getMinistryRole,
+    refetchConversations,
   };
 });

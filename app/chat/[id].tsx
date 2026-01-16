@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react";
+import React, { useState, useCallback, useRef, useEffect, useMemo } from "react";
 import {
   View,
   Text,
@@ -14,12 +14,13 @@ import {
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ArrowLeft, Send, Users } from "lucide-react-native";
+import { ArrowLeft, Send, Users, User, MoreVertical, CheckCheck, Check } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/providers/AuthProvider";
 import { Message } from "@/types";
 import { useQueryClient } from "@tanstack/react-query";
+import * as Haptics from "expo-haptics";
 
 export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -29,6 +30,7 @@ export default function ChatScreen() {
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
   const [messageText, setMessageText] = useState("");
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   const conversationQuery = trpc.messages.getConversation.useQuery(
     { conversationId: id || "" },
@@ -37,20 +39,57 @@ export default function ChatScreen() {
 
   const messagesQuery = trpc.messages.getMessages.useQuery(
     { conversationId: id || "" },
-    { enabled: !!id, refetchInterval: 5000 }
+    { 
+      enabled: !!id, 
+      refetchInterval: 2000,
+    }
   );
 
   const sendMessageMutation = trpc.messages.sendMessage.useMutation({
+    onMutate: async ({ content }) => {
+      await queryClient.cancelQueries();
+      
+      const previousMessages = queryClient.getQueryData(
+        [["messages", "getMessages"], { input: { conversationId: id } }]
+      );
+
+      const optimisticMessage: Message = {
+        id: `temp-${Date.now()}`,
+        conversationId: id || "",
+        content,
+        senderId: user?.id || "",
+        senderName: user?.name || "",
+        senderAvatar: user?.avatar || "",
+        timestamp: new Date().toISOString(),
+        isRead: false,
+        readBy: [user?.id || ""],
+        messageType: "text",
+      };
+
+      queryClient.setQueryData(
+        [["messages", "getMessages"], { input: { conversationId: id } }],
+        (old: Message[] | undefined) => [...(old || []), optimisticMessage]
+      );
+
+      return { previousMessages };
+    },
     onSuccess: () => {
       console.log("Message sent successfully");
       setMessageText("");
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
       queryClient.invalidateQueries();
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     },
-    onError: (error) => {
+    onError: (error, _, context) => {
       console.error("Failed to send message:", error);
+      if (context?.previousMessages) {
+        queryClient.setQueryData(
+          [["messages", "getMessages"], { input: { conversationId: id } }],
+          context.previousMessages
+        );
+      }
     },
   });
 
@@ -64,30 +103,60 @@ export default function ChatScreen() {
   }, [id, conversationQuery.data?.unreadCount]);
 
   const conversation = conversationQuery.data;
-  const messages = messagesQuery.data || [];
+  const messages = useMemo(() => messagesQuery.data || [], [messagesQuery.data]);
 
   const onRefresh = useCallback(() => {
     messagesQuery.refetch();
   }, [messagesQuery]);
 
-  const handleSend = () => {
+  const handleSend = useCallback(() => {
     if (!messageText.trim() || !id) return;
     sendMessageMutation.mutate({
       conversationId: id,
       content: messageText.trim(),
     });
-  };
+  }, [messageText, id, sendMessageMutation]);
 
-  const renderMessage = ({ item }: { item: Message }) => {
+  const handleScroll = useCallback((event: { nativeEvent: { contentOffset: { y: number }, contentSize: { height: number }, layoutMeasurement: { height: number } } }) => {
+    const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+    const paddingToBottom = 100;
+    setIsAtBottom(
+      contentOffset.y >= contentSize.height - layoutMeasurement.height - paddingToBottom
+    );
+  }, []);
+
+  const scrollToBottom = useCallback(() => {
+    flatListRef.current?.scrollToEnd({ animated: true });
+  }, []);
+
+  const getMessageStatus = useCallback((message: Message) => {
+    if (message.senderId !== user?.id) return null;
+    
+    const readByOthers = message.readBy?.filter(uid => uid !== user?.id) || [];
+    if (readByOthers.length > 0) {
+      return "read";
+    }
+    return "sent";
+  }, [user?.id]);
+
+  const renderMessage = useCallback(({ item, index }: { item: Message; index: number }) => {
     const isOwn = item.senderId === user?.id;
+    const showAvatar = !isOwn && (index === 0 || messages[index - 1]?.senderId !== item.senderId);
+    const showName = !isOwn && conversation?.isGroup && showAvatar;
+    const status = getMessageStatus(item);
+    const isTemp = item.id.startsWith("temp-");
 
     return (
       <View style={[styles.messageRow, isOwn && styles.messageRowOwn]}>
         {!isOwn && (
-          <Image source={{ uri: item.senderAvatar }} style={styles.messageAvatar} />
+          <View style={styles.avatarPlaceholder}>
+            {showAvatar && (
+              <Image source={{ uri: item.senderAvatar }} style={styles.messageAvatar} />
+            )}
+          </View>
         )}
         <View style={styles.messageContentWrapper}>
-          {!isOwn && (
+          {showName && (
             <Text style={styles.messageSenderName}>{item.senderName}</Text>
           )}
           <View
@@ -95,6 +164,7 @@ export default function ChatScreen() {
               styles.messageBubble,
               isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
               { backgroundColor: isOwn ? (conversation?.ministryColor || Colors.primary) : Colors.surfaceSecondary },
+              isTemp && styles.messageBubbleTemp,
             ]}
           >
             <Text
@@ -106,16 +176,27 @@ export default function ChatScreen() {
               {item.content}
             </Text>
           </View>
-          <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
-            {new Date(item.timestamp).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-            })}
-          </Text>
+          <View style={[styles.messageFooter, isOwn && styles.messageFooterOwn]}>
+            <Text style={[styles.messageTime, isOwn && styles.messageTimeOwn]}>
+              {new Date(item.timestamp).toLocaleTimeString([], {
+                hour: "2-digit",
+                minute: "2-digit",
+              })}
+            </Text>
+            {isOwn && status && (
+              <View style={styles.statusIcon}>
+                {status === "read" ? (
+                  <CheckCheck size={14} color={Colors.primary} />
+                ) : (
+                  <Check size={14} color={Colors.textTertiary} />
+                )}
+              </View>
+            )}
+          </View>
         </View>
       </View>
     );
-  };
+  }, [user?.id, conversation, messages, getMessageStatus]);
 
   if (conversationQuery.isLoading) {
     return (
@@ -138,6 +219,8 @@ export default function ChatScreen() {
     );
   }
 
+  const headerColor = conversation.ministryColor || Colors.primary;
+
   return (
     <KeyboardAvoidingView
       style={styles.container}
@@ -151,7 +234,7 @@ export default function ChatScreen() {
           styles.header,
           { 
             paddingTop: insets.top + 8,
-            backgroundColor: conversation.ministryColor || Colors.primary,
+            backgroundColor: headerColor,
           },
         ]}
       >
@@ -163,22 +246,33 @@ export default function ChatScreen() {
           <ArrowLeft size={24} color={Colors.textInverse} />
         </TouchableOpacity>
 
-        <View style={styles.headerContent}>
+        <TouchableOpacity style={styles.headerContent} activeOpacity={0.8}>
           <Image source={{ uri: conversation.avatar }} style={styles.headerAvatar} />
           <View style={styles.headerInfo}>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {conversation.name}
             </Text>
-            {conversation.isGroup && (
-              <View style={styles.headerSubtitleRow}>
-                <Users size={12} color="rgba(255,255,255,0.8)" />
-                <Text style={styles.headerSubtitle}>
-                  {conversation.members?.length || 0} members
-                </Text>
-              </View>
-            )}
+            <View style={styles.headerSubtitleRow}>
+              {conversation.isGroup ? (
+                <>
+                  <Users size={12} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.headerSubtitle}>
+                    {conversation.members?.length || conversation.participantIds?.length || 0} members
+                  </Text>
+                </>
+              ) : (
+                <>
+                  <User size={12} color="rgba(255,255,255,0.8)" />
+                  <Text style={styles.headerSubtitle}>Direct message</Text>
+                </>
+              )}
+            </View>
           </View>
-        </View>
+        </TouchableOpacity>
+
+        <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
+          <MoreVertical size={20} color={Colors.textInverse} />
+        </TouchableOpacity>
       </View>
 
       <FlatList
@@ -188,6 +282,8 @@ export default function ChatScreen() {
         renderItem={renderMessage}
         contentContainerStyle={styles.messagesList}
         showsVerticalScrollIndicator={false}
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
         refreshControl={
           <RefreshControl
             refreshing={messagesQuery.isRefetching}
@@ -200,23 +296,43 @@ export default function ChatScreen() {
             <View
               style={[
                 styles.emptyIcon,
-                { backgroundColor: conversation.ministryColor || Colors.primary },
+                { backgroundColor: headerColor },
               ]}
             >
-              <Users size={32} color={Colors.textInverse} />
+              {conversation.isGroup ? (
+                <Users size={32} color={Colors.textInverse} />
+              ) : (
+                <User size={32} color={Colors.textInverse} />
+              )}
             </View>
-            <Text style={styles.emptyTitle}>Welcome to {conversation.name}</Text>
+            <Text style={styles.emptyTitle}>
+              {conversation.type === "direct" 
+                ? `Start chatting with ${conversation.name}`
+                : `Welcome to ${conversation.name}`}
+            </Text>
             <Text style={styles.emptySubtext}>
-              Start the conversation with your ministry group!
+              {conversation.type === "direct"
+                ? "Send a message to start the conversation"
+                : "Be the first to send a message!"}
             </Text>
           </View>
         }
         onContentSizeChange={() => {
-          if (messages.length > 0) {
+          if (messages.length > 0 && isAtBottom) {
             flatListRef.current?.scrollToEnd({ animated: false });
           }
         }}
       />
+
+      {!isAtBottom && messages.length > 5 && (
+        <TouchableOpacity
+          style={[styles.scrollToBottomButton, { backgroundColor: headerColor }]}
+          onPress={scrollToBottom}
+          activeOpacity={0.8}
+        >
+          <ArrowLeft size={18} color="#fff" style={{ transform: [{ rotate: "-90deg" }] }} />
+        </TouchableOpacity>
+      )}
 
       <View style={[styles.inputContainer, { paddingBottom: insets.bottom + 8 }]}>
         <View style={styles.inputWrapper}>
@@ -228,11 +344,13 @@ export default function ChatScreen() {
             onChangeText={setMessageText}
             multiline
             maxLength={1000}
+            onSubmitEditing={handleSend}
+            blurOnSubmit={false}
           />
           <TouchableOpacity
             style={[
               styles.sendButton,
-              { backgroundColor: conversation.ministryColor || Colors.primary },
+              { backgroundColor: headerColor },
               !messageText.trim() && styles.sendButtonDisabled,
             ]}
             onPress={handleSend}
@@ -278,9 +396,9 @@ const styles = StyleSheet.create({
   header: {
     flexDirection: "row",
     alignItems: "center",
-    paddingHorizontal: 16,
-    paddingBottom: 16,
-    gap: 12,
+    paddingHorizontal: 12,
+    paddingBottom: 12,
+    gap: 8,
   },
   backButton: {
     width: 40,
@@ -307,7 +425,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   headerTitle: {
-    fontSize: 18,
+    fontSize: 17,
     fontWeight: "700" as const,
     color: Colors.textInverse,
   },
@@ -321,6 +439,14 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: "rgba(255,255,255,0.8)",
   },
+  moreButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+  },
   messagesList: {
     flexGrow: 1,
     padding: 16,
@@ -328,17 +454,20 @@ const styles = StyleSheet.create({
   },
   messageRow: {
     flexDirection: "row",
-    marginBottom: 16,
+    marginBottom: 8,
     alignItems: "flex-end",
   },
   messageRowOwn: {
     flexDirection: "row-reverse",
   },
+  avatarPlaceholder: {
+    width: 32,
+    marginRight: 8,
+  },
   messageAvatar: {
     width: 32,
     height: 32,
     borderRadius: 16,
-    marginRight: 8,
   },
   messageContentWrapper: {
     maxWidth: "75%",
@@ -361,6 +490,9 @@ const styles = StyleSheet.create({
   messageBubbleOther: {
     borderBottomLeftRadius: 4,
   },
+  messageBubbleTemp: {
+    opacity: 0.7,
+  },
   messageText: {
     fontSize: 15,
     lineHeight: 20,
@@ -371,16 +503,27 @@ const styles = StyleSheet.create({
   messageTextOther: {
     color: Colors.text,
   },
+  messageFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginTop: 4,
+    marginLeft: 4,
+    gap: 4,
+  },
+  messageFooterOwn: {
+    justifyContent: "flex-end",
+    marginRight: 4,
+    marginLeft: 0,
+  },
   messageTime: {
     fontSize: 11,
     color: Colors.textTertiary,
-    marginTop: 4,
-    marginLeft: 4,
   },
   messageTimeOwn: {
     textAlign: "right",
-    marginRight: 4,
-    marginLeft: 0,
+  },
+  statusIcon: {
+    marginLeft: 2,
   },
   emptyContainer: {
     flex: 1,
@@ -408,6 +551,21 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.textSecondary,
     textAlign: "center",
+  },
+  scrollToBottomButton: {
+    position: "absolute",
+    right: 16,
+    bottom: 100,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   inputContainer: {
     backgroundColor: Colors.surface,
