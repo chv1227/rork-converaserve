@@ -259,7 +259,7 @@ export default function AdminDashboard() {
             icon={<Church size={20} color={Colors.primary} />}
             title="Create Church"
             subtitle="Register a new church profile"
-            onPress={() => router.push("/church/create" as any)}
+            onPress={() => router.push("/admin/create-church" as any)}
           />
           <QuickAction
             icon={<Settings size={20} color={Colors.primary} />}

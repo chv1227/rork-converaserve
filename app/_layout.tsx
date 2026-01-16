@@ -138,6 +138,13 @@ function RootLayoutNav() {
         }} 
       />
       <Stack.Screen 
+        name="admin/create-church" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
         name="edit-profile" 
         options={{ 
           headerShown: false,
