@@ -26,6 +26,20 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
+        name="more"
+        options={{
+          title: "More",
+          tabBarButton: (props) => (
+            <TabBarDropdown isActive={props.accessibilityState?.selected} />
+          ),
+        }}
+        listeners={{
+          tabPress: (e) => {
+            e.preventDefault();
+          },
+        }}
+      />
+      <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
@@ -44,20 +58,6 @@ export default function TabLayout() {
         options={{
           title: "Profile",
           tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          title: "More",
-          tabBarButton: (props) => (
-            <TabBarDropdown isActive={props.accessibilityState?.selected} />
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-          },
         }}
       />
       <Tabs.Screen
