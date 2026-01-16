@@ -6,6 +6,11 @@ import { createClient } from "@supabase/supabase-js";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 
+const SUPER_ADMIN_EMAILS = [
+  "chv1227@gmail.com",
+  "coreytmoss@gmail.com",
+];
+
 function getSupabaseAdmin() {
   if (!SUPABASE_URL || !SUPABASE_ANON_KEY) {
     console.error("Supabase credentials not configured");
@@ -112,6 +117,8 @@ async function getUserFromToken(token: string) {
           const metadata = supabaseUser.user_metadata || {};
           const displayName = metadata.display_name || metadata.full_name || supabaseUser.email?.split("@")[0] || "User";
           const now = new Date().toISOString();
+          const userEmail = (supabaseUser.email || "").toLowerCase();
+          const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
           
           const newUser = {
             id: supabaseUser.id,
@@ -119,7 +126,7 @@ async function getUserFromToken(token: string) {
             password: "",
             name: displayName,
             avatar: metadata.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`,
-            role: "member" as const,
+            role: isSuperAdmin ? "super_admin" as const : "member" as const,
             ministries: [],
             phone: metadata.phone || undefined,
             joinedDate: supabaseUser.created_at || now,
@@ -128,7 +135,7 @@ async function getUserFromToken(token: string) {
             updatedAt: now,
           };
           
-          console.log("Backend: Creating new user in persistent db:", newUser.email);
+          console.log("Backend: Creating new user in persistent db:", newUser.email, "role:", newUser.role);
           dbUser = await persistentDb.users.create(newUser);
         } else if (dbUser.id !== supabaseUser.id) {
           // Update the existing user's ID to match Supabase
@@ -137,7 +144,16 @@ async function getUserFromToken(token: string) {
           dbUser = await persistentDb.users.findById(supabaseUser.id);
         }
         
-        console.log("Backend: User authenticated:", dbUser?.name || dbUser?.email);
+        // Check if existing user should be promoted to super_admin
+        if (dbUser && SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === (dbUser.email || "").toLowerCase())) {
+          if (dbUser.role !== "super_admin" && dbUser.role !== "admin") {
+            console.log("Backend: Promoting user to super_admin:", dbUser.email);
+            await persistentDb.users.update(dbUser.id, { role: "super_admin" });
+            dbUser.role = "super_admin";
+          }
+        }
+        
+        console.log("Backend: User authenticated:", dbUser?.name || dbUser?.email, "role:", dbUser?.role);
         return dbUser;
       }
     } catch (err) {
