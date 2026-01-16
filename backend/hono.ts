@@ -73,12 +73,26 @@ app.onError((err, c) => {
 app.all("/trpc/*", async (c) => {
   try {
     const url = new URL(c.req.url);
-    const originalPath = url.pathname;
+    let pathname = url.pathname;
     
-    if (originalPath.startsWith('/trpc/trpc/')) {
-      url.pathname = originalPath.replace('/trpc/trpc/', '/trpc/');
-      console.log(`Fixed double trpc path: ${originalPath} -> ${url.pathname}`);
+    // Fix double trpc path
+    if (pathname.includes('/trpc/trpc/')) {
+      pathname = pathname.replace('/trpc/trpc/', '/trpc/');
     }
+    
+    // Fix double api path
+    if (pathname.includes('/api/api/')) {
+      pathname = pathname.replace('/api/api/', '/api/');
+    }
+    
+    // Ensure path starts with /api/trpc for the fetchRequestHandler
+    if (!pathname.startsWith('/api/trpc')) {
+      if (pathname.startsWith('/trpc/')) {
+        pathname = '/api' + pathname;
+      }
+    }
+    
+    url.pathname = pathname;
     
     const fixedRequest = new Request(url.toString(), {
       method: c.req.method,
@@ -87,7 +101,7 @@ app.all("/trpc/*", async (c) => {
     });
     
     const response = await fetchRequestHandler({
-      endpoint: "/trpc",
+      endpoint: "/api/trpc",
       req: fixedRequest,
       router: appRouter,
       createContext: (opts) => createContext(opts),
