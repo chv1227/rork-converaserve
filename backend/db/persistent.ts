@@ -1,5 +1,5 @@
 import { DbUser, Session, Notification, WorkflowRequest, ReportedContent, ActivityLog, Invitation } from "./index";
-import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving } from "@/types";
+import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving, Poll } from "@/types";
 
 const DB_ENDPOINT = process.env.EXPO_PUBLIC_RORK_DB_ENDPOINT;
 const DB_NAMESPACE = process.env.EXPO_PUBLIC_RORK_DB_NAMESPACE;
@@ -31,6 +31,7 @@ const memoryStore: Record<string, Record<string, unknown>> = {
   invitations: {},
   donations: {},
   recurringGiving: {},
+  polls: {},
 };
 
 function getMemoryCollection<T>(collection: string): T[] {
@@ -781,6 +782,45 @@ export const persistentDb = {
 
     async getAll(): Promise<RecurringGiving[]> {
       return queryCollection<RecurringGiving>("recurringGiving");
+    }
+  },
+
+  polls: {
+    async findById(id: string): Promise<Poll | null> {
+      const result = await dbRequest<Poll>("GET", "polls", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByMinistry(ministryId: string): Promise<Poll[]> {
+      return queryCollection<Poll>("polls", { ministryId });
+    },
+
+    async findByOrganization(organizationId: string): Promise<Poll[]> {
+      return queryCollection<Poll>("polls", { organizationId });
+    },
+
+    async create(poll: Poll): Promise<Poll | null> {
+      console.log("DB: Creating poll:", poll.question);
+      const result = await dbRequest<Poll>("POST", "polls", poll.id, poll);
+      return result.success ? poll : null;
+    },
+
+    async update(id: string, updates: Partial<Poll>): Promise<Poll | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates };
+      const result = await dbRequest<Poll>("PUT", "polls", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "polls", id);
+      return result.success;
+    },
+
+    async getAll(): Promise<Poll[]> {
+      return queryCollection<Poll>("polls");
     }
   }
 };

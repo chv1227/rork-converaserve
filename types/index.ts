@@ -273,3 +273,27 @@ export interface GivingStats {
   thisYearTotal: number;
   donationCount: number;
 }
+
+export interface PollOption {
+  id: string;
+  text: string;
+  votes: number;
+  voterIds: string[];
+}
+
+export interface Poll {
+  id: string;
+  ministryId: string;
+  organizationId: string;
+  question: string;
+  options: PollOption[];
+  createdBy: string;
+  createdByName: string;
+  createdByAvatar: string;
+  createdAt: string;
+  endsAt?: string;
+  isActive: boolean;
+  allowMultiple: boolean;
+  isAnonymous: boolean;
+  totalVotes: number;
+}

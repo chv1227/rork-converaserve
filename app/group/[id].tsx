@@ -25,7 +25,6 @@ import {
   Music,
   Heart,
   Sparkles,
-  MessageCircle,
   Play,
   MessageSquare,
   Clock,
@@ -36,6 +35,10 @@ import {
   Mail,
   Star,
   Shield,
+  BarChart3,
+  Vote,
+  Trash2,
+  XCircle,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { trpc } from "@/lib/trpc";
@@ -53,7 +56,7 @@ import {
   getAnnouncementsForMinistry,
   getMissionStatement,
 } from "@/mocks/ministryData";
-import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement } from "@/types";
+import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement, Poll, PollOption } from "@/types";
 
 type IconComponentType = React.ComponentType<{ size: number; color: string }>;
 
@@ -70,18 +73,24 @@ export default function GroupDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, currentOrganization } = useAuth();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('about');
   const [showDiscussionModal, setShowDiscussionModal] = useState(false);
   const [showPrayerModal, setShowPrayerModal] = useState(false);
+  const [showPollModal, setShowPollModal] = useState(false);
+  const [showPollsListModal, setShowPollsListModal] = useState(false);
   const [newDiscussionTitle, setNewDiscussionTitle] = useState("");
   const [newDiscussionContent, setNewDiscussionContent] = useState("");
   const [newPrayerTitle, setNewPrayerTitle] = useState("");
   const [newPrayerContent, setNewPrayerContent] = useState("");
   const [isAnonymousPrayer, setIsAnonymousPrayer] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [newPollQuestion, setNewPollQuestion] = useState("");
+  const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
+  const [allowMultiple, setAllowMultiple] = useState(false);
+  const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set());
 
   const isDefaultMinistry = id?.startsWith('worship-') || id?.startsWith('prayer-') || id?.startsWith('deacon-') || id?.startsWith('children');
 
@@ -101,6 +110,69 @@ export default function GroupDetailScreen() {
     { ministryId: id || "" },
     { enabled: !!id && !isDefaultMinistry }
   );
+
+  const pollsQuery = trpc.polls.list.useQuery(
+    { ministryId: id || "" },
+    { enabled: !!id }
+  );
+
+  const createPollMutation = trpc.polls.create.useMutation({
+    onSuccess: () => {
+      console.log("Poll created successfully");
+      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      pollsQuery.refetch();
+      setShowPollModal(false);
+      setNewPollQuestion("");
+      setPollOptions(["", ""]);
+      setAllowMultiple(false);
+      Alert.alert("Success", "Poll created successfully!");
+    },
+    onError: (error) => {
+      console.error("Failed to create poll:", error);
+      Alert.alert("Error", "Failed to create poll. Please try again.");
+    },
+  });
+
+  const votePollMutation = trpc.polls.vote.useMutation({
+    onSuccess: () => {
+      console.log("Vote recorded successfully");
+      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      pollsQuery.refetch();
+      setSelectedOptions(new Set());
+    },
+    onError: (error) => {
+      console.error("Failed to vote:", error);
+      Alert.alert("Error", error.message || "Failed to vote. Please try again.");
+    },
+  });
+
+  const closePollMutation = trpc.polls.close.useMutation({
+    onSuccess: () => {
+      console.log("Poll closed successfully");
+      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      pollsQuery.refetch();
+      Alert.alert("Success", "Poll closed successfully!");
+    },
+    onError: (error) => {
+      console.error("Failed to close poll:", error);
+      Alert.alert("Error", "Failed to close poll. Please try again.");
+    },
+  });
+
+  const deletePollMutation = trpc.polls.delete.useMutation({
+    onSuccess: () => {
+      console.log("Poll deleted successfully");
+      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      pollsQuery.refetch();
+      Alert.alert("Success", "Poll deleted successfully!");
+    },
+    onError: (error) => {
+      console.error("Failed to delete poll:", error);
+      Alert.alert("Error", "Failed to delete poll. Please try again.");
+    },
+  });
+
+  const polls = pollsQuery.data || [];
 
   const ministry = isDefaultMinistry ? mockMinistry : ministryQuery.data;
   const events = isDefaultMinistry ? mockEvents : (eventsQuery.data || []);
@@ -151,8 +223,9 @@ export default function GroupDetailScreen() {
       ministryQuery.refetch();
       eventsQuery.refetch();
     }
+    pollsQuery.refetch();
     setTimeout(() => setIsRefreshing(false), 1000);
-  }, [ministryQuery, eventsQuery, isDefaultMinistry]);
+  }, [ministryQuery, eventsQuery, isDefaultMinistry, pollsQuery]);
 
   const handleJoinLeave = () => {
     if (!id) return;
@@ -198,6 +271,92 @@ export default function GroupDetailScreen() {
     setNewPrayerTitle("");
     setNewPrayerContent("");
     setIsAnonymousPrayer(false);
+  };
+
+  const handleCreatePoll = () => {
+    if (!newPollQuestion.trim()) {
+      Alert.alert("Error", "Please enter a poll question");
+      return;
+    }
+    const validOptions = pollOptions.filter(opt => opt.trim());
+    if (validOptions.length < 2) {
+      Alert.alert("Error", "Please enter at least 2 options");
+      return;
+    }
+    if (!currentOrganization) {
+      Alert.alert("Error", "Organization not found");
+      return;
+    }
+
+    createPollMutation.mutate({
+      ministryId: id || "",
+      organizationId: currentOrganization.id,
+      question: newPollQuestion.trim(),
+      options: validOptions,
+      allowMultiple,
+      isAnonymous: false,
+    });
+  };
+
+  const handleAddOption = () => {
+    if (pollOptions.length < 10) {
+      setPollOptions([...pollOptions, ""]);
+    }
+  };
+
+  const handleRemoveOption = (index: number) => {
+    if (pollOptions.length > 2) {
+      setPollOptions(pollOptions.filter((_, i) => i !== index));
+    }
+  };
+
+  const handleOptionChange = (index: number, value: string) => {
+    const updated = [...pollOptions];
+    updated[index] = value;
+    setPollOptions(updated);
+  };
+
+  const handleVote = (poll: Poll) => {
+    if (selectedOptions.size === 0) {
+      Alert.alert("Error", "Please select at least one option");
+      return;
+    }
+    votePollMutation.mutate({
+      pollId: poll.id,
+      optionIds: Array.from(selectedOptions),
+    });
+  };
+
+  const handleToggleOption = (poll: Poll, optionId: string) => {
+    const hasVoted = poll.options.some((opt: PollOption) => opt.voterIds.includes(user?.id || ""));
+    if (hasVoted) return;
+
+    setSelectedOptions(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(optionId)) {
+        newSet.delete(optionId);
+      } else {
+        if (!poll.allowMultiple) {
+          newSet.clear();
+        }
+        newSet.add(optionId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleClosePoll = (pollId: string) => {
+    Alert.alert("Close Poll", "Are you sure you want to close this poll?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Close", style: "destructive", onPress: () => closePollMutation.mutate({ pollId }) },
+    ]);
+  };
+
+  const handleDeletePoll = (pollId: string) => {
+    Alert.alert("Delete Poll", "Are you sure you want to delete this poll?", [
+      { text: "Cancel", style: "cancel" },
+      { text: "Delete", style: "destructive", onPress: () => deletePollMutation.mutate({ pollId }) },
+    ]);
   };
 
   const IconComponent = ministry ? (iconMap[ministry.icon] || Users) : Users;
@@ -630,11 +789,11 @@ export default function GroupDetailScreen() {
           {isMember && (
             <TouchableOpacity
               style={[styles.chatButton, { backgroundColor: ministry.color }]}
-              onPress={() => router.push(`/chat/c-${id}` as Href)}
+              onPress={() => setShowPollsListModal(true)}
               activeOpacity={0.7}
             >
-              <MessageCircle size={18} color={Colors.textInverse} />
-              <Text style={styles.chatButtonText}>Group Chat</Text>
+              <BarChart3 size={18} color={Colors.textInverse} />
+              <Text style={styles.chatButtonText}>Group Poll</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -750,6 +909,264 @@ export default function GroupDetailScreen() {
             >
               <Heart size={18} color={Colors.textInverse} />
               <Text style={styles.submitButtonText}>Share Prayer</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showPollsListModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowPollsListModal(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={[styles.modalContent, { maxHeight: '90%' }]}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Group Polls</Text>
+              <TouchableOpacity onPress={() => setShowPollsListModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <TouchableOpacity
+                style={[styles.createPollButton, { backgroundColor: ministry.color }]}
+                onPress={() => {
+                  setShowPollsListModal(false);
+                  setShowPollModal(true);
+                }}
+              >
+                <Plus size={20} color={Colors.textInverse} />
+                <Text style={styles.createPollButtonText}>Create New Poll</Text>
+              </TouchableOpacity>
+
+              {pollsQuery.isLoading ? (
+                <View style={styles.pollLoadingContainer}>
+                  <ActivityIndicator size="large" color={ministry.color} />
+                </View>
+              ) : polls.length === 0 ? (
+                <View style={styles.noPollsContainer}>
+                  <BarChart3 size={48} color={Colors.textTertiary} />
+                  <Text style={styles.noPollsText}>No polls yet</Text>
+                  <Text style={styles.noPollsSubtext}>Create a poll to gather feedback from the group</Text>
+                </View>
+              ) : (
+                polls.map((poll: Poll) => {
+                  const hasVoted = poll.options.some((opt: PollOption) => opt.voterIds.includes(user?.id || ""));
+                  const isCreator = poll.createdBy === user?.id;
+                  return (
+                    <View key={poll.id} style={[styles.pollCard, !poll.isActive && styles.pollCardClosed]}>
+                      <View style={styles.pollHeader}>
+                        <View style={styles.pollCreatorInfo}>
+                          <View style={[styles.pollCreatorAvatar, { backgroundColor: ministry.color + '20' }]}>
+                            <Vote size={16} color={ministry.color} />
+                          </View>
+                          <View>
+                            <Text style={styles.pollCreatorName}>{poll.createdByName}</Text>
+                            <Text style={styles.pollDate}>
+                              {new Date(poll.createdAt).toLocaleDateString()}
+                            </Text>
+                          </View>
+                        </View>
+                        {!poll.isActive && (
+                          <View style={styles.closedBadge}>
+                            <Text style={styles.closedBadgeText}>Closed</Text>
+                          </View>
+                        )}
+                      </View>
+
+                      <Text style={styles.pollQuestion}>{poll.question}</Text>
+                      
+                      {poll.allowMultiple && (
+                        <Text style={styles.multipleHint}>Select multiple options</Text>
+                      )}
+
+                      <View style={styles.pollOptionsContainer}>
+                        {poll.options.map((option: PollOption) => {
+                          const percentage = poll.totalVotes > 0 ? Math.round((option.votes / poll.totalVotes) * 100) : 0;
+                          const isSelected = selectedOptions.has(option.id);
+                          const userVotedThis = option.voterIds.includes(user?.id || "");
+                          
+                          return (
+                            <TouchableOpacity
+                              key={option.id}
+                              style={[
+                                styles.pollOption,
+                                isSelected && { borderColor: ministry.color, borderWidth: 2 },
+                                userVotedThis && { borderColor: ministry.color, borderWidth: 2 },
+                              ]}
+                              onPress={() => handleToggleOption(poll, option.id)}
+                              disabled={hasVoted || !poll.isActive}
+                              activeOpacity={0.7}
+                            >
+                              <View style={styles.pollOptionContent}>
+                                <View style={styles.pollOptionLeft}>
+                                  {!hasVoted && poll.isActive ? (
+                                    <View style={[
+                                      styles.pollCheckbox,
+                                      isSelected && { backgroundColor: ministry.color, borderColor: ministry.color }
+                                    ]}>
+                                      {isSelected && <Check size={12} color={Colors.textInverse} />}
+                                    </View>
+                                  ) : userVotedThis ? (
+                                    <View style={[styles.pollCheckbox, { backgroundColor: ministry.color, borderColor: ministry.color }]}>
+                                      <Check size={12} color={Colors.textInverse} />
+                                    </View>
+                                  ) : null}
+                                  <Text style={styles.pollOptionText}>{option.text}</Text>
+                                </View>
+                                {(hasVoted || !poll.isActive) && (
+                                  <Text style={[styles.pollOptionPercent, { color: ministry.color }]}>
+                                    {percentage}%
+                                  </Text>
+                                )}
+                              </View>
+                              {(hasVoted || !poll.isActive) && (
+                                <View style={styles.pollProgressBarBg}>
+                                  <View 
+                                    style={[
+                                      styles.pollProgressBar, 
+                                      { width: `${percentage}%`, backgroundColor: ministry.color + '40' }
+                                    ]} 
+                                  />
+                                </View>
+                              )}
+                            </TouchableOpacity>
+                          );
+                        })}
+                      </View>
+
+                      <View style={styles.pollFooter}>
+                        <Text style={styles.pollVoteCount}>
+                          {poll.totalVotes} {poll.totalVotes === 1 ? 'vote' : 'votes'}
+                        </Text>
+                        
+                        {!hasVoted && poll.isActive && (
+                          <TouchableOpacity
+                            style={[styles.voteButton, { backgroundColor: ministry.color }]}
+                            onPress={() => handleVote(poll)}
+                            disabled={selectedOptions.size === 0 || votePollMutation.isPending}
+                          >
+                            {votePollMutation.isPending ? (
+                              <ActivityIndicator size="small" color={Colors.textInverse} />
+                            ) : (
+                              <Text style={styles.voteButtonText}>Vote</Text>
+                            )}
+                          </TouchableOpacity>
+                        )}
+                      </View>
+
+                      {isCreator && (
+                        <View style={styles.pollActions}>
+                          {poll.isActive && (
+                            <TouchableOpacity
+                              style={styles.pollActionButton}
+                              onPress={() => handleClosePoll(poll.id)}
+                            >
+                              <XCircle size={16} color={Colors.warning} />
+                              <Text style={[styles.pollActionText, { color: Colors.warning }]}>Close</Text>
+                            </TouchableOpacity>
+                          )}
+                          <TouchableOpacity
+                            style={styles.pollActionButton}
+                            onPress={() => handleDeletePoll(poll.id)}
+                          >
+                            <Trash2 size={16} color={Colors.error} />
+                            <Text style={[styles.pollActionText, { color: Colors.error }]}>Delete</Text>
+                          </TouchableOpacity>
+                        </View>
+                      )}
+                    </View>
+                  );
+                })
+              )}
+              <View style={{ height: 40 }} />
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
+
+      <Modal
+        visible={showPollModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowPollModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Create Poll</Text>
+              <TouchableOpacity onPress={() => setShowPollModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Question</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="What would you like to ask?"
+                placeholderTextColor={Colors.textTertiary}
+                value={newPollQuestion}
+                onChangeText={setNewPollQuestion}
+              />
+
+              <Text style={[styles.inputLabel, { marginTop: 16 }]}>Options</Text>
+              {pollOptions.map((option, index) => (
+                <View key={index} style={styles.pollOptionInputRow}>
+                  <TextInput
+                    style={[styles.input, styles.pollOptionInput]}
+                    placeholder={`Option ${index + 1}`}
+                    placeholderTextColor={Colors.textTertiary}
+                    value={option}
+                    onChangeText={(value) => handleOptionChange(index, value)}
+                  />
+                  {pollOptions.length > 2 && (
+                    <TouchableOpacity
+                      style={styles.removeOptionButton}
+                      onPress={() => handleRemoveOption(index)}
+                    >
+                      <X size={20} color={Colors.error} />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ))}
+
+              {pollOptions.length < 10 && (
+                <TouchableOpacity
+                  style={styles.addOptionButton}
+                  onPress={handleAddOption}
+                >
+                  <Plus size={18} color={ministry.color} />
+                  <Text style={[styles.addOptionText, { color: ministry.color }]}>Add Option</Text>
+                </TouchableOpacity>
+              )}
+
+              <TouchableOpacity
+                style={styles.anonymousToggle}
+                onPress={() => setAllowMultiple(!allowMultiple)}
+              >
+                <View style={[styles.checkbox, allowMultiple && { backgroundColor: ministry.color, borderColor: ministry.color }]}>
+                  {allowMultiple && <Check size={14} color={Colors.textInverse} />}
+                </View>
+                <Text style={styles.anonymousText}>Allow multiple selections</Text>
+              </TouchableOpacity>
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.submitButton, { backgroundColor: ministry.color }]}
+              onPress={handleCreatePoll}
+              disabled={createPollMutation.isPending}
+            >
+              {createPollMutation.isPending ? (
+                <ActivityIndicator size="small" color={Colors.textInverse} />
+              ) : (
+                <>
+                  <BarChart3 size={18} color={Colors.textInverse} />
+                  <Text style={styles.submitButtonText}>Create Poll</Text>
+                </>
+              )}
             </TouchableOpacity>
           </View>
         </KeyboardAvoidingView>
@@ -1480,5 +1897,212 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600' as const,
     color: Colors.textInverse,
+  },
+  createPollButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 8,
+    padding: 16,
+    borderRadius: 12,
+    marginBottom: 20,
+  },
+  createPollButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.textInverse,
+  },
+  pollLoadingContainer: {
+    padding: 40,
+    alignItems: 'center',
+  },
+  noPollsContainer: {
+    alignItems: 'center',
+    padding: 40,
+    gap: 8,
+  },
+  noPollsText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginTop: 8,
+  },
+  noPollsSubtext: {
+    fontSize: 14,
+    color: Colors.textTertiary,
+    textAlign: 'center' as const,
+  },
+  pollCard: {
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 16,
+  },
+  pollCardClosed: {
+    opacity: 0.7,
+  },
+  pollHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 12,
+  },
+  pollCreatorInfo: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  pollCreatorAvatar: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pollCreatorName: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  pollDate: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+  },
+  closedBadge: {
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  closedBadgeText: {
+    fontSize: 12,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+  },
+  pollQuestion: {
+    fontSize: 17,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 8,
+    lineHeight: 24,
+  },
+  multipleHint: {
+    fontSize: 12,
+    color: Colors.textTertiary,
+    marginBottom: 12,
+  },
+  pollOptionsContainer: {
+    gap: 8,
+    marginBottom: 12,
+  },
+  pollOption: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+    overflow: 'hidden',
+  },
+  pollOptionContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pollOptionLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    flex: 1,
+  },
+  pollCheckbox: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    borderWidth: 2,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  pollOptionText: {
+    fontSize: 15,
+    color: Colors.text,
+    flex: 1,
+  },
+  pollOptionPercent: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+  },
+  pollProgressBarBg: {
+    height: 4,
+    backgroundColor: Colors.borderLight,
+    borderRadius: 2,
+    marginTop: 10,
+  },
+  pollProgressBar: {
+    height: '100%',
+    borderRadius: 2,
+  },
+  pollFooter: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  pollVoteCount: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  voteButton: {
+    paddingHorizontal: 24,
+    paddingVertical: 10,
+    borderRadius: 20,
+  },
+  voteButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textInverse,
+  },
+  pollActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+    marginTop: 12,
+    paddingTop: 12,
+    borderTopWidth: 1,
+    borderTopColor: Colors.borderLight,
+  },
+  pollActionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+  },
+  pollActionText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+  },
+  pollOptionInputRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 8,
+  },
+  pollOptionInput: {
+    flex: 1,
+  },
+  removeOptionButton: {
+    padding: 8,
+  },
+  addOptionButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 12,
+    marginTop: 4,
+  },
+  addOptionText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
   },
 });

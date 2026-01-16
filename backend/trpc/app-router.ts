@@ -11,6 +11,7 @@ import { songsRouter } from "./routes/songs";
 import { organizationsRouter } from "./routes/organizations";
 import { givingRouter } from "./routes/giving";
 import { churchManagementRouter } from "./routes/churchManagement";
+import { pollsRouter } from "./routes/polls";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -25,6 +26,7 @@ export const appRouter = createTRPCRouter({
   organizations: organizationsRouter,
   giving: givingRouter,
   churchManagement: churchManagementRouter,
+  polls: pollsRouter,
 });
 
 export type AppRouter = typeof appRouter;
