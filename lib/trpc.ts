@@ -22,15 +22,19 @@ const getApiUrl = (): string => {
   const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL;
   if (baseUrl) {
     let cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-    // Remove trailing /trpc if it already exists to avoid double path
-    if (cleanBase.endsWith('/trpc')) {
+    // Remove trailing paths if they already exist to avoid double paths
+    if (cleanBase.endsWith('/api/trpc')) {
+      cleanBase = cleanBase.slice(0, -9);
+    } else if (cleanBase.endsWith('/trpc')) {
       cleanBase = cleanBase.slice(0, -5);
+    } else if (cleanBase.endsWith('/api')) {
+      cleanBase = cleanBase.slice(0, -4);
     }
-    const apiUrl = `${cleanBase}/trpc`;
+    const apiUrl = `${cleanBase}/api/trpc`;
     console.log("tRPC: Base URL:", baseUrl, "-> API URL:", apiUrl);
     return apiUrl;
   }
-  return "/trpc";
+  return "/api/trpc";
 };
 
 let cachedApiUrl: string | null = null;
