@@ -32,7 +32,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
+import { createChurch, CreateChurchInput } from '@/lib/supabase-churches';
+import { useMutation } from '@tanstack/react-query';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -107,7 +108,11 @@ export default function AdminCreateChurchScreen() {
     }
   }, [isAdmin, router]);
 
-  const createMutation = trpc.churches.create.useMutation({
+  const { mutate: createChurchMutate, isPending: isCreating } = useMutation({
+    mutationFn: async (input: CreateChurchInput) => {
+      console.log('Creating church via Supabase:', input.name);
+      return await createChurch(input);
+    },
     onSuccess: (data) => {
       console.log('Church created successfully:', data.church.name);
       Alert.alert(
@@ -116,7 +121,7 @@ export default function AdminCreateChurchScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Create church error:', error.message);
       Alert.alert('Error', error.message || 'Failed to create church');
     },
@@ -189,7 +194,7 @@ export default function AdminCreateChurchScreen() {
     if (twitter.trim()) socialLinks.twitter = twitter.trim();
     if (youtube.trim()) socialLinks.youtube = youtube.trim();
 
-    createMutation.mutate({
+    const churchInput: CreateChurchInput = {
       name: name.trim(),
       denomination: denomination || undefined,
       description: description.trim(),
@@ -204,9 +209,11 @@ export default function AdminCreateChurchScreen() {
       logo: logo.trim() || undefined,
       bannerImage: bannerImage.trim() || undefined,
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-    });
+    };
+    
+    createChurchMutate(churchInput);
   }, [
-    isAuthenticated, isAdmin, validateForm, createMutation, name, denomination, description,
+    isAuthenticated, isAdmin, validateForm, createChurchMutate, name, denomination, description,
     address, city, state, zip, country, email, phone, website, logo, bannerImage,
     facebook, instagram, twitter, youtube, router
   ]);
@@ -611,11 +618,11 @@ export default function AdminCreateChurchScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.createButton, createMutation.isPending && styles.createButtonDisabled]}
+            style={[styles.createButton, isCreating && styles.createButtonDisabled]}
             onPress={handleCreate}
-            disabled={createMutation.isPending}
+            disabled={isCreating}
           >
-            {createMutation.isPending ? (
+            {isCreating ? (
               <>
                 <ActivityIndicator color="#FFF" />
                 <Text style={styles.createButtonText}>Creating Church...</Text>
