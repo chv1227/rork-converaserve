@@ -761,40 +761,42 @@ export default function GroupDetailScreen() {
         }
       >
         <View style={styles.actionRow}>
-          <TouchableOpacity
-            style={[
-              styles.joinButton,
-              isMember ? styles.joinedButton : styles.notJoinedButton,
-              { flex: isMember ? 1 : undefined },
-            ]}
-            onPress={handleJoinLeave}
-            disabled={isActionLoading}
-            activeOpacity={0.7}
-          >
-            {isActionLoading ? (
-              <ActivityIndicator size="small" color={isMember ? Colors.primary : Colors.textInverse} />
-            ) : isMember ? (
-              <>
-                <Check size={18} color={Colors.primary} />
-                <Text style={styles.joinedButtonText}>Joined</Text>
-              </>
-            ) : (
-              <>
-                <Plus size={18} color={Colors.textInverse} />
-                <Text style={styles.notJoinedButtonText}>Join Group</Text>
-              </>
-            )}
-          </TouchableOpacity>
-
-          {isMember && (
+          {!isMember ? (
             <TouchableOpacity
-              style={[styles.chatButton, { backgroundColor: ministry.color }]}
-              onPress={() => setShowPollsListModal(true)}
+              style={[styles.joinButton, styles.notJoinedButton]}
+              onPress={handleJoinLeave}
+              disabled={isActionLoading}
               activeOpacity={0.7}
             >
-              <BarChart3 size={18} color={Colors.textInverse} />
-              <Text style={styles.chatButtonText}>Group Poll</Text>
+              {isActionLoading ? (
+                <ActivityIndicator size="small" color={Colors.textInverse} />
+              ) : (
+                <>
+                  <Plus size={18} color={Colors.textInverse} />
+                  <Text style={styles.notJoinedButtonText}>Join Group</Text>
+                </>
+              )}
             </TouchableOpacity>
+          ) : (
+            <>
+              <TouchableOpacity
+                style={[styles.prayersButton, { backgroundColor: ministry.color + '15', borderColor: ministry.color }]}
+                onPress={() => setActiveTab('prayers')}
+                activeOpacity={0.7}
+              >
+                <Heart size={18} color={ministry.color} />
+                <Text style={[styles.prayersButtonText, { color: ministry.color }]}>Prayers</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.chatButton, { backgroundColor: ministry.color }]}
+                onPress={() => setShowPollsListModal(true)}
+                activeOpacity={0.7}
+              >
+                <BarChart3 size={18} color={Colors.textInverse} />
+                <Text style={styles.chatButtonText}>Group Poll</Text>
+              </TouchableOpacity>
+            </>
           )}
         </View>
 
@@ -1312,6 +1314,20 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.primary,
+  },
+  prayersButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    borderWidth: 1,
+  },
+  prayersButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
   },
   chatButton: {
     flex: 1,
