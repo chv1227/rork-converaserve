@@ -268,7 +268,7 @@ export default function ChurchManagementScreen() {
           <Building2 size={64} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>No Church Selected</Text>
           <Text style={styles.errorText}>Please select a church first</Text>
-          <TouchableOpacity style={styles.errorButton} onPress={() => router.push('/organization')}>
+          <TouchableOpacity style={styles.errorButton} onPress={() => router.push('/organization' as any)}>
             <Text style={styles.errorButtonText}>Select Church</Text>
           </TouchableOpacity>
         </View>
@@ -401,7 +401,7 @@ export default function ChurchManagementScreen() {
           <Text style={styles.sectionTitle}>Ministries ({ministries.length})</Text>
           <TouchableOpacity
             style={styles.addMinistriesButton}
-            onPress={() => router.push('/admin/ministries')}
+            onPress={() => router.push('/admin/ministries' as any)}
           >
             <Text style={styles.addMinistriesButtonText}>Manage All</Text>
             <ChevronRight size={16} color={Colors.primary} />
@@ -417,7 +417,7 @@ export default function ChurchManagementScreen() {
             <Text style={styles.emptyText}>Create your first ministry to get started</Text>
             <TouchableOpacity
               style={styles.createButton}
-              onPress={() => router.push('/admin/ministries')}
+              onPress={() => router.push('/admin/ministries' as any)}
             >
               <Text style={styles.createButtonText}>Create Ministry</Text>
             </TouchableOpacity>
@@ -430,7 +430,7 @@ export default function ChurchManagementScreen() {
                 <TouchableOpacity
                   key={ministry.id}
                   style={styles.ministryCard}
-                  onPress={() => router.push('/admin/ministries')}
+                  onPress={() => router.push('/admin/ministries' as any)}
                   activeOpacity={0.7}
                 >
                   <View style={[styles.ministryColor, { backgroundColor: color }]} />
@@ -472,7 +472,7 @@ export default function ChurchManagementScreen() {
       <View style={styles.settingsSection}>
         <TouchableOpacity
           style={styles.settingsItem}
-          onPress={() => router.push('/organization/edit')}
+          onPress={() => router.push('/organization/edit' as any)}
           activeOpacity={0.7}
         >
           <View style={[styles.settingsIcon, { backgroundColor: Colors.primary + '15' }]}>
@@ -487,7 +487,7 @@ export default function ChurchManagementScreen() {
 
         <TouchableOpacity
           style={styles.settingsItem}
-          onPress={() => router.push('/settings')}
+          onPress={() => router.push('/settings' as any)}
           activeOpacity={0.7}
         >
           <View style={[styles.settingsIcon, { backgroundColor: Colors.warning + '15' }]}>
@@ -502,7 +502,7 @@ export default function ChurchManagementScreen() {
 
         <TouchableOpacity
           style={styles.settingsItem}
-          onPress={() => router.push('/admin')}
+          onPress={() => router.push('/admin' as any)}
           activeOpacity={0.7}
         >
           <View style={[styles.settingsIcon, { backgroundColor: '#7C3AED' + '15' }]}>

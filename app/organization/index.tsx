@@ -73,7 +73,7 @@ export default function OrganizationSelectScreen() {
   }, [refetch]);
 
   const handleAdminPanel = () => {
-    router.push('/organization/admin');
+    router.push('/organization/admin' as any);
   };
 
   const handleCreateOrganization = () => {

@@ -148,7 +148,7 @@ export default function EditOrganizationScreen() {
           <Text style={styles.errorText}>Please select a church first</Text>
           <TouchableOpacity
             style={styles.errorButton}
-            onPress={() => router.push('/organization')}
+            onPress={() => router.push('/organization' as any)}
           >
             <Text style={styles.errorButtonText}>Select Church</Text>
           </TouchableOpacity>

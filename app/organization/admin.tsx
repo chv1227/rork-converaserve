@@ -239,7 +239,7 @@ export default function OrganizationAdminScreen() {
           <Text style={styles.errorText}>Please select a church first</Text>
           <TouchableOpacity
             style={styles.errorButton}
-            onPress={() => router.push('/organization')}
+            onPress={() => router.push('/organization' as any)}
           >
             <Text style={styles.errorButtonText}>Select Church</Text>
           </TouchableOpacity>
@@ -279,7 +279,7 @@ export default function OrganizationAdminScreen() {
         <Text style={styles.headerTitle}>Church Admin</Text>
         <TouchableOpacity
           style={styles.editButton}
-          onPress={() => router.push('/organization/edit')}
+          onPress={() => router.push('/organization/edit' as any)}
         >
           <Edit3 size={20} color={Colors.primary} />
         </TouchableOpacity>
@@ -322,7 +322,7 @@ export default function OrganizationAdminScreen() {
         <View style={styles.quickActions}>
           <TouchableOpacity
             style={styles.actionButton}
-            onPress={() => router.push('/organization/edit')}
+            onPress={() => router.push('/organization/edit' as any)}
           >
             <View style={styles.actionIcon}>
               <Settings size={20} color={Colors.primary} />

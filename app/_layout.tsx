@@ -35,8 +35,8 @@ function AuthGate({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (isLoading || isNavigating) return;
 
-    const inAuthGroup = segments[0] === "login" || segments[0] === "register";
-    const inOrganizationGroup = segments[0] === "organization";
+    const inAuthGroup = segments[0] === "login" as string || segments[0] === "register" as string;
+    const inOrganizationGroup = segments[0] === "organization" as string;
 
     if (!isAuthenticated && !inAuthGroup && !inOrganizationGroup) {
       console.log("AuthGate: Not authenticated, redirecting to login");
@@ -45,7 +45,7 @@ function AuthGate({ children }: { children: ReactNode }) {
         router.replace("/login" as any);
         setIsNavigating(false);
       }, 100);
-    } else if (isAuthenticated && segments[0] === "login") {
+    } else if (isAuthenticated && segments[0] === "login" as string) {
       console.log("AuthGate: Authenticated on login page, redirecting to home");
       setIsNavigating(true);
       setTimeout(() => {

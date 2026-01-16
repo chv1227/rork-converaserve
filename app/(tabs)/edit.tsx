@@ -132,7 +132,7 @@ export default function EditChurchTab() {
           <Text style={styles.emptyText}>Please sign in to manage your church</Text>
           <TouchableOpacity
             style={styles.primaryButton}
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/login' as any)}
           >
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
@@ -357,7 +357,7 @@ export default function EditChurchTab() {
 
           <TouchableOpacity
             style={styles.adminButton}
-            onPress={() => router.push('/organization/admin')}
+            onPress={() => router.push('/organization/admin' as any)}
           >
             <Text style={styles.adminButtonText}>Church Admin Panel</Text>
           </TouchableOpacity>
