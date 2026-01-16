@@ -65,13 +65,64 @@ function deleteMemoryItem(collection: string, id: string): boolean {
   return false;
 }
 
+const loadedCollections = new Set<string>();
+
+async function loadCollectionFromExternalDb<T extends { id: string }>(collection: string): Promise<void> {
+  if (loadedCollections.has(collection)) return;
+  if (!DB_ENDPOINT || !DB_TOKEN) {
+    loadedCollections.add(collection);
+    return;
+  }
+  
+  try {
+    const url = `${DB_ENDPOINT}/${DB_NAMESPACE}/${collection}`;
+    console.log(`DB: Loading ${collection} from external database`);
+    
+    const response = await fetch(url, {
+      method: "GET",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${DB_TOKEN}`,
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (Array.isArray(data)) {
+        data.forEach((item: T) => {
+          if (item && item.id) {
+            setMemoryItem(collection, item);
+          }
+        });
+        console.log(`DB: Loaded ${data.length} items from external ${collection}`);
+      } else if (data && typeof data === 'object') {
+        Object.values(data).forEach((item: unknown) => {
+          const typedItem = item as T;
+          if (typedItem && typedItem.id) {
+            setMemoryItem(collection, typedItem);
+          }
+        });
+        console.log(`DB: Loaded items from external ${collection}`);
+      }
+    } else {
+      console.log(`DB: External DB returned ${response.status} for ${collection}`);
+    }
+  } catch (error) {
+    console.log(`DB: Failed to load ${collection} from external DB:`, error);
+  }
+  
+  loadedCollections.add(collection);
+}
+
 async function dbRequest<T>(
   method: "GET" | "POST" | "PUT" | "DELETE",
   collection: string,
   id?: string,
   body?: unknown
 ): Promise<DbResponse<T>> {
-  // Always use memory store for reliability - external DB is optional
+  // Load from external DB on first access to this collection
+  await loadCollectionFromExternalDb(collection);
+  
   console.log(`DB: Using memory store for ${method} ${collection}${id ? `/${id}` : ""}`);
   const memoryResult = handleMemoryRequest<T>(method, collection, id, body);
   
@@ -81,14 +132,13 @@ async function dbRequest<T>(
     console.log(`Memory store success for ${method} ${collection}`);
   }
   
-  // Try to sync with external DB in background if configured (non-blocking)
+  // Sync mutations to external DB in background if configured
   if (DB_ENDPOINT && DB_TOKEN && (method === "POST" || method === "PUT" || method === "DELETE")) {
     const url = id 
       ? `${DB_ENDPOINT}/${DB_NAMESPACE}/${collection}/${id}`
       : `${DB_ENDPOINT}/${DB_NAMESPACE}/${collection}`;
     const actualMethod = method === "POST" && id ? "PUT" : method;
     
-    // Fire and forget - don't wait for external DB
     fetch(url, {
       method: actualMethod,
       headers: {
@@ -141,7 +191,9 @@ async function queryCollection<T>(
   collection: string,
   filter?: Record<string, unknown>
 ): Promise<T[]> {
-  // Always use memory store for reliability
+  // Load from external DB on first access
+  await loadCollectionFromExternalDb(collection);
+  
   console.log(`DB: Querying memory store for ${collection}`, filter ? JSON.stringify(filter) : "");
   const result = queryMemoryCollection<T>(collection, filter);
   console.log(`Memory query result for ${collection}: ${result.length} items`);
