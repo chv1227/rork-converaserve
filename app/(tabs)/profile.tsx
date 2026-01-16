@@ -251,16 +251,45 @@ export default function ProfileScreen() {
           </>
         )}
 
-        <Text style={styles.sectionTitle}>My Ministries</Text>
+        <View style={styles.myMinistriesHeader}>
+          <Text style={styles.sectionTitle}>My Ministries</Text>
+          {userMinistries.length > 0 && (
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/groups" as any)}
+              activeOpacity={0.7}
+            >
+              <Text style={styles.viewAllText}>View All</Text>
+            </TouchableOpacity>
+          )}
+        </View>
         <View style={styles.ministriesGrid}>
           {userMinistries.map((ministry) => (
-            <View key={ministry.id} style={styles.ministryBadge}>
-              <View style={[styles.ministryDot, { backgroundColor: ministry.color }]} />
-              <Text style={styles.ministryName}>{ministry.name}</Text>
-            </View>
+            <TouchableOpacity
+              key={ministry.id}
+              style={[styles.ministryBadge, { borderLeftColor: ministry.color, borderLeftWidth: 3 }]}
+              onPress={() => router.push(`/group/${ministry.id}` as any)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.ministryIconSmall, { backgroundColor: ministry.color + '20' }]}>
+                <View style={[styles.ministryDot, { backgroundColor: ministry.color }]} />
+              </View>
+              <View style={styles.ministryBadgeContent}>
+                <Text style={styles.ministryName}>{ministry.name}</Text>
+                <Text style={styles.ministryMemberCount}>{ministry.memberCount} members</Text>
+              </View>
+              <ChevronRight size={16} color={Colors.textTertiary} />
+            </TouchableOpacity>
           ))}
           {userMinistries.length === 0 && (
-            <Text style={styles.noMinistries}>Not a member of any ministries yet</Text>
+            <TouchableOpacity
+              style={styles.noMinistriesCard}
+              onPress={() => router.push("/(tabs)/groups" as any)}
+              activeOpacity={0.7}
+            >
+              <Users size={24} color={Colors.textTertiary} />
+              <Text style={styles.noMinistriesTitle}>Not a member of any ministries yet</Text>
+              <Text style={styles.noMinistriesSubtitle}>Tap to explore and join ministries</Text>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -648,34 +677,72 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   ministriesGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 8,
+    flexDirection: "column",
     marginBottom: 24,
+  },
+  myMinistriesHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 12,
+  },
+  viewAllText: {
+    fontSize: 14,
+    fontWeight: "500" as const,
+    color: Colors.primary,
   },
   ministryBadge: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.surface,
     paddingHorizontal: 14,
-    paddingVertical: 10,
-    borderRadius: 20,
-    gap: 8,
+    paddingVertical: 12,
+    borderRadius: 12,
+    gap: 12,
+    width: "100%",
+    marginBottom: 8,
+  },
+  ministryIconSmall: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
   },
   ministryDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+  },
+  ministryBadgeContent: {
+    flex: 1,
   },
   ministryName: {
-    fontSize: 13,
-    fontWeight: "500" as const,
+    fontSize: 14,
+    fontWeight: "600" as const,
     color: Colors.text,
   },
-  noMinistries: {
-    fontSize: 14,
+  ministryMemberCount: {
+    fontSize: 12,
     color: Colors.textSecondary,
-    fontStyle: "italic",
+    marginTop: 2,
+  },
+  noMinistriesCard: {
+    width: "100%",
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    padding: 24,
+    alignItems: "center",
+    gap: 8,
+  },
+  noMinistriesTitle: {
+    fontSize: 14,
+    fontWeight: "500" as const,
+    color: Colors.textSecondary,
+  },
+  noMinistriesSubtitle: {
+    fontSize: 12,
+    color: Colors.textTertiary,
   },
   menuSection: {
     backgroundColor: Colors.surface,
