@@ -206,7 +206,7 @@ export default function GroupsScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.title}>Groups</Text>
+        <Text style={styles.title}>Ministries</Text>
         <Text style={styles.subtitle}>Connect with your ministries</Text>
       </View>
 
