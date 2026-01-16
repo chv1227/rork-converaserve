@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -50,11 +50,7 @@ export default function CreateOrganizationScreen() {
   const [isResending, setIsResending] = useState(false);
   const [resendSuccess, setResendSuccess] = useState(false);
   const [resendError, setResendError] = useState('');
-
-  // Track if we should create after auth
-  const [pendingCreate, setPendingCreate] = useState(false);
-  const prevAuthRef = useRef(isAuthenticated);
-  const createAttemptRef = useRef(0);
+  const [isCreatingAfterAuth, setIsCreatingAfterAuth] = useState(false);
 
   const createMutation = useMutation({
     mutationFn: async (input: {
@@ -70,8 +66,7 @@ export default function CreateOrganizationScreen() {
     },
     onSuccess: async (data) => {
       console.log('Organization created successfully:', data.organization.name);
-      setPendingCreate(false);
-      createAttemptRef.current = 0;
+      setIsCreatingAfterAuth(false);
       await setCurrentOrganization(data.organization, {
         id: data.membership.id,
         organizationId: data.organization.id,
@@ -84,8 +79,7 @@ export default function CreateOrganizationScreen() {
     },
     onError: (error: Error) => {
       console.error('Create organization error:', error.message);
-      setPendingCreate(false);
-      createAttemptRef.current = 0;
+      setIsCreatingAfterAuth(false);
       
       let errorMessage = error.message || 'Failed to create organization';
       if (errorMessage.includes('Failed to fetch') || errorMessage.includes('Network')) {
@@ -101,10 +95,13 @@ export default function CreateOrganizationScreen() {
   const { mutate: createOrg, isPending: isCreating } = createMutation;
 
   const executeCreate = useCallback(() => {
-    if (!name.trim() || !description.trim() || description.length < 10) {
-      console.log('Invalid form data, skipping create');
-      setPendingCreate(false);
-      return;
+    if (!name.trim()) {
+      Alert.alert('Error', 'Please enter a church name');
+      return false;
+    }
+    if (!description.trim() || description.length < 10) {
+      Alert.alert('Error', 'Please enter a description (at least 10 characters)');
+      return false;
     }
 
     console.log('Executing organization create via Supabase');
@@ -120,71 +117,13 @@ export default function CreateOrganizationScreen() {
     return true;
   }, [name, description, address, phone, email, website, createOrg]);
 
-  // Effect to handle pending create after authentication
-  useEffect(() => {
-    if (!pendingCreate || !isAuthenticated || isCreating) {
-      prevAuthRef.current = isAuthenticated;
-      return;
-    }
-
-    // Wait a moment for auth to settle then create
-    const checkAndCreate = () => {
-      createAttemptRef.current += 1;
-      console.log(`Auth completed, attempting organization creation (attempt ${createAttemptRef.current})...`);
-      
-      if (isAuthenticated) {
-        console.log('User authenticated, creating organization via Supabase...');
-        const success = executeCreate();
-        if (success) {
-          return;
-        }
-      }
-      
-      // Retry up to 5 times with increasing delays
-      if (createAttemptRef.current < 5) {
-        const delay = Math.min(500 * createAttemptRef.current, 2000);
-        console.log(`Auth not ready, retrying in ${delay}ms...`);
-        setTimeout(checkAndCreate, delay);
-      } else {
-        console.error('Failed to create organization after multiple attempts');
-        setPendingCreate(false);
-        createAttemptRef.current = 0;
-        Alert.alert('Error', 'Authentication issue. Please try again.');
-      }
-    };
-
-    // Initial delay to allow auth to settle
-    const timer = setTimeout(checkAndCreate, 500);
-    
-    prevAuthRef.current = isAuthenticated;
-    return () => clearTimeout(timer);
-  }, [isAuthenticated, pendingCreate, isCreating, executeCreate]);
-
   const handleCreate = () => {
     if (!isAuthenticated) {
       setShowAuthModal(true);
       return;
     }
 
-    if (!name.trim()) {
-      Alert.alert('Error', 'Please enter a church name');
-      return;
-    }
-    if (!description.trim() || description.length < 10) {
-      Alert.alert('Error', 'Please enter a description (at least 10 characters)');
-      return;
-    }
-
-    console.log('handleCreate called, creating organization via Supabase');
-
-    createOrg({
-      name: name.trim(),
-      description: description.trim(),
-      address: address.trim() || undefined,
-      phone: phone.trim() || undefined,
-      email: email.trim() || undefined,
-      website: website.trim() || undefined,
-    });
+    executeCreate();
   };
 
   const handleSignIn = async () => {
@@ -199,10 +138,18 @@ export default function CreateOrganizationScreen() {
     const result = await login(authEmail.trim(), authPassword);
 
     if (result.success) {
-      console.log('Sign in successful, setting pending create...');
-      setPendingCreate(true);
+      console.log('Sign in successful, creating organization...');
       setShowAuthModal(false);
       resetAuthForm();
+      
+      // Small delay to ensure auth state is updated, then create
+      setIsCreatingAfterAuth(true);
+      setTimeout(() => {
+        const success = executeCreate();
+        if (!success) {
+          setIsCreatingAfterAuth(false);
+        }
+      }, 300);
     } else {
       setAuthError(result.error || 'Sign in failed');
     }
@@ -233,14 +180,24 @@ export default function CreateOrganizationScreen() {
 
     if (result.success) {
       if (result.error && result.error.includes('verify your email')) {
+        // Email verification required
         setVerificationEmail(authEmail.trim());
         setShowAuthModal(false);
         setShowVerificationModal(true);
       } else {
-        console.log('Registration successful, setting pending create...');
-        setPendingCreate(true);
+        // Registration successful and auto-logged in
+        console.log('Registration successful, creating organization...');
         setShowAuthModal(false);
         resetAuthForm();
+        
+        // Small delay to ensure auth state is updated, then create
+        setIsCreatingAfterAuth(true);
+        setTimeout(() => {
+          const success = executeCreate();
+          if (!success) {
+            setIsCreatingAfterAuth(false);
+          }
+        }, 300);
       }
     } else {
       setAuthError(result.error || 'Registration failed');
@@ -400,16 +357,14 @@ export default function CreateOrganizationScreen() {
           </View>
 
           <TouchableOpacity
-            style={[styles.createButton, (isCreating || pendingCreate) && styles.createButtonDisabled]}
+            style={[styles.createButton, (isCreating || isCreatingAfterAuth) && styles.createButtonDisabled]}
             onPress={handleCreate}
-            disabled={isCreating || pendingCreate}
+            disabled={isCreating || isCreatingAfterAuth}
           >
-            {isCreating || pendingCreate ? (
+            {isCreating || isCreatingAfterAuth ? (
               <>
                 <ActivityIndicator color="#FFF" />
-                <Text style={styles.createButtonText}>
-                  {pendingCreate ? 'Setting up...' : 'Creating...'}
-                </Text>
+                <Text style={styles.createButtonText}>Creating...</Text>
               </>
             ) : (
               <>
