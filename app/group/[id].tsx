@@ -368,7 +368,6 @@ export default function GroupDetailScreen() {
       { key: 'about', label: 'About', icon: Megaphone },
       { key: 'members', label: 'Members', icon: Users },
       { key: 'discussions', label: 'Discuss', icon: MessageSquare },
-      { key: 'prayers', label: 'Prayers', icon: Heart },
     ];
 
     if (id === 'worship-ministry' && isMember) {
