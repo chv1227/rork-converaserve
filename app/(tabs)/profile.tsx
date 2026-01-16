@@ -21,6 +21,7 @@ import {
   Eye,
   BellRing,
   Building2,
+  Cog,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -58,7 +59,7 @@ function MenuItem({ icon, title, subtitle, onPress, showBorder = true, danger = 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin } = useAuth();
   
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
@@ -166,21 +167,87 @@ export default function ProfileScreen() {
 
         {hasOrganization && currentOrganization && (
           <>
-            <Text style={styles.sectionTitle}>My Church</Text>
-            <TouchableOpacity 
-              style={styles.organizationCard}
-              onPress={() => router.push("/organization" as any)}
-              activeOpacity={0.7}
-            >
-              <View style={styles.organizationIcon}>
-                <Building2 size={24} color={Colors.primary} />
+            <Text style={styles.sectionTitle}>
+              {isSuperAdmin || isOrganizationSuperAdmin ? "Church Management" : "My Church"}
+            </Text>
+            {isSuperAdmin || isOrganizationSuperAdmin ? (
+              <View style={styles.churchManagementCard}>
+                <View style={styles.churchHeader}>
+                  <View style={styles.organizationIcon}>
+                    <Building2 size={24} color={Colors.primary} />
+                  </View>
+                  <View style={styles.organizationInfo}>
+                    <Text style={styles.organizationName}>{currentOrganization.name}</Text>
+                    <View style={styles.superAdminBadge}>
+                      <Crown size={10} color="#7C3AED" />
+                      <Text style={styles.superAdminBadgeText}>Super Admin</Text>
+                    </View>
+                  </View>
+                </View>
+                
+                <View style={styles.managementActions}>
+                  <TouchableOpacity 
+                    style={styles.managementAction}
+                    onPress={() => router.push("/church-management" as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.managementActionIcon, { backgroundColor: Colors.primary + "15" }]}>
+                      <Users size={18} color={Colors.primary} />
+                    </View>
+                    <View style={styles.managementActionContent}>
+                      <Text style={styles.managementActionTitle}>Manage Members</Text>
+                      <Text style={styles.managementActionSubtitle}>View and manage all members</Text>
+                    </View>
+                    <ChevronRight size={16} color={Colors.textTertiary} />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={styles.managementAction}
+                    onPress={() => router.push("/admin/ministries" as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.managementActionIcon, { backgroundColor: "#8B5CF6" + "15" }]}>
+                      <Shield size={18} color="#8B5CF6" />
+                    </View>
+                    <View style={styles.managementActionContent}>
+                      <Text style={styles.managementActionTitle}>Manage Ministries</Text>
+                      <Text style={styles.managementActionSubtitle}>Create and edit ministries</Text>
+                    </View>
+                    <ChevronRight size={16} color={Colors.textTertiary} />
+                  </TouchableOpacity>
+                  
+                  <TouchableOpacity 
+                    style={[styles.managementAction, styles.managementActionLast]}
+                    onPress={() => router.push("/organization/edit" as any)}
+                    activeOpacity={0.7}
+                  >
+                    <View style={[styles.managementActionIcon, { backgroundColor: Colors.warning + "15" }]}>
+                      <Cog size={18} color={Colors.warning} />
+                    </View>
+                    <View style={styles.managementActionContent}>
+                      <Text style={styles.managementActionTitle}>Church Settings</Text>
+                      <Text style={styles.managementActionSubtitle}>Edit organization settings</Text>
+                    </View>
+                    <ChevronRight size={16} color={Colors.textTertiary} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <View style={styles.organizationInfo}>
-                <Text style={styles.organizationName}>{currentOrganization.name}</Text>
-                <Text style={styles.organizationSubtitle}>Tap to manage</Text>
-              </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
-            </TouchableOpacity>
+            ) : (
+              <TouchableOpacity 
+                style={styles.organizationCard}
+                onPress={() => router.push("/organization" as any)}
+                activeOpacity={0.7}
+              >
+                <View style={styles.organizationIcon}>
+                  <Building2 size={24} color={Colors.primary} />
+                </View>
+                <View style={styles.organizationInfo}>
+                  <Text style={styles.organizationName}>{currentOrganization.name}</Text>
+                  <Text style={styles.organizationSubtitle}>View church info</Text>
+                </View>
+                <ChevronRight size={18} color={Colors.textTertiary} />
+              </TouchableOpacity>
+            )}
           </>
         )}
 
@@ -825,6 +892,69 @@ const styles = StyleSheet.create({
     fontSize: 13,
     color: Colors.textSecondary,
     marginTop: 2,
+  },
+  churchManagementCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+  },
+  churchHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  superAdminBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#7C3AED" + "15",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 10,
+    marginTop: 4,
+    alignSelf: "flex-start",
+    gap: 4,
+  },
+  superAdminBadgeText: {
+    fontSize: 10,
+    fontWeight: "600" as const,
+    color: "#7C3AED",
+  },
+  managementActions: {
+    marginTop: 12,
+  },
+  managementAction: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  managementActionLast: {
+    borderBottomWidth: 0,
+  },
+  managementActionIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 12,
+  },
+  managementActionContent: {
+    flex: 1,
+  },
+  managementActionTitle: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text,
+  },
+  managementActionSubtitle: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 1,
   },
   noOrgCard: {
     backgroundColor: Colors.surface,
