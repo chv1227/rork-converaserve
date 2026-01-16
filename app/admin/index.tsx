@@ -25,6 +25,7 @@ import {
   Calendar,
   Megaphone,
   Palette,
+  Church,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -253,6 +254,12 @@ export default function AdminDashboard() {
             title="Ministry Colors"
             subtitle="Manage ministry categories & colors"
             onPress={() => router.push("/admin/ministries" as any)}
+          />
+          <QuickAction
+            icon={<Church size={20} color={Colors.primary} />}
+            title="Create Church"
+            subtitle="Register a new church profile"
+            onPress={() => router.push("/church/create" as any)}
           />
           <QuickAction
             icon={<Settings size={20} color={Colors.primary} />}
