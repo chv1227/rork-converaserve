@@ -1,5 +1,5 @@
 import { DbUser, Session, Notification, WorkflowRequest, ReportedContent, ActivityLog, Invitation } from "./index";
-import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving, Poll } from "@/types";
+import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving, Poll, Church, ChurchSettings, ChurchMembership } from "@/types";
 
 const DB_ENDPOINT = process.env.EXPO_PUBLIC_RORK_DB_ENDPOINT;
 const DB_NAMESPACE = process.env.EXPO_PUBLIC_RORK_DB_NAMESPACE;
@@ -32,6 +32,9 @@ const memoryStore: Record<string, Record<string, unknown>> = {
   donations: {},
   recurringGiving: {},
   polls: {},
+  churches: {},
+  churchSettings: {},
+  churchMemberships: {},
 };
 
 function getMemoryCollection<T>(collection: string): T[] {
@@ -821,6 +824,109 @@ export const persistentDb = {
 
     async getAll(): Promise<Poll[]> {
       return queryCollection<Poll>("polls");
+    }
+  },
+
+  churches: {
+    async findById(id: string): Promise<Church | null> {
+      const result = await dbRequest<Church>("GET", "churches", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async create(church: Church): Promise<Church | null> {
+      console.log("DB: Creating church:", church.name);
+      const result = await dbRequest<Church>("POST", "churches", church.id, church);
+      return result.success ? church : null;
+    },
+
+    async update(id: string, updates: Partial<Church>): Promise<Church | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      const result = await dbRequest<Church>("PUT", "churches", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "churches", id);
+      return result.success;
+    },
+
+    async getAll(): Promise<Church[]> {
+      return queryCollection<Church>("churches");
+    }
+  },
+
+  churchSettings: {
+    async findById(id: string): Promise<ChurchSettings | null> {
+      const result = await dbRequest<ChurchSettings>("GET", "churchSettings", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByChurchId(churchId: string): Promise<ChurchSettings | null> {
+      const settings = await queryCollection<ChurchSettings>("churchSettings", { churchId });
+      return settings.length > 0 ? settings[0] : null;
+    },
+
+    async create(settings: ChurchSettings): Promise<ChurchSettings | null> {
+      console.log("DB: Creating church settings for:", settings.churchId);
+      const result = await dbRequest<ChurchSettings>("POST", "churchSettings", settings.id, settings);
+      return result.success ? settings : null;
+    },
+
+    async update(id: string, updates: Partial<ChurchSettings>): Promise<ChurchSettings | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      const result = await dbRequest<ChurchSettings>("PUT", "churchSettings", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "churchSettings", id);
+      return result.success;
+    }
+  },
+
+  churchMemberships: {
+    async findById(id: string): Promise<ChurchMembership | null> {
+      const result = await dbRequest<ChurchMembership>("GET", "churchMemberships", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByUserAndChurch(userId: string, churchId: string): Promise<ChurchMembership | null> {
+      const memberships = await queryCollection<ChurchMembership>("churchMemberships", { userId, churchId });
+      return memberships.length > 0 ? memberships[0] : null;
+    },
+
+    async findByUser(userId: string): Promise<ChurchMembership[]> {
+      return queryCollection<ChurchMembership>("churchMemberships", { userId });
+    },
+
+    async findByChurch(churchId: string): Promise<ChurchMembership[]> {
+      return queryCollection<ChurchMembership>("churchMemberships", { churchId });
+    },
+
+    async create(membership: ChurchMembership): Promise<ChurchMembership | null> {
+      console.log("DB: Creating church membership for user:", membership.userId);
+      const result = await dbRequest<ChurchMembership>("POST", "churchMemberships", membership.id, membership);
+      return result.success ? membership : null;
+    },
+
+    async update(id: string, updates: Partial<ChurchMembership>): Promise<ChurchMembership | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates };
+      const result = await dbRequest<ChurchMembership>("PUT", "churchMemberships", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "churchMemberships", id);
+      return result.success;
     }
   }
 };

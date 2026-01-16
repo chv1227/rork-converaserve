@@ -297,3 +297,61 @@ export interface Poll {
   isAnonymous: boolean;
   totalVotes: number;
 }
+
+export type ChurchRole = 'super_admin' | 'admin' | 'staff' | 'member';
+
+export interface Church {
+  id: string;
+  name: string;
+  denomination?: string;
+  description: string;
+  address: string;
+  city: string;
+  state: string;
+  zip: string;
+  country: string;
+  email: string;
+  phone: string;
+  website?: string;
+  logo?: string;
+  bannerImage?: string;
+  socialLinks?: {
+    facebook?: string;
+    instagram?: string;
+    twitter?: string;
+    youtube?: string;
+  };
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ChurchSettings {
+  id: string;
+  churchId: string;
+  visibility: 'public' | 'private';
+  modulesEnabled: {
+    events: boolean;
+    announcements: boolean;
+    donations: boolean;
+    media: boolean;
+    ministries: boolean;
+    messaging: boolean;
+  };
+  notificationPreferences: {
+    newMembers: boolean;
+    events: boolean;
+    announcements: boolean;
+    donations: boolean;
+  };
+  updatedAt: string;
+}
+
+export interface ChurchMembership {
+  id: string;
+  churchId: string;
+  userId: string;
+  role: ChurchRole;
+  joinedAt: string;
+  isActive: boolean;
+}
