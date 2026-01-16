@@ -728,7 +728,7 @@ export default function GroupDetailScreen() {
       </View>
 
       <View style={styles.tabsContainer}>
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tabsContent}>
+        <View style={styles.tabsContent}>
           {tabs.map((tab) => {
             const TabIcon = tab.icon;
             const isActive = activeTab === tab.key;
@@ -744,7 +744,7 @@ export default function GroupDetailScreen() {
               </TouchableOpacity>
             );
           })}
-        </ScrollView>
+        </View>
       </View>
 
       <ScrollView
@@ -1260,16 +1260,18 @@ const styles = StyleSheet.create({
     borderBottomColor: Colors.borderLight,
   },
   tabsContent: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    gap: 8,
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    gap: 6,
   },
   tab: {
+    flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 6,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
+    justifyContent: 'center',
+    gap: 5,
+    paddingVertical: 10,
     borderRadius: 20,
   },
   tabText: {
