@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Href } from 'expo-router';
-import { Users, Calendar, MoreHorizontal, ChevronUp } from 'lucide-react-native';
+import { Users, Calendar, MoreHorizontal, ChevronUp, Megaphone } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 interface DropdownItem {
@@ -32,6 +32,12 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
   const rotateAnim = useRef(new Animated.Value(0)).current;
 
   const dropdownItems: DropdownItem[] = [
+    {
+      id: 'announcements',
+      label: 'Announcements',
+      icon: <Megaphone size={20} color={Colors.text} />,
+      route: '/announcements' as Href,
+    },
     {
       id: 'ministries',
       label: 'Ministries',
