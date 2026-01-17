@@ -1,4 +1,4 @@
-import { trpcClient } from '@/lib/trpc';
+import { trpcClient, getTRPCErrorMessage } from '@/lib/trpc';
 import { Church, ChurchSettings, ChurchMembership, ChurchRole } from '@/types';
 
 export interface CreateChurchInput {
@@ -32,7 +32,13 @@ export async function createChurch(input: CreateChurchInput): Promise<{
   membership: ChurchMembership;
   settings: ChurchSettings;
 }> {
-  console.log('Churches: Creating church via tRPC:', input.name);
+  console.log('Supabase Churches: Creating church via tRPC:', input.name);
+  console.log('Supabase Churches: Input data:', JSON.stringify({
+    name: input.name,
+    city: input.city,
+    state: input.state,
+    country: input.country,
+  }));
   
   try {
     const result = await trpcClient.churches.create.mutate({
@@ -52,49 +58,60 @@ export async function createChurch(input: CreateChurchInput): Promise<{
       socialLinks: input.socialLinks,
     });
 
-    console.log('Churches: Church created successfully:', result.church.name);
+    console.log('Supabase Churches: Church created successfully:', result.church.name);
+    console.log('Supabase Churches: Church ID:', result.church.id);
+    console.log('Supabase Churches: Settings ID:', result.settings.id);
+    console.log('Supabase Churches: Membership ID:', result.membership.id);
     return result;
   } catch (error) {
-    console.error('Churches: Error creating church:', error);
-    const message = error instanceof Error ? error.message : 'Failed to create church';
+    console.error('Supabase Churches: Error creating church:', error);
+    const message = getTRPCErrorMessage(error);
+    console.error('Supabase Churches: Parsed error:', message);
     throw new Error(message);
   }
 }
 
 export async function listChurches(): Promise<Church[]> {
-  console.log('Churches: Listing all churches via tRPC');
+  console.log('Supabase Churches: Listing all churches via tRPC');
   
   try {
     const churches = await trpcClient.churches.list.query();
-    console.log('Churches: Found', churches.length, 'churches');
+    console.log('Supabase Churches: Found', churches.length, 'churches');
     return churches;
   } catch (error) {
-    console.error('Churches: Error listing churches:', error);
+    console.error('Supabase Churches: Error listing churches:', error);
+    const message = getTRPCErrorMessage(error);
+    console.error('Supabase Churches: Parsed error:', message);
     return [];
   }
 }
 
 export async function getChurchById(churchId: string): Promise<Church | null> {
-  console.log('Churches: Getting church by ID via tRPC:', churchId);
+  console.log('Supabase Churches: Getting church by ID via tRPC:', churchId);
   
   try {
     const church = await trpcClient.churches.getById.query({ id: churchId });
+    console.log('Supabase Churches: Found church:', church?.name);
     return church;
   } catch (error) {
-    console.error('Churches: Error getting church:', error);
+    console.error('Supabase Churches: Error getting church:', error);
+    const message = getTRPCErrorMessage(error);
+    console.error('Supabase Churches: Parsed error:', message);
     return null;
   }
 }
 
 export async function getUserChurches(): Promise<Church[]> {
-  console.log('Churches: Getting user churches via tRPC');
+  console.log('Supabase Churches: Getting user churches via tRPC');
   
   try {
     const churches = await trpcClient.churches.getUserChurches.query();
-    console.log('Churches: User has', churches.length, 'churches');
+    console.log('Supabase Churches: User has', churches.length, 'churches');
     return churches as Church[];
   } catch (error) {
-    console.error('Churches: Error getting user churches:', error);
+    console.error('Supabase Churches: Error getting user churches:', error);
+    const message = getTRPCErrorMessage(error);
+    console.error('Supabase Churches: Parsed error:', message);
     return [];
   }
 }

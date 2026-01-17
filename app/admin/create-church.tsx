@@ -32,7 +32,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
+import { trpc, getTRPCErrorMessage } from '@/lib/trpc';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -110,15 +110,29 @@ export default function AdminCreateChurchScreen() {
   const createChurchMutation = trpc.churches.create.useMutation({
     onSuccess: (data) => {
       console.log('Church created successfully:', data.church.name);
+      console.log('Church ID:', data.church.id);
+      console.log('Settings ID:', data.settings.id);
+      console.log('Membership ID:', data.membership.id);
       Alert.alert(
         'Success!', 
-        `${data.church.name} has been created. You are now the administrator.`,
+        `${data.church.name} has been created successfully. You are now the administrator.`,
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
     onError: (error) => {
-      console.error('Create church error:', error.message);
-      Alert.alert('Error', error.message || 'Failed to create church');
+      console.error('Create church error:', error);
+      const errorMessage = getTRPCErrorMessage(error);
+      console.error('Parsed error message:', errorMessage);
+      
+      if (errorMessage.includes('FORBIDDEN') || errorMessage.includes('administrators')) {
+        Alert.alert('Access Denied', 'Only administrators can create churches. Please contact support if you believe this is an error.');
+      } else if (errorMessage.includes('CONFLICT') || errorMessage.includes('already exists')) {
+        Alert.alert('Duplicate Church', 'A church with this name already exists in this location. Please use a different name or check if the church already exists.');
+      } else if (errorMessage.includes('network') || errorMessage.includes('connect') || errorMessage.includes('fetch')) {
+        Alert.alert('Connection Error', 'Unable to connect to the server. Please check your internet connection and try again.');
+      } else {
+        Alert.alert('Error', errorMessage || 'Failed to create church. Please try again.');
+      }
     },
   });
 
@@ -190,6 +204,12 @@ export default function AdminCreateChurchScreen() {
     if (instagram.trim()) socialLinks.instagram = instagram.trim();
     if (twitter.trim()) socialLinks.twitter = twitter.trim();
     if (youtube.trim()) socialLinks.youtube = youtube.trim();
+
+    console.log('Creating church with data:', {
+      name: name.trim(),
+      city: city.trim(),
+      state: state.trim(),
+    });
 
     createChurchMutation.mutate({
       name: name.trim(),
@@ -619,7 +639,7 @@ export default function AdminCreateChurchScreen() {
           >
             {isCreating ? (
               <>
-                <ActivityIndicator color="#FFF" />
+                <ActivityIndicator color="#FFF" size="small" />
                 <Text style={styles.createButtonText}>Creating Church...</Text>
               </>
             ) : (

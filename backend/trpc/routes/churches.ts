@@ -5,6 +5,37 @@ import { createTRPCRouter, publicProcedure, protectedProcedure } from "../create
 import { persistentDb, generateId } from "@/backend/db/persistent";
 import { Church, ChurchSettings, ChurchMembership, ChurchRole } from "@/types";
 
+const MAX_RETRIES = 3;
+const RETRY_DELAY = 500;
+
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  retries: number = MAX_RETRIES
+): Promise<T> {
+  let lastError: Error | null = null;
+  
+  for (let i = 0; i < retries; i++) {
+    try {
+      console.log(`Churches: Attempting ${operationName} (attempt ${i + 1}/${retries})`);
+      const result = await operation();
+      console.log(`Churches: ${operationName} succeeded on attempt ${i + 1}`);
+      return result;
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error(String(error));
+      console.error(`Churches: ${operationName} failed (attempt ${i + 1}):`, lastError.message);
+      
+      if (i < retries - 1) {
+        const delay = RETRY_DELAY * Math.pow(2, i);
+        console.log(`Churches: Retrying ${operationName} in ${delay}ms...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      }
+    }
+  }
+  
+  throw lastError || new Error(`${operationName} failed after ${retries} attempts`);
+}
+
 const socialLinksSchema = z.object({
   facebook: z.string().url().optional().or(z.literal("")),
   instagram: z.string().url().optional().or(z.literal("")),
@@ -100,110 +131,147 @@ export const churchesRouter = createTRPCRouter({
     .input(createChurchSchema)
     .mutation(async ({ ctx, input }) => {
       console.log("Churches: Creating new church:", input.name);
+      console.log("Churches: User creating church:", ctx.user.id, "role:", ctx.user.role);
 
-      // Only admins can create churches
       if (ctx.user.role !== "admin" && ctx.user.role !== "super_admin") {
+        console.log("Churches: User role check failed:", ctx.user.role);
         throw new TRPCError({
           code: "FORBIDDEN",
           message: "Only administrators can create churches",
         });
       }
 
-      const existingChurches = await persistentDb.churches.getAll();
-      const duplicate = existingChurches.find(
-        (c) => c.name.toLowerCase() === input.name.toLowerCase() &&
-               c.city.toLowerCase() === input.city.toLowerCase() &&
-               c.state.toLowerCase() === input.state.toLowerCase()
-      );
+      try {
+        const existingChurches = await withRetry(
+          () => persistentDb.churches.getAll(),
+          "fetch existing churches"
+        );
+        
+        const duplicate = existingChurches.find(
+          (c) => c.name.toLowerCase() === input.name.toLowerCase() &&
+                 c.city.toLowerCase() === input.city.toLowerCase() &&
+                 c.state.toLowerCase() === input.state.toLowerCase()
+        );
 
-      if (duplicate) {
-        throw new TRPCError({
-          code: "CONFLICT",
-          message: "A church with this name already exists in this location",
-        });
-      }
+        if (duplicate) {
+          console.log("Churches: Duplicate church found:", duplicate.id);
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "A church with this name already exists in this location",
+          });
+        }
 
-      const churchId = generateId();
-      const now = new Date().toISOString();
+        const churchId = generateId();
+        const now = new Date().toISOString();
+        console.log("Churches: Generated church ID:", churchId);
 
-      const newChurch: Church = {
-        id: churchId,
-        name: input.name.trim(),
-        denomination: input.denomination?.trim(),
-        description: input.description.trim(),
-        address: input.address.trim(),
-        city: input.city.trim(),
-        state: input.state.trim(),
-        zip: input.zip.trim(),
-        country: input.country.trim(),
-        email: input.email.trim().toLowerCase(),
-        phone: input.phone.trim(),
-        website: input.website?.trim() || undefined,
-        logo: input.logo?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=1A7B74&color=fff&size=200`,
-        bannerImage: input.bannerImage?.trim() || undefined,
-        socialLinks: input.socialLinks || undefined,
-        createdBy: ctx.user.id,
-        createdAt: now,
-        updatedAt: now,
-      };
+        const newChurch: Church = {
+          id: churchId,
+          name: input.name.trim(),
+          denomination: input.denomination?.trim(),
+          description: input.description.trim(),
+          address: input.address.trim(),
+          city: input.city.trim(),
+          state: input.state.trim(),
+          zip: input.zip.trim(),
+          country: input.country.trim(),
+          email: input.email.trim().toLowerCase(),
+          phone: input.phone.trim(),
+          website: input.website?.trim() || undefined,
+          logo: input.logo?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=1A7B74&color=fff&size=200`,
+          bannerImage: input.bannerImage?.trim() || undefined,
+          socialLinks: input.socialLinks || undefined,
+          createdBy: ctx.user.id,
+          createdAt: now,
+          updatedAt: now,
+        };
 
-      const createdChurch = await persistentDb.churches.create(newChurch);
-      if (!createdChurch) {
+        console.log("Churches: Creating church record...");
+        const createdChurch = await withRetry(
+          () => persistentDb.churches.create(newChurch),
+          "create church record"
+        );
+        
+        if (!createdChurch) {
+          console.error("Churches: Failed to create church - null result");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create church record",
+          });
+        }
+        console.log("Churches: Church record created:", createdChurch.id);
+
+        const settingsId = generateId();
+        const defaultSettings: ChurchSettings = {
+          id: settingsId,
+          churchId: churchId,
+          visibility: "public",
+          modulesEnabled: {
+            events: true,
+            announcements: true,
+            donations: true,
+            media: true,
+            ministries: true,
+            messaging: true,
+          },
+          notificationPreferences: {
+            newMembers: true,
+            events: true,
+            announcements: true,
+            donations: true,
+          },
+          updatedAt: now,
+        };
+
+        console.log("Churches: Creating settings record...");
+        await withRetry(
+          () => persistentDb.churchSettings.create(defaultSettings),
+          "create church settings"
+        );
+        console.log("Churches: Settings record created:", settingsId);
+
+        const membershipId = generateId();
+        const membership: ChurchMembership = {
+          id: membershipId,
+          churchId: churchId,
+          userId: ctx.user.id,
+          role: "super_admin" as ChurchRole,
+          joinedAt: now,
+          isActive: true,
+        };
+
+        console.log("Churches: Creating membership record...");
+        const createdMembership = await withRetry(
+          () => persistentDb.churchMemberships.create(membership),
+          "create church membership"
+        );
+        
+        if (!createdMembership) {
+          console.error("Churches: Failed to create membership - null result");
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create membership record",
+          });
+        }
+        console.log("Churches: Membership record created:", membershipId);
+
+        console.log("Churches: Church creation completed successfully:", churchId);
+
+        return { 
+          church: newChurch, 
+          membership,
+          settings: defaultSettings,
+        };
+      } catch (error) {
+        if (error instanceof TRPCError) {
+          throw error;
+        }
+        console.error("Churches: Unexpected error during church creation:", error);
         throw new TRPCError({
           code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create church",
+          message: error instanceof Error ? error.message : "Failed to create church",
         });
       }
-
-      const settingsId = generateId();
-      const defaultSettings: ChurchSettings = {
-        id: settingsId,
-        churchId: churchId,
-        visibility: "public",
-        modulesEnabled: {
-          events: true,
-          announcements: true,
-          donations: true,
-          media: true,
-          ministries: true,
-          messaging: true,
-        },
-        notificationPreferences: {
-          newMembers: true,
-          events: true,
-          announcements: true,
-          donations: true,
-        },
-        updatedAt: now,
-      };
-
-      await persistentDb.churchSettings.create(defaultSettings);
-
-      const membershipId = generateId();
-      const membership: ChurchMembership = {
-        id: membershipId,
-        churchId: churchId,
-        userId: ctx.user.id,
-        role: "super_admin" as ChurchRole,
-        joinedAt: now,
-        isActive: true,
-      };
-
-      const createdMembership = await persistentDb.churchMemberships.create(membership);
-      if (!createdMembership) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create membership",
-        });
-      }
-
-      console.log("Churches: Church created successfully:", churchId);
-
-      return { 
-        church: newChurch, 
-        membership,
-        settings: defaultSettings,
-      };
     }),
 
   update: protectedProcedure
