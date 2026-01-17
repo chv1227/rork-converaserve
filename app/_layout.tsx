@@ -10,6 +10,7 @@ import Colors from "@/constants/colors";
 import { trpc, trpcClient } from "@/lib/trpc";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { DataProvider } from "@/providers/DataProvider";
+import { ErrorBoundary } from "@/components/ErrorBoundary";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -39,14 +40,12 @@ function AuthGate({ children }: { children: ReactNode }) {
     const inOrganizationGroup = segments[0] === "organization" as string;
 
     if (!isAuthenticated && !inAuthGroup && !inOrganizationGroup) {
-      console.log("AuthGate: Not authenticated, redirecting to login");
       setIsNavigating(true);
       setTimeout(() => {
         router.replace("/login" as any);
         setIsNavigating(false);
       }, 100);
     } else if (isAuthenticated && segments[0] === "login" as string) {
-      console.log("AuthGate: Authenticated on login page, redirecting to home");
       setIsNavigating(true);
       setTimeout(() => {
         router.replace("/(tabs)");
@@ -258,8 +257,8 @@ export default function RootLayout() {
         if (Platform.OS !== 'web') {
           await SplashScreen.hideAsync();
         }
-      } catch (error) {
-        console.log('SplashScreen.hideAsync error (can be safely ignored):', error);
+      } catch {
+        // Splash screen hide error can be safely ignored
       }
     };
     hideSplash();
@@ -268,11 +267,13 @@ export default function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <StatusBar style="dark" />
-      <QueryClientProvider client={queryClient}>
-        <trpc.Provider client={trpcClient} queryClient={queryClient}>
-          <AppContent />
-        </trpc.Provider>
-      </QueryClientProvider>
+      <ErrorBoundary>
+        <QueryClientProvider client={queryClient}>
+          <trpc.Provider client={trpcClient} queryClient={queryClient}>
+            <AppContent />
+          </trpc.Provider>
+        </QueryClientProvider>
+      </ErrorBoundary>
     </GestureHandlerRootView>
   );
 }

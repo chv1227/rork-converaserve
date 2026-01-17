@@ -142,7 +142,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     initRef.current = true;
 
     const loadStoredAuth = async () => {
-      console.log("AuthProvider: Loading stored authentication...");
+      
       try {
         const [storedUser, storedOrg] = await Promise.all([
           getStoredValue(USER_KEY),
@@ -159,7 +159,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             supabaseUser = await getCurrentUser();
           }
         } catch {
-          console.log("AuthProvider: Network error during auth check, using cached data if available");
+          
           
           // If we have cached user data, use it even if network fails
           if (storedUser) {
@@ -167,7 +167,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
               const cachedUser = JSON.parse(storedUser) as User;
               const cachedOrg = storedOrg ? JSON.parse(storedOrg) as Organization : null;
               
-              console.log("AuthProvider: Using cached user data due to network error:", cachedUser.name);
+              
               
               setState({
                 user: cachedUser,
@@ -181,7 +181,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
               });
               return;
             } catch {
-              console.log("AuthProvider: Failed to parse cached data");
+              
             }
           }
           
@@ -195,14 +195,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         
         // If no session, clear everything and return
         if (!session) {
-          console.log("AuthProvider: No active session found");
+          
           await clearAllAuthData();
           setState(prev => ({ ...prev, isLoading: false }));
           return;
         }
         
         if (!supabaseUser) {
-          console.log("AuthProvider: Session exists but user not found - clearing auth data");
+          
           await clearAllAuthData();
           setState(prev => ({ ...prev, isLoading: false }));
           return;
@@ -220,7 +220,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             const userEmail = (supabaseUser.email || "").toLowerCase();
             const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
             if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
-              console.log("AuthProvider: Promoting user to super_admin on restore:", userEmail);
+              
               user.role = "super_admin";
             }
           } else {
@@ -234,10 +234,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
         await setStoredValue(USER_KEY, JSON.stringify(user));
 
-        console.log("AuthProvider: Session restored for user:", user.name);
+        
         
         setAuthToken(session.access_token);
-        console.log("AuthProvider: Token synced with tRPC client");
+        
         
         setState({
           user,
@@ -274,7 +274,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     loadStoredAuth();
 
     const unsubscribe = onAuthStateChange(async (session) => {
-      console.log("AuthProvider: Auth state changed", session ? "logged in" : "logged out");
+      
       
       if (!session) {
         setAuthToken(null);
@@ -297,7 +297,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       
       // If session exists but user doesn't, clear everything
       if (!supabaseUser) {
-        console.log("AuthProvider: Auth state has session but no valid user - clearing");
+        
         await clearAllAuthData();
         setState({
           user: null,
@@ -325,7 +325,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             const userEmail = (supabaseUser.email || "").toLowerCase();
             const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
             if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
-              console.log("AuthProvider: Promoting user to super_admin on auth change:", userEmail);
+              
               user.role = "super_admin";
             }
           } catch {
@@ -335,7 +335,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           user = createUserFromSupabase(supabaseUser);
         }
 
-        console.log("AuthProvider: User authenticated - email:", user.email, "role:", user.role);
+        
         await setStoredValue(USER_KEY, JSON.stringify(user));
         
         setAuthToken(session.access_token);
@@ -372,7 +372,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Attempting login for:", email);
+      
       const result = await signInWithEmail(email.toLowerCase().trim(), password);
 
       if (!result.user || !result.session) {
@@ -381,12 +381,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       const user = createUserFromSupabase(result.user);
 
-      console.log("AuthProvider: Login successful for:", user.name);
+      
 
       await setStoredValue(USER_KEY, JSON.stringify(user));
       
       setAuthToken(result.session.access_token);
-      console.log("AuthProvider: Token synced after login");
+      
 
       setState({
         user,
@@ -429,7 +429,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Starting registration for:", email);
+      
       const result = await signUpWithEmail(
         email.toLowerCase().trim(),
         password,
@@ -453,12 +453,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         user.phone = phone.trim();
       }
 
-      console.log("AuthProvider: Registration successful for:", user.name);
+      
 
       await setStoredValue(USER_KEY, JSON.stringify(user));
       
       setAuthToken(result.session.access_token);
-      console.log("AuthProvider: Token synced after registration");
+      
 
       setState({
         user,
@@ -491,9 +491,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Sending password reset email to:", email);
+      
       await supabaseSendPasswordReset(email.toLowerCase().trim());
-      console.log("AuthProvider: Password reset email sent");
+      
       return { success: true };
     } catch (error: unknown) {
       console.error("AuthProvider: Password reset error:", error);
@@ -503,7 +503,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const logout = useCallback(async () => {
-    console.log("AuthProvider: Logging out...");
+    
 
     try {
       await signOut();
@@ -513,7 +513,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
     setAuthToken(null);
     await clearAllAuthData();
-    console.log("AuthProvider: Logout complete");
+    
 
     setState({
       user: null,
@@ -585,9 +585,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Changing password...");
+      
       await supabaseChangePassword(newPassword);
-      console.log("AuthProvider: Password changed successfully");
+      
       return { success: true };
     } catch (error: unknown) {
       console.error("AuthProvider: Change password error:", error);

@@ -33,7 +33,6 @@ async function withRetry<T>(
         throw lastError;
       }
       
-      console.log(`Supabase: Retry ${i + 1}/${retries} after network error`);
       await sleep(RETRY_DELAY * (i + 1));
     }
   }
@@ -141,8 +140,6 @@ export async function signUpWithEmail(
   password: string,
   displayName?: string
 ): Promise<AuthResult> {
-  console.log("Supabase: Signing up user:", email);
-
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.signUp({
@@ -161,7 +158,6 @@ export async function signUpWithEmail(
     throw new Error(getSupabaseErrorMessage(error));
   }
 
-  console.log("Supabase: Sign up successful for:", email);
   return { user: data.user, session: data.session };
 }
 
@@ -169,8 +165,6 @@ export async function signInWithEmail(
   email: string,
   password: string
 ): Promise<AuthResult> {
-  console.log("Supabase: Signing in user:", email);
-
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.signInWithPassword({
@@ -183,13 +177,10 @@ export async function signInWithEmail(
     throw new Error(getSupabaseErrorMessage(error));
   }
 
-  console.log("Supabase: Sign in successful for:", email);
   return { user: data.user, session: data.session };
 }
 
 export async function signOut(): Promise<void> {
-  console.log("Supabase: Signing out");
-
   const supabase = getSupabaseClient();
   const { error } = await supabase.auth.signOut();
 
@@ -197,13 +188,9 @@ export async function signOut(): Promise<void> {
     console.error("Supabase sign out error:", error);
     throw new Error(getSupabaseErrorMessage(error));
   }
-
-  console.log("Supabase: Sign out successful");
 }
 
 export async function sendPasswordResetEmail(email: string): Promise<void> {
-  console.log("Supabase: Sending password reset email to:", email);
-
   const supabase = getSupabaseClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -214,16 +201,12 @@ export async function sendPasswordResetEmail(email: string): Promise<void> {
     console.error("Supabase password reset error:", error);
     throw new Error(getSupabaseErrorMessage(error));
   }
-
-  console.log("Supabase: Password reset email sent to:", email);
 }
 
 export async function updateUserProfile(updates: {
   displayName?: string;
   avatarUrl?: string;
 }): Promise<SupabaseUser | null> {
-  console.log("Supabase: Updating user profile");
-
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.updateUser({
@@ -239,13 +222,10 @@ export async function updateUserProfile(updates: {
     throw new Error(getSupabaseErrorMessage(error));
   }
 
-  console.log("Supabase: Profile updated successfully");
   return data.user;
 }
 
 export async function changePassword(newPassword: string): Promise<SupabaseUser | null> {
-  console.log("Supabase: Changing password");
-
   const supabase = getSupabaseClient();
 
   const { data, error } = await supabase.auth.updateUser({
@@ -257,7 +237,6 @@ export async function changePassword(newPassword: string): Promise<SupabaseUser 
     throw new Error(getSupabaseErrorMessage(error));
   }
 
-  console.log("Supabase: Password changed successfully");
   return data.user;
 }
 
@@ -279,9 +258,7 @@ export async function getCurrentSession(): Promise<Session | null> {
       err.message.includes('Network') ||
       err.name === 'AuthRetryableFetchError';
     
-    if (isNetworkError) {
-      console.log("Supabase: Network error getting session, will retry on next attempt");
-    } else {
+    if (!isNetworkError) {
       console.error("Supabase get session error:", error);
     }
     return null;
@@ -307,22 +284,18 @@ export async function getCurrentUser(): Promise<SupabaseUser | null> {
       err.name === 'AuthRetryableFetchError';
     
     if (isNetworkError) {
-      console.log("Supabase: Network error getting user, will retry on next attempt");
       return null;
     }
-    
-    console.error("Supabase get user error:", error);
     
     // Handle "User from sub claim in JWT does not exist" error
     if (err.message?.includes("User from sub claim") || 
         err.message?.includes("does not exist") ||
         err.name === "AuthApiError") {
-      console.log("Clearing invalid session due to non-existent user");
       try {
         const supabase = getSupabaseClient();
         await supabase.auth.signOut();
-      } catch (signOutError) {
-        console.error("Error signing out invalid session:", signOutError);
+      } catch {
+        // Silent fail for cleanup
       }
     }
     return null;
@@ -330,8 +303,6 @@ export async function getCurrentUser(): Promise<SupabaseUser | null> {
 }
 
 export async function refreshSession(): Promise<Session | null> {
-  console.log("Supabase: Refreshing session");
-
   const supabase = getSupabaseClient();
   const { data, error } = await supabase.auth.refreshSession();
 
@@ -340,19 +311,14 @@ export async function refreshSession(): Promise<Session | null> {
     return null;
   }
 
-  console.log("Supabase: Session refreshed successfully");
   return data.session;
 }
 
 export async function deleteAccount(): Promise<void> {
-  console.log("Supabase: Deleting account");
-  
   throw new Error("Account deletion requires admin privileges. Please contact support.");
 }
 
 export async function resendVerificationEmail(email: string): Promise<void> {
-  console.log("Supabase: Resending verification email to:", email);
-
   const supabase = getSupabaseClient();
 
   const { error } = await supabase.auth.resend({
@@ -364,8 +330,6 @@ export async function resendVerificationEmail(email: string): Promise<void> {
     console.error("Supabase resend verification error:", error);
     throw new Error(getSupabaseErrorMessage(error));
   }
-
-  console.log("Supabase: Verification email resent to:", email);
 }
 
 export function onAuthStateChange(

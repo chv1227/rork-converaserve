@@ -52,14 +52,14 @@ export default function LoginScreen() {
     setIsLoading(true);
     setError("");
 
-    console.log("Attempting login...");
+    
     const result = await login(email.trim(), password);
 
     if (result.success) {
-      console.log("Login successful, navigating to home");
+      
       router.replace("/(tabs)");
     } else {
-      console.log("Login failed:", result.error);
+      
       const errorMsg = result.error || "Login failed";
       
       if (errorMsg.toLowerCase().includes("verify") || errorMsg.toLowerCase().includes("email not confirmed")) {
@@ -94,14 +94,14 @@ export default function LoginScreen() {
     setIsResetting(true);
     setResetError("");
 
-    console.log("Sending password reset email...");
+    
     const result = await sendPasswordResetEmail(resetEmail.trim());
 
     if (result.success) {
-      console.log("Password reset email sent");
+      
       setResetSuccess(true);
     } else {
-      console.log("Password reset failed:", result.error);
+      
       setResetError(result.error || "Failed to send reset email");
     }
 
@@ -125,12 +125,12 @@ export default function LoginScreen() {
     setVerifyError("");
 
     try {
-      console.log("Resending verification email...");
+      
       await resendVerificationEmail(verifyEmail.trim().toLowerCase());
-      console.log("Verification email resent");
+      
       setVerificationSent(true);
     } catch (err) {
-      console.log("Resend verification failed:", err);
+      
       setVerifyError(err instanceof Error ? err.message : "Failed to resend verification email");
     }
 

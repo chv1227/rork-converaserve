@@ -31,12 +31,11 @@ export default function HomeScreen() {
   const totalUnread = getTotalUnread();
 
   const onRefresh = useCallback(async () => {
-    console.log("Refreshing home data...");
     setLocalRefreshing(true);
     try {
       await refresh();
-    } catch (error) {
-      console.log("Refresh error:", error);
+    } catch {
+      // Refresh error handled silently
     } finally {
       setLocalRefreshing(false);
     }
@@ -108,7 +107,7 @@ export default function HomeScreen() {
         <SectionHeader
           title="Announcements"
           actionText="View all"
-          onActionPress={() => console.log("View all announcements")}
+          onActionPress={() => {}}
         />
         <View style={styles.announcementsContainer}>
           {isLoading && announcements.length === 0 ? (
@@ -124,7 +123,7 @@ export default function HomeScreen() {
               <AnnouncementCard
                 key={announcement.id}
                 announcement={announcement}
-                onPress={() => console.log("Announcement pressed:", announcement.id)}
+                onPress={() => {}}
               />
             ))
           )}
@@ -150,7 +149,7 @@ export default function HomeScreen() {
                 key={event.id}
                 event={event}
                 compact
-                onPress={() => console.log("Event pressed:", event.id)}
+                onPress={() => {}}
               />
             ))
           )}

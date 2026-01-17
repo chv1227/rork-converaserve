@@ -3,10 +3,6 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import createContextHook from "@nkzw/create-context-hook";
 import { useAuth } from "@/providers/AuthProvider";
 import { Ministry, Event, Announcement, Conversation } from "@/types";
-import { 
-  events as mockEvents, 
-  announcements as mockAnnouncements,
-} from "@/mocks/data";
 import { trpc } from "@/lib/trpc";
 
 const MINISTRIES_KEY = "app_ministries_v2";
@@ -61,7 +57,7 @@ export const [DataProvider, useData] = createContextHook(() => {
 
   useEffect(() => {
     const loadData = async () => {
-      console.log("DataProvider: Loading data for organization:", currentOrganization?.id);
+      
       setState(prev => ({ ...prev, isLoading: true }));
 
       try {
@@ -78,14 +74,11 @@ export const [DataProvider, useData] = createContextHook(() => {
         ]);
 
         let ministries: Ministry[] = storedMinistries ? JSON.parse(storedMinistries) : [];
-        let events: Event[] = storedEvents ? JSON.parse(storedEvents) : mockEvents;
-        let announcements: Announcement[] = storedAnnouncements ? JSON.parse(storedAnnouncements) : mockAnnouncements;
+        let events: Event[] = storedEvents ? JSON.parse(storedEvents) : [];
+        let announcements: Announcement[] = storedAnnouncements ? JSON.parse(storedAnnouncements) : [];
         let memberships: MinistryMembership[] = storedMemberships ? JSON.parse(storedMemberships) : [];
 
-        if (!storedMinistries) {
-          ministries = [];
-          await AsyncStorage.setItem(MINISTRIES_KEY, JSON.stringify(ministries));
-        }
+        if (!storedMinistries) await AsyncStorage.setItem(MINISTRIES_KEY, JSON.stringify(ministries));
         if (!storedEvents) await AsyncStorage.setItem(EVENTS_KEY, JSON.stringify(events));
         if (!storedAnnouncements) await AsyncStorage.setItem(ANNOUNCEMENTS_KEY, JSON.stringify(announcements));
         if (!storedMemberships) await AsyncStorage.setItem(MINISTRY_MEMBERSHIPS_KEY, JSON.stringify(memberships));
@@ -100,17 +93,17 @@ export const [DataProvider, useData] = createContextHook(() => {
           error: null,
         });
 
-        console.log("DataProvider: Data loaded successfully -", ministries.length, "ministries");
+        
       } catch (error) {
         console.error("DataProvider: Failed to load data:", error);
         setState({
           ministries: [],
-          events: mockEvents,
-          announcements: mockAnnouncements,
+          events: [],
+          announcements: [],
           ministryMemberships: [],
           isLoading: false,
           isRefreshing: false,
-          error: null,
+          error: "Failed to load data. Please try again.",
         });
       }
     };
@@ -119,7 +112,7 @@ export const [DataProvider, useData] = createContextHook(() => {
   }, [currentOrganization?.id]);
 
   const refresh = useCallback(async () => {
-    console.log("DataProvider: Refreshing data...");
+    
     setState(prev => ({ ...prev, isRefreshing: true }));
     
     await conversationsQuery.refetch();
@@ -127,7 +120,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     await new Promise(resolve => setTimeout(resolve, 300));
     
     setState(prev => ({ ...prev, isRefreshing: false }));
-    console.log("DataProvider: Refresh complete");
+    
   }, [conversationsQuery, totalUnreadQuery]);
 
   const organizationMinistries = useMemo(() => {
@@ -185,7 +178,7 @@ export const [DataProvider, useData] = createContextHook(() => {
   const joinMinistry = useCallback(async (ministryId: string) => {
     if (!user) return { success: false, message: "Not logged in" };
     
-    console.log("DataProvider: Joining ministry:", ministryId);
+    
     
     const existingMembership = state.ministryMemberships.find(
       m => m.ministryId === ministryId && m.userId === user.id
@@ -218,7 +211,7 @@ export const [DataProvider, useData] = createContextHook(() => {
   const leaveMinistry = useCallback(async (ministryId: string) => {
     if (!user) return { success: false };
     
-    console.log("DataProvider: Leaving ministry:", ministryId);
+    
     
     const updatedMemberships = state.ministryMemberships.filter(
       m => !(m.ministryId === ministryId && m.userId === user.id)
@@ -238,7 +231,7 @@ export const [DataProvider, useData] = createContextHook(() => {
   const createMinistry = useCallback(async (ministry: Omit<Ministry, 'id' | 'memberCount'>) => {
     if (!user) return { success: false, ministry: null };
     
-    console.log("DataProvider: Creating ministry:", ministry.name);
+    
     
     const newMinistry: Ministry = {
       ...ministry,
@@ -261,12 +254,12 @@ export const [DataProvider, useData] = createContextHook(() => {
     setState(prev => ({ ...prev, ministryMemberships: updatedMemberships }));
     await AsyncStorage.setItem(MINISTRY_MEMBERSHIPS_KEY, JSON.stringify(updatedMemberships));
     
-    console.log("DataProvider: Ministry created and user added as admin:", newMinistry.id);
+    
     return { success: true, ministry: newMinistry };
   }, [user, state.ministries, state.ministryMemberships]);
 
   const updateMinistry = useCallback(async (id: string, updates: Partial<Ministry>) => {
-    console.log("DataProvider: Updating ministry:", id);
+    
     const updatedMinistries = state.ministries.map(m => 
       m.id === id ? { ...m, ...updates } : m
     );
@@ -276,7 +269,7 @@ export const [DataProvider, useData] = createContextHook(() => {
   }, [state.ministries]);
 
   const deleteMinistry = useCallback(async (id: string) => {
-    console.log("DataProvider: Deleting ministry:", id);
+    
     const updatedMinistries = state.ministries.filter(m => m.id !== id);
     setState(prev => ({ ...prev, ministries: updatedMinistries }));
     await AsyncStorage.setItem(MINISTRIES_KEY, JSON.stringify(updatedMinistries));
