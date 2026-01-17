@@ -5,6 +5,10 @@ import * as SecureStore from "expo-secure-store";
 const SUPABASE_URL = process.env.EXPO_PUBLIC_SUPABASE_URL || "";
 const SUPABASE_ANON_KEY = process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY || "";
 
+export function isSupabaseConfigured(): boolean {
+  return Boolean(SUPABASE_URL && SUPABASE_ANON_KEY);
+}
+
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 1000;
 

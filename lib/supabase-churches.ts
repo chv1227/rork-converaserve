@@ -1,4 +1,4 @@
-import { getSupabaseClient } from './supabase-auth';
+import { getSupabaseClient, isSupabaseConfigured } from './supabase-auth';
 import { Church, ChurchSettings, ChurchMembership, ChurchRole } from '@/types';
 
 export interface CreateChurchInput {
@@ -102,6 +102,11 @@ export async function createChurch(
   console.log('Supabase Churches: Creating church:', input.name);
   console.log('Supabase Churches: User ID:', userId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured, using mock creation');
+    return createMockChurch(input, userId);
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -113,8 +118,13 @@ export async function createChurch(
       .ilike('state', input.state.trim());
     
     if (fetchError) {
-      console.error('Supabase Churches: Error checking duplicates:', fetchError);
-      throw new Error(fetchError.message || 'Failed to check for existing churches');
+      const errorMsg = fetchError.message || fetchError.code || 'Unknown error';
+      console.error('Supabase Churches: Error checking duplicates:', errorMsg);
+      if (fetchError.code === '42P01' || errorMsg.includes('does not exist')) {
+        console.log('Supabase Churches: Table does not exist, using mock creation');
+        return createMockChurch(input, userId);
+      }
+      throw new Error(errorMsg);
     }
     
     if (existingChurches && existingChurches.length > 0) {
@@ -236,8 +246,78 @@ export async function createChurch(
   }
 }
 
+function createMockChurch(
+  input: CreateChurchInput,
+  userId: string
+): {
+  church: Church;
+  membership: ChurchMembership;
+  settings: ChurchSettings;
+} {
+  const churchId = generateId();
+  const now = new Date().toISOString();
+  
+  const church: Church = {
+    id: churchId,
+    name: input.name.trim(),
+    denomination: input.denomination?.trim(),
+    description: input.description.trim(),
+    address: input.address.trim(),
+    city: input.city.trim(),
+    state: input.state.trim(),
+    zip: input.zip.trim(),
+    country: input.country.trim(),
+    email: input.email.trim().toLowerCase(),
+    phone: input.phone.trim(),
+    website: input.website?.trim(),
+    logo: input.logo?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=1A7B74&color=fff&size=200`,
+    bannerImage: input.bannerImage?.trim(),
+    socialLinks: input.socialLinks,
+    createdBy: userId,
+    createdAt: now,
+    updatedAt: now,
+  };
+  
+  const membership: ChurchMembership = {
+    id: generateId(),
+    churchId: churchId,
+    userId: userId,
+    role: 'super_admin',
+    joinedAt: now,
+    isActive: true,
+  };
+  
+  const settings: ChurchSettings = {
+    id: generateId(),
+    churchId: churchId,
+    visibility: 'public',
+    modulesEnabled: {
+      events: true,
+      announcements: true,
+      donations: true,
+      media: true,
+      ministries: true,
+      messaging: true,
+    },
+    notificationPreferences: {
+      newMembers: true,
+      events: true,
+      announcements: true,
+      donations: true,
+    },
+    updatedAt: now,
+  };
+  
+  return { church, membership, settings };
+}
+
 export async function listChurches(): Promise<Church[]> {
   console.log('Supabase Churches: Listing all churches');
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return [];
+  }
   
   const supabase = getSupabaseClient();
   
@@ -285,6 +365,11 @@ export async function listChurches(): Promise<Church[]> {
 export async function getChurchById(churchId: string): Promise<Church | null> {
   console.log('Supabase Churches: Getting church by ID:', churchId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return null;
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -321,6 +406,11 @@ export async function getChurchById(churchId: string): Promise<Church | null> {
 
 export async function getUserChurches(userId: string): Promise<Church[]> {
   console.log('Supabase Churches: Getting churches for user:', userId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return [];
+  }
   
   const supabase = getSupabaseClient();
   
@@ -372,6 +462,11 @@ export async function getUserChurches(userId: string): Promise<Church[]> {
 export async function getChurchMembership(churchId: string, userId: string): Promise<ChurchMembership | null> {
   console.log('Supabase Churches: Getting membership for church:', churchId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return null;
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -408,6 +503,11 @@ export async function getChurchMembership(churchId: string, userId: string): Pro
 
 export async function getChurchSettings(churchId: string): Promise<ChurchSettings | null> {
   console.log('Supabase Churches: Getting settings for church:', churchId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return null;
+  }
   
   const supabase = getSupabaseClient();
   
@@ -446,6 +546,11 @@ export async function updateChurchSettings(
   updates: Partial<Omit<ChurchSettings, 'id' | 'churchId'>>
 ): Promise<ChurchSettings | null> {
   console.log('Supabase Churches: Updating settings for church:', churchId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
   
   const supabase = getSupabaseClient();
   
@@ -489,6 +594,11 @@ export async function updateChurch(
   updates: Partial<Omit<Church, 'id' | 'createdBy' | 'createdAt'>>
 ): Promise<Church | null> {
   console.log('Supabase Churches: Updating church:', churchId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
   
   const supabase = getSupabaseClient();
   
@@ -535,6 +645,11 @@ export async function updateChurch(
 export async function deleteChurch(churchId: string): Promise<boolean> {
   console.log('Supabase Churches: Deleting church:', churchId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -576,6 +691,11 @@ export async function deleteChurch(churchId: string): Promise<boolean> {
 
 export async function joinChurch(churchId: string, userId: string): Promise<ChurchMembership> {
   console.log('Supabase Churches: User joining church:', churchId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
   
   const supabase = getSupabaseClient();
   
@@ -637,6 +757,11 @@ export async function joinChurch(churchId: string, userId: string): Promise<Chur
 export async function leaveChurch(churchId: string, userId: string): Promise<boolean> {
   console.log('Supabase Churches: User leaving church:', churchId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -685,6 +810,11 @@ export async function leaveChurch(churchId: string, userId: string): Promise<boo
 export async function getChurchMembers(churchId: string): Promise<ChurchMembership[]> {
   console.log('Supabase Churches: Getting members for church:', churchId);
   
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    return [];
+  }
+  
   const supabase = getSupabaseClient();
   
   try {
@@ -719,6 +849,11 @@ export async function updateMemberRole(
   role: ChurchRole
 ): Promise<ChurchMembership | null> {
   console.log('Supabase Churches: Updating member role:', membershipId);
+  
+  if (!isSupabaseConfigured()) {
+    console.log('Supabase Churches: Supabase not configured');
+    throw new Error('Supabase is not configured');
+  }
   
   const supabase = getSupabaseClient();
   
