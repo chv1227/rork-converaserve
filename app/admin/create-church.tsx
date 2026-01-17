@@ -32,7 +32,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc, getTRPCErrorMessage } from '@/lib/trpc';
+import { createChurch, CreateChurchInput } from '@/lib/supabase-churches';
+import { useMutation } from '@tanstack/react-query';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -107,7 +108,15 @@ export default function AdminCreateChurchScreen() {
     }
   }, [isAdmin, router]);
 
-  const createChurchMutation = trpc.churches.create.useMutation({
+  const { user } = useAuth();
+
+  const { mutate: createChurchMutate, isPending: isCreating } = useMutation({
+    mutationFn: async (input: CreateChurchInput) => {
+      if (!user?.id) {
+        throw new Error('User not authenticated');
+      }
+      return createChurch(input, user.id);
+    },
     onSuccess: (data) => {
       console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
@@ -125,28 +134,17 @@ export default function AdminCreateChurchScreen() {
     onError: (error) => {
       console.error('=== Church Creation Error ===');
       console.error('Raw error:', error);
-      console.error('Error message:', error?.message);
-      const errorMessage = getTRPCErrorMessage(error);
-      console.error('Parsed error message:', errorMessage);
+      const errorMessage = error instanceof Error ? error.message : 'Failed to create church';
+      console.error('Error message:', errorMessage);
       console.error('==============================');
       
-      if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('logged in')) {
-        Alert.alert('Session Expired', 'Please log in again to create a church.', [
-          { text: 'OK', onPress: () => router.push('/login') }
-        ]);
-      } else if (errorMessage.includes('FORBIDDEN') || errorMessage.includes('administrators')) {
-        Alert.alert('Access Denied', 'Only administrators can create churches. Please contact support if you believe this is an error.');
-      } else if (errorMessage.includes('CONFLICT') || errorMessage.includes('already exists')) {
+      if (errorMessage.includes('already exists')) {
         Alert.alert('Duplicate Church', 'A church with this name already exists in this location. Please use a different name or check if the church already exists.');
-      } else if (errorMessage.includes('network') || errorMessage.includes('connect') || errorMessage.includes('fetch') || errorMessage.includes('Failed to fetch')) {
-        Alert.alert('Connection Error', 'Unable to connect to the server. Please check your internet connection and try again.');
       } else {
         Alert.alert('Error', errorMessage || 'Failed to create church. Please try again.');
       }
     },
   });
-
-  const isCreating = createChurchMutation.isPending;
 
   const validateForm = useCallback(() => {
     if (!name.trim()) {
@@ -226,7 +224,7 @@ export default function AdminCreateChurchScreen() {
     });
     console.log('========================');
 
-    createChurchMutation.mutate({
+    const churchInput: CreateChurchInput = {
       name: name.trim(),
       denomination: denomination || undefined,
       description: description.trim(),
@@ -241,9 +239,11 @@ export default function AdminCreateChurchScreen() {
       logo: logo.trim() || undefined,
       bannerImage: bannerImage.trim() || undefined,
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-    });
+    };
+
+    createChurchMutate(churchInput);
   }, [
-    isAuthenticated, isAdmin, validateForm, createChurchMutation, name, denomination, description,
+    isAuthenticated, isAdmin, validateForm, createChurchMutate, name, denomination, description,
     address, city, state, zip, country, email, phone, website, logo, bannerImage,
     facebook, instagram, twitter, youtube, router
   ]);
