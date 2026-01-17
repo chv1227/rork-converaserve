@@ -68,7 +68,7 @@ const COUNTRIES = [
 
 export default function CreateChurchScreen() {
   const router = useRouter();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const { isAuthenticated } = useAuth();
   
   const [name, setName] = useState('');
   const [denomination, setDenomination] = useState('');
@@ -172,11 +172,6 @@ export default function CreateChurchScreen() {
       return;
     }
 
-    if (!isAdmin) {
-      Alert.alert('Access Denied', 'Only administrators can create churches.');
-      return;
-    }
-
     if (!validateForm()) return;
 
     const socialLinks: { facebook?: string; instagram?: string; twitter?: string; youtube?: string } = {};
@@ -202,12 +197,12 @@ export default function CreateChurchScreen() {
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
     });
   }, [
-    isAuthenticated, isAdmin, validateForm, createChurchMutation, name, denomination, description,
+    isAuthenticated, validateForm, createChurchMutation, name, denomination, description,
     address, city, state, zip, country, email, phone, website, logo, bannerImage,
     facebook, instagram, twitter, youtube, router
   ]);
 
-  if (!isAdmin) {
+  if (!isAuthenticated) {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
@@ -224,15 +219,15 @@ export default function CreateChurchScreen() {
           <View style={styles.accessDeniedIcon}>
             <ShieldX size={48} color={Colors.error} />
           </View>
-          <Text style={styles.accessDeniedTitle}>Access Restricted</Text>
+          <Text style={styles.accessDeniedTitle}>Sign In Required</Text>
           <Text style={styles.accessDeniedText}>
-            Only administrators can create new churches. Please contact an administrator if you need to register a church.
+            Please sign in to create a church. You will become the administrator of the church you create.
           </Text>
           <TouchableOpacity
             style={styles.backHomeButton}
-            onPress={() => router.back()}
+            onPress={() => router.push('/login')}
           >
-            <Text style={styles.backHomeButtonText}>Go Back</Text>
+            <Text style={styles.backHomeButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>
       </SafeAreaView>

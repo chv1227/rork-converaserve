@@ -355,3 +355,21 @@ export interface ChurchMembership {
   joinedAt: string;
   isActive: boolean;
 }
+
+export type ChurchInviteStatus = 'pending' | 'accepted' | 'expired' | 'revoked';
+
+export interface ChurchInvite {
+  id: string;
+  churchId: string;
+  email: string;
+  token: string;
+  role: ChurchRole;
+  invitedBy: string;
+  invitedByName: string;
+  status: ChurchInviteStatus;
+  expiresAt: string;
+  acceptedAt?: string;
+  acceptedBy?: string;
+  createdAt: string;
+  updatedAt: string;
+}

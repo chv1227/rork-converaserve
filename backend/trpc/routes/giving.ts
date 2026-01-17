@@ -4,11 +4,32 @@ import { persistentDb, generateId } from "@/backend/db/persistent";
 import { TRPCError } from "@trpc/server";
 import { Donation, RecurringGiving, GivingStats, GivingType, GivingFrequency } from "@/types";
 
+async function validateChurchDonationsEnabled(churchId: string, userId: string): Promise<void> {
+  const membership = await persistentDb.churchMemberships.findByUserAndChurch(userId, churchId);
+  
+  if (!membership || !membership.isActive) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You must be a member of this church to make donations",
+    });
+  }
+
+  const settings = await persistentDb.churchSettings.findByChurchId(churchId);
+  
+  if (settings && !settings.modulesEnabled.donations) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Donations are not enabled for this church",
+    });
+  }
+}
+
 export const givingRouter = createTRPCRouter({
   createDonation: protectedProcedure
     .input(
       z.object({
         organizationId: z.string(),
+        churchId: z.string().optional(),
         type: z.enum(["tithe", "offering"]),
         amount: z.number().positive(),
         currency: z.string().default("USD"),
@@ -19,6 +40,9 @@ export const givingRouter = createTRPCRouter({
     )
     .mutation(async ({ ctx, input }) => {
       console.log("Creating donation for user:", ctx.user.id);
+
+      const churchId = input.churchId || input.organizationId;
+      await validateChurchDonationsEnabled(churchId, ctx.user.id);
 
       const now = new Date().toISOString();
       const donationId = generateId();

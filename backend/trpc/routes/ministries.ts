@@ -1,8 +1,34 @@
 import * as z from "zod";
 import { TRPCError } from "@trpc/server";
 
-import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure } from "../create-context";
+import { createTRPCRouter, publicProcedure, protectedProcedure } from "../create-context";
 import { persistentDb, generateId } from "@/backend/db/persistent";
+
+async function validateChurchMinistriesEnabled(churchId: string): Promise<void> {
+  const settings = await persistentDb.churchSettings.findByChurchId(churchId);
+  if (settings && !settings.modulesEnabled.ministries) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Ministries are not enabled for this church",
+    });
+  }
+}
+
+async function validateChurchAdmin(userId: string, churchId: string): Promise<void> {
+  const membership = await persistentDb.churchMemberships.findByUserAndChurch(userId, churchId);
+  if (!membership || !membership.isActive) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "You are not a member of this church",
+    });
+  }
+  if (!['super_admin', 'admin'].includes(membership.role)) {
+    throw new TRPCError({
+      code: "FORBIDDEN",
+      message: "Only admins can manage ministries",
+    });
+  }
+}
 
 const createMinistrySchema = z.object({
   name: z.string().min(2),
@@ -60,10 +86,13 @@ export const ministriesRouter = createTRPCRouter({
       }));
     }),
 
-  create: adminProcedure
+  create: protectedProcedure
     .input(createMinistrySchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       console.log("Creating new ministry:", input.name);
+
+      await validateChurchAdmin(ctx.user.id, input.organizationId);
+      await validateChurchMinistriesEnabled(input.organizationId);
 
       const newMinistry = {
         id: generateId(),
@@ -88,9 +117,9 @@ export const ministriesRouter = createTRPCRouter({
       return newMinistry;
     }),
 
-  update: adminProcedure
+  update: protectedProcedure
     .input(updateMinistrySchema)
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const ministry = await persistentDb.ministries.findById(input.id);
       if (!ministry) {
         throw new TRPCError({
@@ -98,6 +127,8 @@ export const ministriesRouter = createTRPCRouter({
           message: "Ministry not found",
         });
       }
+
+      await validateChurchAdmin(ctx.user.id, ministry.organizationId);
 
       const updates: Record<string, unknown> = {};
       if (input.name) updates.name = input.name;
@@ -112,9 +143,9 @@ export const ministriesRouter = createTRPCRouter({
       return updated;
     }),
 
-  delete: adminProcedure
+  delete: protectedProcedure
     .input(z.object({ id: z.string() }))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ ctx, input }) => {
       const ministry = await persistentDb.ministries.findById(input.id);
       if (!ministry) {
         throw new TRPCError({
@@ -122,6 +153,8 @@ export const ministriesRouter = createTRPCRouter({
           message: "Ministry not found",
         });
       }
+
+      await validateChurchAdmin(ctx.user.id, ministry.organizationId);
 
       await persistentDb.ministries.delete(input.id);
       console.log("Ministry deleted:", input.id);

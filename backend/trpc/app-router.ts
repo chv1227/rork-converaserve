@@ -8,7 +8,7 @@ import { adminRouter } from "./routes/admin";
 import { notificationsRouter } from "./routes/notifications";
 import { messagesRouter } from "./routes/messages";
 import { songsRouter } from "./routes/songs";
-import { organizationsRouter } from "./routes/organizations";
+import { organizationsRouter } from "./routes/organizations"; // @deprecated - Use churches router instead
 import { givingRouter } from "./routes/giving";
 import { churchManagementRouter } from "./routes/churchManagement";
 import { pollsRouter } from "./routes/polls";
@@ -24,7 +24,7 @@ export const appRouter = createTRPCRouter({
   notifications: notificationsRouter,
   messages: messagesRouter,
   songs: songsRouter,
-  organizations: organizationsRouter,
+  organizations: organizationsRouter, // @deprecated - Use churches router for unified church organization system
   giving: givingRouter,
   churchManagement: churchManagementRouter,
   polls: pollsRouter,

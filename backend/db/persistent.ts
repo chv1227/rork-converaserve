@@ -1,5 +1,5 @@
 import { DbUser, Session, Notification, WorkflowRequest, ReportedContent, ActivityLog, Invitation } from "./index";
-import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving, Poll, Church, ChurchSettings, ChurchMembership } from "@/types";
+import { Ministry, Event, Announcement, Conversation, Message, Song, AudioPart, LyricLine, Organization, Membership, Donation, RecurringGiving, Poll, Church, ChurchSettings, ChurchMembership, ChurchInvite } from "@/types";
 
 const DB_ENDPOINT = process.env.EXPO_PUBLIC_RORK_DB_ENDPOINT;
 const DB_NAMESPACE = process.env.EXPO_PUBLIC_RORK_DB_NAMESPACE;
@@ -35,6 +35,7 @@ const memoryStore: Record<string, Record<string, unknown>> = {
   churches: {},
   churchSettings: {},
   churchMemberships: {},
+  churchInvites: {},
 };
 
 function getMemoryCollection<T>(collection: string): T[] {
@@ -979,6 +980,56 @@ export const persistentDb = {
     async delete(id: string): Promise<boolean> {
       const result = await dbRequest<void>("DELETE", "churchMemberships", id);
       return result.success;
+    }
+  },
+
+  churchInvites: {
+    async findById(id: string): Promise<ChurchInvite | null> {
+      const result = await dbRequest<ChurchInvite>("GET", "churchInvites", id);
+      return result.success && result.data ? result.data : null;
+    },
+
+    async findByToken(token: string): Promise<ChurchInvite | null> {
+      const invites = await queryCollection<ChurchInvite>("churchInvites", { token });
+      return invites.length > 0 ? invites[0] : null;
+    },
+
+    async findByEmail(email: string): Promise<ChurchInvite[]> {
+      return queryCollection<ChurchInvite>("churchInvites", { email: email.toLowerCase() });
+    },
+
+    async findByChurch(churchId: string): Promise<ChurchInvite[]> {
+      return queryCollection<ChurchInvite>("churchInvites", { churchId });
+    },
+
+    async findByEmailAndChurch(email: string, churchId: string): Promise<ChurchInvite | null> {
+      const invites = await this.findByChurch(churchId);
+      const found = invites.find(i => i.email.toLowerCase() === email.toLowerCase() && i.status === 'pending');
+      return found || null;
+    },
+
+    async create(invite: ChurchInvite): Promise<ChurchInvite | null> {
+      console.log("DB: Creating church invite for:", invite.email);
+      const result = await dbRequest<ChurchInvite>("POST", "churchInvites", invite.id, invite);
+      return result.success ? invite : null;
+    },
+
+    async update(id: string, updates: Partial<ChurchInvite>): Promise<ChurchInvite | null> {
+      const existing = await this.findById(id);
+      if (!existing) return null;
+      
+      const updated = { ...existing, ...updates, updatedAt: new Date().toISOString() };
+      const result = await dbRequest<ChurchInvite>("PUT", "churchInvites", id, updated);
+      return result.success ? updated : null;
+    },
+
+    async delete(id: string): Promise<boolean> {
+      const result = await dbRequest<void>("DELETE", "churchInvites", id);
+      return result.success;
+    },
+
+    async getAll(): Promise<ChurchInvite[]> {
+      return queryCollection<ChurchInvite>("churchInvites");
     }
   }
 };

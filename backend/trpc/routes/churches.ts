@@ -3,10 +3,11 @@ import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, publicProcedure, protectedProcedure } from "../create-context";
 import { persistentDb, generateId } from "@/backend/db/persistent";
-import { Church, ChurchSettings, ChurchMembership, ChurchRole } from "@/types";
+import { Church, ChurchSettings, ChurchMembership, ChurchRole, ChurchInvite } from "@/types";
 
 const MAX_RETRIES = 3;
 const RETRY_DELAY = 500;
+const INVITE_EXPIRY_DAYS = 7;
 
 async function withRetry<T>(
   operation: () => Promise<T>,
@@ -34,6 +35,15 @@ async function withRetry<T>(
   }
   
   throw lastError || new Error(`${operationName} failed after ${retries} attempts`);
+}
+
+function generateSecureToken(): string {
+  const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let token = '';
+  for (let i = 0; i < 64; i++) {
+    token += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return token;
 }
 
 const socialLinksSchema = z.object({
@@ -97,6 +107,12 @@ const updateSettingsSchema = z.object({
   }).optional(),
 });
 
+const inviteSchema = z.object({
+  churchId: z.string(),
+  email: z.string().email("Valid email is required"),
+  role: z.enum(["admin", "staff", "member"]).default("member"),
+});
+
 export const churchesRouter = createTRPCRouter({
   list: publicProcedure.query(async () => {
     console.log("Churches: Fetching all public churches");
@@ -131,15 +147,7 @@ export const churchesRouter = createTRPCRouter({
     .input(createChurchSchema)
     .mutation(async ({ ctx, input }) => {
       console.log("Churches: Creating new church:", input.name);
-      console.log("Churches: User creating church:", ctx.user.id, "role:", ctx.user.role);
-
-      if (ctx.user.role !== "admin" && ctx.user.role !== "super_admin") {
-        console.log("Churches: User role check failed:", ctx.user.role);
-        throw new TRPCError({
-          code: "FORBIDDEN",
-          message: "Only administrators can create churches",
-        });
-      }
+      console.log("Churches: User creating church:", ctx.user.id);
 
       try {
         const existingChurches = await withRetry(
@@ -240,7 +248,7 @@ export const churchesRouter = createTRPCRouter({
           isActive: true,
         };
 
-        console.log("Churches: Creating membership record...");
+        console.log("Churches: Creating membership record with super_admin role...");
         const createdMembership = await withRetry(
           () => persistentDb.churchMemberships.create(membership),
           "create church membership"
@@ -254,6 +262,9 @@ export const churchesRouter = createTRPCRouter({
           });
         }
         console.log("Churches: Membership record created:", membershipId);
+
+        await persistentDb.users.update(ctx.user.id, { role: "super_admin" });
+        console.log("Churches: User role updated to super_admin");
 
         console.log("Churches: Church creation completed successfully:", churchId);
 
@@ -551,6 +562,17 @@ export const churchesRouter = createTRPCRouter({
 
       await persistentDb.churchMemberships.update(input.membershipId, { role: input.role });
 
+      await persistentDb.notifications.create({
+        id: generateId(),
+        userId: targetMembership.userId,
+        organizationId: input.churchId,
+        title: "Role Updated",
+        message: `Your role has been updated to ${input.role.replace(/_/g, " ")}.`,
+        type: "info",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
+
       console.log("Churches: Member role updated:", input.membershipId, "to", input.role);
 
       return { success: true };
@@ -594,6 +616,17 @@ export const churchesRouter = createTRPCRouter({
       }
 
       await persistentDb.churchMemberships.update(input.membershipId, { isActive: false });
+
+      await persistentDb.notifications.create({
+        id: generateId(),
+        userId: targetMembership.userId,
+        organizationId: input.churchId,
+        title: "Removed from Church",
+        message: "You have been removed from the church.",
+        type: "warning",
+        isRead: false,
+        createdAt: new Date().toISOString(),
+      });
 
       console.log("Churches: Member removed:", input.membershipId);
 
@@ -671,4 +704,351 @@ export const churchesRouter = createTRPCRouter({
 
       return { success: true, message: "You have joined the church" };
     }),
+
+  invite: protectedProcedure
+    .input(inviteSchema)
+    .mutation(async ({ ctx, input }) => {
+      console.log("Churches: Creating invite for:", input.email);
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.churchId);
+
+      if (!membership || !["super_admin", "admin"].includes(membership.role)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can invite users",
+        });
+      }
+
+      const church = await persistentDb.churches.findById(input.churchId);
+      if (!church) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Church not found",
+        });
+      }
+
+      const existingInvite = await persistentDb.churchInvites.findByEmailAndChurch(input.email, input.churchId);
+      if (existingInvite) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "An invite for this email already exists",
+        });
+      }
+
+      const existingUser = await persistentDb.users.findByEmail(input.email);
+      if (existingUser) {
+        const existingMembership = await persistentDb.churchMemberships.findByUserAndChurch(existingUser.id, input.churchId);
+        if (existingMembership && existingMembership.isActive) {
+          throw new TRPCError({
+            code: "CONFLICT",
+            message: "This user is already a member of this church",
+          });
+        }
+      }
+
+      const inviter = await persistentDb.users.findById(ctx.user.id);
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+      const invite: ChurchInvite = {
+        id: generateId(),
+        churchId: input.churchId,
+        email: input.email.toLowerCase().trim(),
+        token: generateSecureToken(),
+        role: input.role as ChurchRole,
+        invitedBy: ctx.user.id,
+        invitedByName: inviter?.name || "Admin",
+        status: "pending",
+        expiresAt: expiresAt.toISOString(),
+        createdAt: now.toISOString(),
+        updatedAt: now.toISOString(),
+      };
+
+      await persistentDb.churchInvites.create(invite);
+
+      console.log("Churches: Invite created for:", input.email, "token:", invite.token);
+
+      return {
+        success: true,
+        invite: {
+          id: invite.id,
+          email: invite.email,
+          role: invite.role,
+          expiresAt: invite.expiresAt,
+          token: invite.token,
+        },
+      };
+    }),
+
+  getInvites: protectedProcedure
+    .input(z.object({ churchId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      console.log("Churches: Fetching invites for church:", input.churchId);
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.churchId);
+
+      if (!membership || !["super_admin", "admin"].includes(membership.role)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can view invites",
+        });
+      }
+
+      const invites = await persistentDb.churchInvites.findByChurch(input.churchId);
+      
+      const now = new Date();
+      const processedInvites = invites.map(invite => {
+        if (invite.status === "pending" && new Date(invite.expiresAt) < now) {
+          return { ...invite, status: "expired" as const };
+        }
+        return invite;
+      });
+
+      return processedInvites.sort((a, b) => 
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+    }),
+
+  acceptInvite: protectedProcedure
+    .input(z.object({ token: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      console.log("Churches: Accepting invite with token");
+
+      const invite = await persistentDb.churchInvites.findByToken(input.token);
+
+      if (!invite) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found or invalid",
+        });
+      }
+
+      if (invite.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `This invite has already been ${invite.status}`,
+        });
+      }
+
+      if (new Date(invite.expiresAt) < new Date()) {
+        await persistentDb.churchInvites.update(invite.id, { status: "expired" });
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "This invite has expired",
+        });
+      }
+
+      const user = await persistentDb.users.findById(ctx.user.id);
+      if (user?.email?.toLowerCase() !== invite.email.toLowerCase()) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "This invite was sent to a different email address",
+        });
+      }
+
+      const existingMembership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, invite.churchId);
+      if (existingMembership && existingMembership.isActive) {
+        throw new TRPCError({
+          code: "CONFLICT",
+          message: "You are already a member of this church",
+        });
+      }
+
+      const now = new Date().toISOString();
+      const membershipId = generateId();
+      const membership: ChurchMembership = {
+        id: membershipId,
+        churchId: invite.churchId,
+        userId: ctx.user.id,
+        role: invite.role,
+        joinedAt: now,
+        isActive: true,
+      };
+
+      await persistentDb.churchMemberships.create(membership);
+
+      await persistentDb.churchInvites.update(invite.id, {
+        status: "accepted",
+        acceptedAt: now,
+        acceptedBy: ctx.user.id,
+      });
+
+      const church = await persistentDb.churches.findById(invite.churchId);
+
+      console.log("Churches: Invite accepted, membership created:", membershipId);
+
+      return {
+        success: true,
+        church,
+        membership,
+      };
+    }),
+
+  revokeInvite: protectedProcedure
+    .input(z.object({ inviteId: z.string(), churchId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      console.log("Churches: Revoking invite:", input.inviteId);
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.churchId);
+
+      if (!membership || !["super_admin", "admin"].includes(membership.role)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can revoke invites",
+        });
+      }
+
+      const invite = await persistentDb.churchInvites.findById(input.inviteId);
+
+      if (!invite || invite.churchId !== input.churchId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found",
+        });
+      }
+
+      if (invite.status !== "pending") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Can only revoke pending invites",
+        });
+      }
+
+      await persistentDb.churchInvites.update(input.inviteId, { status: "revoked" });
+
+      console.log("Churches: Invite revoked:", input.inviteId);
+
+      return { success: true };
+    }),
+
+  resendInvite: protectedProcedure
+    .input(z.object({ inviteId: z.string(), churchId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      console.log("Churches: Resending invite:", input.inviteId);
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.churchId);
+
+      if (!membership || !["super_admin", "admin"].includes(membership.role)) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Only admins can resend invites",
+        });
+      }
+
+      const invite = await persistentDb.churchInvites.findById(input.inviteId);
+
+      if (!invite || invite.churchId !== input.churchId) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found",
+        });
+      }
+
+      const now = new Date();
+      const expiresAt = new Date(now.getTime() + INVITE_EXPIRY_DAYS * 24 * 60 * 60 * 1000);
+
+      await persistentDb.churchInvites.update(input.inviteId, {
+        token: generateSecureToken(),
+        status: "pending",
+        expiresAt: expiresAt.toISOString(),
+      });
+
+      const updatedInvite = await persistentDb.churchInvites.findById(input.inviteId);
+
+      console.log("Churches: Invite resent:", input.inviteId);
+
+      return {
+        success: true,
+        invite: updatedInvite,
+      };
+    }),
+
+  getInviteByToken: publicProcedure
+    .input(z.object({ token: z.string() }))
+    .query(async ({ input }) => {
+      console.log("Churches: Fetching invite by token");
+
+      const invite = await persistentDb.churchInvites.findByToken(input.token);
+
+      if (!invite) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invite not found or invalid",
+        });
+      }
+
+      const church = await persistentDb.churches.findById(invite.churchId);
+
+      return {
+        id: invite.id,
+        email: invite.email,
+        role: invite.role,
+        status: invite.status,
+        expiresAt: invite.expiresAt,
+        invitedByName: invite.invitedByName,
+        church: church ? {
+          id: church.id,
+          name: church.name,
+          logo: church.logo,
+        } : null,
+      };
+    }),
+
+  checkServicesEnabled: protectedProcedure
+    .input(z.object({ churchId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      console.log("Churches: Checking services enabled for church:", input.churchId);
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.churchId);
+
+      if (!membership || !membership.isActive) {
+        return {
+          hasChurch: false,
+          services: {
+            events: false,
+            announcements: false,
+            donations: false,
+            media: false,
+            ministries: false,
+            messaging: false,
+          },
+        };
+      }
+
+      const settings = await persistentDb.churchSettings.findByChurchId(input.churchId);
+
+      return {
+        hasChurch: true,
+        churchId: input.churchId,
+        role: membership.role,
+        services: settings?.modulesEnabled || {
+          events: true,
+          announcements: true,
+          donations: true,
+          media: true,
+          ministries: true,
+          messaging: true,
+        },
+      };
+    }),
+
+  getUserActiveChurch: protectedProcedure.query(async ({ ctx }) => {
+    console.log("Churches: Getting user's active church");
+
+    const memberships = await persistentDb.churchMemberships.findByUser(ctx.user.id);
+    const activeMembership = memberships.find(m => m.isActive);
+
+    if (!activeMembership) {
+      return null;
+    }
+
+    const church = await persistentDb.churches.findById(activeMembership.churchId);
+    const settings = await persistentDb.churchSettings.findByChurchId(activeMembership.churchId);
+
+    return {
+      church,
+      membership: activeMembership,
+      settings,
+    };
+  }),
 });
