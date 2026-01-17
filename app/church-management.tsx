@@ -35,6 +35,8 @@ import {
   Phone,
   Mail,
   Globe,
+  Bell,
+  Database,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
@@ -530,6 +532,14 @@ export default function ChurchManagementScreen() {
     </View>
   );
 
+  const showComingSoon = (feature: string) => {
+    if (Platform.OS === 'web') {
+      console.log(`${feature} - Coming soon`);
+    } else {
+      Alert.alert('Coming Soon', `${feature} will be available in a future update.`);
+    }
+  };
+
   const renderSettingsTab = () => (
     <View style={styles.tabContent}>
       <View style={styles.orgInfoCard}>
@@ -546,6 +556,70 @@ export default function ChurchManagementScreen() {
         </View>
       </View>
 
+      <Text style={styles.settingsSectionTitle}>Organization</Text>
+      <View style={styles.settingsSection}>
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => router.push('/organization' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.primary + '15' }]}>
+            <Building2 size={20} color={Colors.primary} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>{currentOrganization?.name || 'Current Organization'}</Text>
+            <Text style={styles.settingsSubtitle}>Switch or manage organizations</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => showComingSoon('General Settings')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.secondary + '15' }]}>
+            <Settings size={20} color={Colors.secondary} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>General Settings</Text>
+            <Text style={styles.settingsSubtitle}>Organization name, branding</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => showComingSoon('Notification Settings')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.warning + '15' }]}>
+            <Bell size={20} color={Colors.warning} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Notification Settings</Text>
+            <Text style={styles.settingsSubtitle}>Configure push notifications</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.settingsItem, styles.settingsItemNoBorder]}
+          onPress={() => showComingSoon('Data & Storage')}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: '#7C3AED' + '15' }]}>
+            <Database size={20} color="#7C3AED" />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Data & Storage</Text>
+            <Text style={styles.settingsSubtitle}>Manage organization data</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.settingsSectionTitle}>Church Settings</Text>
       <View style={styles.settingsSection}>
         <TouchableOpacity
           style={styles.settingsItem}
@@ -571,14 +645,14 @@ export default function ChurchManagementScreen() {
             <Settings size={20} color={Colors.warning} />
           </View>
           <View style={styles.settingsContent}>
-            <Text style={styles.settingsTitle}>Advanced Settings</Text>
-            <Text style={styles.settingsSubtitle}>Configure organization settings</Text>
+            <Text style={styles.settingsTitle}>Admin Settings</Text>
+            <Text style={styles.settingsSubtitle}>Manage users and content</Text>
           </View>
           <ChevronRight size={18} color={Colors.textTertiary} />
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.settingsItem}
+          style={[styles.settingsItem, styles.settingsItemNoBorder]}
           onPress={() => router.push('/admin' as any)}
           activeOpacity={0.7}
         >
@@ -1187,11 +1261,23 @@ const styles = StyleSheet.create({
     marginTop: 4,
     lineHeight: 18,
   },
+  settingsSectionTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.textSecondary,
+    marginBottom: 12,
+    marginTop: 8,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
   settingsSection: {
     backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 20,
+  },
+  settingsItemNoBorder: {
+    borderBottomWidth: 0,
   },
   settingsItem: {
     flexDirection: 'row',

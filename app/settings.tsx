@@ -20,11 +20,8 @@ import {
   Megaphone,
   Music,
   Shield,
-  Database,
-  Bell,
   ChevronRight,
   UserPlus,
-  Settings as SettingsIcon,
   Trash2,
   UsersRound,
   AlertTriangle,
@@ -32,7 +29,6 @@ import {
   X,
   Check,
   ClipboardList,
-  Building2,
   Church,
   Plus,
   MapPin,
@@ -91,7 +87,7 @@ interface ChurchWithRole extends ChurchType {
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAdmin, isSuperAdmin, currentOrganization, user } = useAuth();
+  const { isAdmin, isSuperAdmin, user } = useAuth();
   const queryClient = useQueryClient();
 
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
@@ -399,34 +395,7 @@ export default function SettingsScreen() {
           </>
         )}
 
-        <Text style={styles.sectionTitle}>Organization</Text>
-        <View style={styles.menuSection}>
-          <AdminMenuItem
-            icon={<Building2 size={20} color={Colors.primary} />}
-            title={currentOrganization?.name || "Current Organization"}
-            subtitle="Switch or manage organizations"
-            onPress={() => handleNavigation("/organization")}
-          />
-          <AdminMenuItem
-            icon={<SettingsIcon size={20} color={Colors.primary} />}
-            title="General Settings"
-            subtitle="Organization name, branding"
-            onPress={() => showComingSoon("General Settings")}
-          />
-          <AdminMenuItem
-            icon={<Bell size={20} color={Colors.primary} />}
-            title="Notification Settings"
-            subtitle="Configure push notifications"
-            onPress={() => showComingSoon("Notification Settings")}
-          />
-          <AdminMenuItem
-            icon={<Database size={20} color={Colors.primary} />}
-            title="Data & Storage"
-            subtitle="Manage organization data"
-            onPress={() => showComingSoon("Data & Storage")}
-            showBorder={false}
-          />
-        </View>
+        
 
         {isSuperAdmin && (
           <>
