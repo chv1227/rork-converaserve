@@ -21,6 +21,7 @@ export type UserRole = "member" | "leader" | "admin" | "super_admin";
 
 const SUPER_ADMIN_EMAILS = [
   "chv1227@gmail.com",
+  "coreytmoss@gmail.com",
 ];
 
 export interface User {
@@ -215,6 +216,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             user = JSON.parse(storedUser) as User;
             user.id = supabaseUser.id;
             user.email = supabaseUser.email || user.email;
+            // Re-check super admin status on every auth restore
+            const userEmail = (supabaseUser.email || "").toLowerCase();
+            const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+            if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
+              console.log("AuthProvider: Promoting user to super_admin on restore:", userEmail);
+              user.role = "super_admin";
+            }
           } else {
             user = createUserFromSupabase(supabaseUser);
           }
@@ -313,6 +321,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             user = JSON.parse(storedUser) as User;
             user.id = supabaseUser.id;
             user.email = supabaseUser.email || user.email;
+            // Re-check super admin status on auth state change
+            const userEmail = (supabaseUser.email || "").toLowerCase();
+            const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+            if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
+              console.log("AuthProvider: Promoting user to super_admin on auth change:", userEmail);
+              user.role = "super_admin";
+            }
           } catch {
             user = createUserFromSupabase(supabaseUser);
           }
@@ -320,6 +335,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           user = createUserFromSupabase(supabaseUser);
         }
 
+        console.log("AuthProvider: User authenticated - email:", user.email, "role:", user.role);
         await setStoredValue(USER_KEY, JSON.stringify(user));
         
         setAuthToken(session.access_token);

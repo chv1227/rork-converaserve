@@ -109,10 +109,13 @@ export default function AdminCreateChurchScreen() {
 
   const createChurchMutation = trpc.churches.create.useMutation({
     onSuccess: (data) => {
+      console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
       console.log('Church ID:', data.church.id);
       console.log('Settings ID:', data.settings.id);
       console.log('Membership ID:', data.membership.id);
+      console.log('Created by:', data.church.createdBy);
+      console.log('================================');
       Alert.alert(
         'Success!', 
         `${data.church.name} has been created successfully. You are now the administrator.`,
@@ -120,15 +123,22 @@ export default function AdminCreateChurchScreen() {
       );
     },
     onError: (error) => {
-      console.error('Create church error:', error);
+      console.error('=== Church Creation Error ===');
+      console.error('Raw error:', error);
+      console.error('Error message:', error?.message);
       const errorMessage = getTRPCErrorMessage(error);
       console.error('Parsed error message:', errorMessage);
+      console.error('==============================');
       
-      if (errorMessage.includes('FORBIDDEN') || errorMessage.includes('administrators')) {
+      if (errorMessage.includes('UNAUTHORIZED') || errorMessage.includes('logged in')) {
+        Alert.alert('Session Expired', 'Please log in again to create a church.', [
+          { text: 'OK', onPress: () => router.push('/login') }
+        ]);
+      } else if (errorMessage.includes('FORBIDDEN') || errorMessage.includes('administrators')) {
         Alert.alert('Access Denied', 'Only administrators can create churches. Please contact support if you believe this is an error.');
       } else if (errorMessage.includes('CONFLICT') || errorMessage.includes('already exists')) {
         Alert.alert('Duplicate Church', 'A church with this name already exists in this location. Please use a different name or check if the church already exists.');
-      } else if (errorMessage.includes('network') || errorMessage.includes('connect') || errorMessage.includes('fetch')) {
+      } else if (errorMessage.includes('network') || errorMessage.includes('connect') || errorMessage.includes('fetch') || errorMessage.includes('Failed to fetch')) {
         Alert.alert('Connection Error', 'Unable to connect to the server. Please check your internet connection and try again.');
       } else {
         Alert.alert('Error', errorMessage || 'Failed to create church. Please try again.');
@@ -205,11 +215,16 @@ export default function AdminCreateChurchScreen() {
     if (twitter.trim()) socialLinks.twitter = twitter.trim();
     if (youtube.trim()) socialLinks.youtube = youtube.trim();
 
-    console.log('Creating church with data:', {
+    console.log('=== Creating Church ===');
+    console.log('User authenticated:', isAuthenticated);
+    console.log('User is admin:', isAdmin);
+    console.log('Church data:', {
       name: name.trim(),
       city: city.trim(),
       state: state.trim(),
+      country: country.trim(),
     });
+    console.log('========================');
 
     createChurchMutation.mutate({
       name: name.trim(),
