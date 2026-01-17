@@ -30,6 +30,11 @@ import {
   Building2,
   Edit3,
   Palette,
+  Camera,
+  MapPin,
+  Phone,
+  Mail,
+  Globe,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
@@ -40,6 +45,7 @@ import {
   approveMemberRequest,
   rejectMemberRequest,
   removeMember,
+  updateOrganization,
   OrganizationMember,
   OrganizationMembership,
 } from '@/lib/supabase-organizations';
@@ -48,7 +54,7 @@ import { trpc } from '@/lib/trpc';
 import { Ministry } from '@/types';
 import { getMinistryColor } from '@/constants/ministryColors';
 
-type TabType = 'members' | 'ministries' | 'settings';
+type TabType = 'members' | 'ministries' | 'settings' | 'edit';
 type RoleType = OrganizationMembership['role'];
 
 const ROLE_LABELS: Record<RoleType, string> = {
@@ -65,16 +71,46 @@ const ROLE_COLORS: Record<RoleType, string> = {
   member: Colors.primary,
 };
 
+const LOGO_OPTIONS = [
+  'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1519491050282-cf00c82424bd?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1548625149-fc4a29cf7092?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1507692049790-de58290a4334?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1473177104440-ffee2f376098?w=200&h=200&fit=crop',
+  'https://images.unsplash.com/photo-1545296664-39db56ad95bd?w=200&h=200&fit=crop',
+];
+
 export default function ChurchManagementScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { currentOrganization, user, isSuperAdmin, isOrganizationSuperAdmin } = useAuth();
+  const { currentOrganization, user, isSuperAdmin, isOrganizationSuperAdmin, setCurrentOrganization, currentMembership } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabType>('members');
   const [searchQuery, setSearchQuery] = useState('');
   const [refreshing, setRefreshing] = useState(false);
   const [selectedMember, setSelectedMember] = useState<OrganizationMember | null>(null);
   const [showRoleModal, setShowRoleModal] = useState(false);
+
+  const [churchName, setChurchName] = useState('');
+  const [churchDescription, setChurchDescription] = useState('');
+  const [churchAddress, setChurchAddress] = useState('');
+  const [churchPhone, setChurchPhone] = useState('');
+  const [churchEmail, setChurchEmail] = useState('');
+  const [churchWebsite, setChurchWebsite] = useState('');
+  const [churchLogo, setChurchLogo] = useState('');
+  const [showLogoPicker, setShowLogoPicker] = useState(false);
+
+  React.useEffect(() => {
+    if (currentOrganization) {
+      setChurchName(currentOrganization.name || '');
+      setChurchDescription(currentOrganization.description || '');
+      setChurchAddress(currentOrganization.address || '');
+      setChurchPhone(currentOrganization.phone || '');
+      setChurchEmail(currentOrganization.email || '');
+      setChurchWebsite(currentOrganization.website || '');
+      setChurchLogo(currentOrganization.logo || '');
+    }
+  }, [currentOrganization]);
 
   const orgId = currentOrganization?.id || '';
   const canManage = isSuperAdmin || isOrganizationSuperAdmin;
@@ -153,6 +189,47 @@ export default function ChurchManagementScreen() {
       Alert.alert('Error', error.message);
     },
   });
+
+  const updateChurchMutation = useMutation({
+    mutationFn: async () => {
+      if (!currentOrganization) throw new Error('No organization selected');
+      return await updateOrganization(currentOrganization.id, {
+        name: churchName.trim(),
+        description: churchDescription.trim(),
+        address: churchAddress.trim() || undefined,
+        phone: churchPhone.trim() || undefined,
+        email: churchEmail.trim() || undefined,
+        website: churchWebsite.trim() || undefined,
+        logo: churchLogo || undefined,
+      });
+    },
+    onSuccess: async (updatedOrg) => {
+      console.log('Organization updated successfully:', updatedOrg.name);
+      await setCurrentOrganization(updatedOrg, currentMembership);
+      Alert.alert('Success', 'Church profile updated!');
+    },
+    onError: (error: Error) => {
+      console.error('Update organization error:', error.message);
+      Alert.alert('Error', error.message || 'Failed to update church profile');
+    },
+  });
+
+  const handleSaveChurch = () => {
+    if (!churchName.trim()) {
+      Alert.alert('Error', 'Please enter a church name');
+      return;
+    }
+    if (!churchDescription.trim() || churchDescription.length < 10) {
+      Alert.alert('Error', 'Please enter a description (at least 10 characters)');
+      return;
+    }
+    updateChurchMutation.mutate();
+  };
+
+  const selectLogo = (url: string) => {
+    setChurchLogo(url);
+    setShowLogoPicker(false);
+  };
 
   const { refetch: refetchMembers } = membersQuery;
   const { refetch: refetchPending } = pendingQuery;
@@ -472,7 +549,7 @@ export default function ChurchManagementScreen() {
       <View style={styles.settingsSection}>
         <TouchableOpacity
           style={styles.settingsItem}
-          onPress={() => router.push('/organization/edit' as any)}
+          onPress={() => setActiveTab('edit')}
           activeOpacity={0.7}
         >
           <View style={[styles.settingsIcon, { backgroundColor: Colors.primary + '15' }]}>
@@ -536,6 +613,159 @@ export default function ChurchManagementScreen() {
     </View>
   );
 
+  const renderEditTab = () => (
+    <View style={styles.tabContent}>
+      <View style={styles.editHeader}>
+        <TouchableOpacity
+          style={[styles.saveButton, updateChurchMutation.isPending && styles.saveButtonDisabled]}
+          onPress={handleSaveChurch}
+          disabled={updateChurchMutation.isPending}
+        >
+          {updateChurchMutation.isPending ? (
+            <ActivityIndicator size="small" color="#FFF" />
+          ) : (
+            <>
+              <Check size={18} color="#FFF" />
+              <Text style={styles.saveButtonText}>Save Changes</Text>
+            </>
+          )}
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.logoSection}>
+        <TouchableOpacity
+          style={styles.logoContainer}
+          onPress={() => setShowLogoPicker(!showLogoPicker)}
+        >
+          {churchLogo ? (
+            <Image source={{ uri: churchLogo }} style={styles.logoImage} contentFit="cover" />
+          ) : (
+            <View style={styles.logoPlaceholder}>
+              <Building2 size={48} color={Colors.textTertiary} />
+            </View>
+          )}
+          <View style={styles.cameraOverlay}>
+            <Camera size={18} color="#FFF" />
+          </View>
+        </TouchableOpacity>
+        <Text style={styles.logoHint}>Tap to change logo</Text>
+      </View>
+
+      {showLogoPicker && (
+        <View style={styles.logoPicker}>
+          <Text style={styles.pickerTitle}>Choose a logo</Text>
+          <View style={styles.logoGrid}>
+            {LOGO_OPTIONS.map((url, index) => (
+              <TouchableOpacity
+                key={index}
+                style={[styles.logoOption, churchLogo === url && styles.logoOptionSelected]}
+                onPress={() => selectLogo(url)}
+              >
+                <Image source={{ uri: url }} style={styles.logoOptionImage} contentFit="cover" />
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
+
+      <View style={styles.form}>
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Church Name *</Text>
+          <TextInput
+            style={styles.formInput}
+            placeholder="e.g., Grace Community Church"
+            placeholderTextColor={Colors.textTertiary}
+            value={churchName}
+            onChangeText={setChurchName}
+            autoCapitalize="words"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Description *</Text>
+          <TextInput
+            style={[styles.formInput, styles.textArea]}
+            placeholder="Tell us about your church..."
+            placeholderTextColor={Colors.textTertiary}
+            value={churchDescription}
+            onChangeText={setChurchDescription}
+            multiline
+            numberOfLines={4}
+            textAlignVertical="top"
+          />
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Address</Text>
+          <View style={styles.inputWithIcon}>
+            <MapPin size={20} color={Colors.textSecondary} />
+            <TextInput
+              style={styles.inputIcon}
+              placeholder="123 Faith Avenue, City, State"
+              placeholderTextColor={Colors.textTertiary}
+              value={churchAddress}
+              onChangeText={setChurchAddress}
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Phone</Text>
+          <View style={styles.inputWithIcon}>
+            <Phone size={20} color={Colors.textSecondary} />
+            <TextInput
+              style={styles.inputIcon}
+              placeholder="+1 (555) 123-4567"
+              placeholderTextColor={Colors.textTertiary}
+              value={churchPhone}
+              onChangeText={setChurchPhone}
+              keyboardType="phone-pad"
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Email</Text>
+          <View style={styles.inputWithIcon}>
+            <Mail size={20} color={Colors.textSecondary} />
+            <TextInput
+              style={styles.inputIcon}
+              placeholder="info@yourchurch.org"
+              placeholderTextColor={Colors.textTertiary}
+              value={churchEmail}
+              onChangeText={setChurchEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
+            />
+          </View>
+        </View>
+
+        <View style={styles.inputGroup}>
+          <Text style={styles.label}>Website</Text>
+          <View style={styles.inputWithIcon}>
+            <Globe size={20} color={Colors.textSecondary} />
+            <TextInput
+              style={styles.inputIcon}
+              placeholder="https://yourchurch.org"
+              placeholderTextColor={Colors.textTertiary}
+              value={churchWebsite}
+              onChangeText={setChurchWebsite}
+              keyboardType="url"
+              autoCapitalize="none"
+            />
+          </View>
+        </View>
+      </View>
+
+      <TouchableOpacity
+        style={styles.adminButton}
+        onPress={() => router.push('/organization/admin' as any)}
+      >
+        <Text style={styles.adminButtonText}>Church Admin Panel</Text>
+      </TouchableOpacity>
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
@@ -576,6 +806,15 @@ export default function ChurchManagementScreen() {
             Settings
           </Text>
         </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.tab, activeTab === 'edit' && styles.activeTab]}
+          onPress={() => setActiveTab('edit')}
+        >
+          <Edit3 size={18} color={activeTab === 'edit' ? Colors.primary : Colors.textSecondary} />
+          <Text style={[styles.tabText, activeTab === 'edit' && styles.activeTabText]}>
+            Edit
+          </Text>
+        </TouchableOpacity>
       </View>
 
       <ScrollView
@@ -589,6 +828,7 @@ export default function ChurchManagementScreen() {
         {activeTab === 'members' && renderMembersTab()}
         {activeTab === 'ministries' && renderMinistriesTab()}
         {activeTab === 'settings' && renderSettingsTab()}
+        {activeTab === 'edit' && renderEditTab()}
 
         <View style={{ height: 100 }} />
       </ScrollView>
@@ -1013,6 +1253,156 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     textTransform: 'uppercase',
     marginTop: 4,
+  },
+  editHeader: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    marginBottom: 16,
+  },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFF',
+  },
+  logoSection: {
+    alignItems: 'center',
+    marginBottom: 28,
+  },
+  logoContainer: {
+    position: 'relative',
+  },
+  logoImage: {
+    width: 110,
+    height: 110,
+    borderRadius: 28,
+    borderWidth: 4,
+    borderColor: Colors.surface,
+  },
+  logoPlaceholder: {
+    width: 110,
+    height: 110,
+    borderRadius: 28,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: Colors.surface,
+  },
+  cameraOverlay: {
+    position: 'absolute',
+    bottom: 0,
+    right: 0,
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: Colors.surface,
+  },
+  logoHint: {
+    fontSize: 14,
+    color: Colors.primary,
+    marginTop: 10,
+    fontWeight: '500' as const,
+  },
+  logoPicker: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 24,
+  },
+  pickerTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+    marginBottom: 12,
+  },
+  logoGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 12,
+    justifyContent: 'center',
+  },
+  logoOption: {
+    borderRadius: 16,
+    borderWidth: 3,
+    borderColor: 'transparent',
+  },
+  logoOptionSelected: {
+    borderColor: Colors.primary,
+  },
+  logoOptionImage: {
+    width: 68,
+    height: 68,
+    borderRadius: 14,
+  },
+  form: {
+    gap: 20,
+  },
+  inputGroup: {
+    gap: 8,
+  },
+  label: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  formInput: {
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    padding: 16,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  textArea: {
+    height: 100,
+    paddingTop: 16,
+  },
+  inputWithIcon: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.surface,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    gap: 12,
+  },
+  inputIcon: {
+    flex: 1,
+    paddingVertical: 16,
+    fontSize: 16,
+    color: Colors.text,
+  },
+  adminButton: {
+    marginTop: 32,
+    backgroundColor: Colors.surfaceSecondary,
+    paddingVertical: 16,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: Colors.border,
+  },
+  adminButtonText: {
+    fontSize: 16,
+    fontWeight: '600' as const,
+    color: Colors.primary,
   },
   errorContainer: {
     flex: 1,
