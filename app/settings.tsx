@@ -33,11 +33,16 @@ import {
   Check,
   ClipboardList,
   Building2,
+  Church,
+  Plus,
+  MapPin,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import { getUserChurches, getChurchMembership } from "@/lib/supabase-churches";
+import { Church as ChurchType, ChurchMembership } from "@/types";
 
 interface AdminMenuItemProps {
   icon: React.ReactNode;
@@ -79,10 +84,14 @@ function AdminMenuItem({
   );
 }
 
+interface ChurchWithRole extends ChurchType {
+  membership?: ChurchMembership;
+}
+
 export default function SettingsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAdmin, isSuperAdmin, currentOrganization } = useAuth();
+  const { isAdmin, isSuperAdmin, currentOrganization, user } = useAuth();
   const queryClient = useQueryClient();
 
   const [inviteModalVisible, setInviteModalVisible] = useState(false);
@@ -111,6 +120,27 @@ export default function SettingsScreen() {
     { status: "pending" },
     { enabled: isAdmin }
   );
+
+  const userChurchesQuery = useQuery({
+    queryKey: ['userChurches', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const churches = await getUserChurches(user.id);
+      const churchesWithRoles: ChurchWithRole[] = [];
+      
+      for (const church of churches) {
+        const membership = await getChurchMembership(church.id, user.id);
+        if (membership && (membership.role === 'super_admin' || membership.role === 'admin')) {
+          churchesWithRoles.push({ ...church, membership });
+        }
+      }
+      
+      return churchesWithRoles;
+    },
+    enabled: !!user?.id && isAdmin,
+  });
+
+  const adminChurches = userChurchesQuery.data || [];
 
   const inviteMutation = trpc.admin.inviteUser.useMutation({
     onSuccess: () => {
@@ -309,6 +339,65 @@ export default function SettingsScreen() {
             showBorder={false}
           />
         </View>
+
+        {(isSuperAdmin || adminChurches.length > 0) && (
+          <>
+            <Text style={styles.sectionTitle}>Church Management</Text>
+            <View style={styles.menuSection}>
+              {adminChurches.map((church, index) => (
+                <TouchableOpacity
+                  key={church.id}
+                  style={[
+                    styles.churchItem,
+                    index === adminChurches.length - 1 && !isSuperAdmin && styles.menuItemNoBorder,
+                  ]}
+                  onPress={() => router.push(`/church/${church.id}/settings` as any)}
+                  activeOpacity={0.7}
+                >
+                  <View style={styles.churchIcon}>
+                    {church.logo ? (
+                      <View style={styles.churchLogoContainer}>
+                        <Church size={20} color={Colors.primary} />
+                      </View>
+                    ) : (
+                      <Church size={20} color={Colors.primary} />
+                    )}
+                  </View>
+                  <View style={styles.menuContent}>
+                    <Text style={styles.menuTitle}>{church.name}</Text>
+                    <View style={styles.churchLocationRow}>
+                      <MapPin size={12} color={Colors.textTertiary} />
+                      <Text style={styles.churchLocation}>
+                        {church.city}, {church.state}
+                      </Text>
+                    </View>
+                  </View>
+                  <View style={styles.churchRoleBadge}>
+                    <Text style={styles.churchRoleText}>
+                      {church.membership?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
+                    </Text>
+                  </View>
+                  <ChevronRight size={18} color={Colors.textTertiary} />
+                </TouchableOpacity>
+              ))}
+              {isSuperAdmin && (
+                <AdminMenuItem
+                  icon={<Plus size={20} color={Colors.primary} />}
+                  title="Create New Church"
+                  subtitle="Add a new church to the platform"
+                  onPress={() => handleNavigation("/church/create")}
+                  showBorder={false}
+                />
+              )}
+              {adminChurches.length === 0 && !isSuperAdmin && (
+                <View style={styles.emptyChurchState}>
+                  <Church size={32} color={Colors.textTertiary} />
+                  <Text style={styles.emptyChurchText}>No churches to manage</Text>
+                </View>
+              )}
+            </View>
+          </>
+        )}
 
         <Text style={styles.sectionTitle}>Organization</Text>
         <View style={styles.menuSection}>
@@ -742,5 +831,60 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontWeight: "700" as const,
     color: Colors.textInverse,
+  },
+  churchItem: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    padding: 16,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.borderLight,
+  },
+  churchIcon: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    marginRight: 12,
+  },
+  churchLogoContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  churchLocationRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 4,
+    marginTop: 2,
+  },
+  churchLocation: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+  },
+  churchRoleBadge: {
+    backgroundColor: Colors.primary + "15",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginRight: 8,
+  },
+  churchRoleText: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+  emptyChurchState: {
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+    paddingVertical: 32,
+    gap: 8,
+  },
+  emptyChurchText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
   },
 });
