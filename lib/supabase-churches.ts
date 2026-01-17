@@ -248,13 +248,25 @@ export async function listChurches(): Promise<Church[]> {
       .order('created_at', { ascending: false });
 
     if (error) {
-      console.error('Supabase Churches: Error listing churches:', error);
+      const errorMessage = error.message || error.code || JSON.stringify(error);
+      console.error('Supabase Churches: Error listing churches:', errorMessage);
+      
+      // If the table doesn't exist, return empty array
+      if (error.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: churches table does not exist yet');
+        return [];
+      }
       return [];
     }
 
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from('church_settings')
       .select('church_id, visibility');
+
+    if (settingsError) {
+      const errorMessage = settingsError.message || settingsError.code || JSON.stringify(settingsError);
+      console.log('Supabase Churches: Error getting settings (non-fatal):', errorMessage);
+    }
 
     const publicChurches = (churches || []).filter(church => {
       const churchSettings = settings?.find(s => s.church_id === church.id);
@@ -264,7 +276,8 @@ export async function listChurches(): Promise<Church[]> {
     console.log('Supabase Churches: Found', publicChurches.length, 'public churches');
     return publicChurches.map(mapDbChurchToChurch);
   } catch (error) {
-    console.error('Supabase Churches: Error listing churches:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error listing churches:', errorMessage);
     return [];
   }
 }
@@ -286,14 +299,22 @@ export async function getChurchById(churchId: string): Promise<Church | null> {
         console.log('Supabase Churches: Church not found:', churchId);
         return null;
       }
-      console.error('Supabase Churches: Error getting church:', error);
+      const errorMessage = error.message || error.code || JSON.stringify(error);
+      console.error('Supabase Churches: Error getting church:', errorMessage);
+      
+      // If the table doesn't exist, return null
+      if (error.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: churches table does not exist yet');
+        return null;
+      }
       return null;
     }
 
     console.log('Supabase Churches: Found church:', church.name);
     return mapDbChurchToChurch(church);
   } catch (error) {
-    console.error('Supabase Churches: Error getting church:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error getting church:', errorMessage);
     return null;
   }
 }
@@ -311,7 +332,14 @@ export async function getUserChurches(userId: string): Promise<Church[]> {
       .eq('is_active', true);
 
     if (membershipError) {
-      console.error('Supabase Churches: Error getting memberships:', membershipError);
+      const errorMessage = membershipError.message || membershipError.code || JSON.stringify(membershipError);
+      console.error('Supabase Churches: Error getting memberships:', errorMessage);
+      
+      // If the table doesn't exist, return empty array instead of failing
+      if (membershipError.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: church_memberships table does not exist yet');
+        return [];
+      }
       return [];
     }
 
@@ -335,7 +363,8 @@ export async function getUserChurches(userId: string): Promise<Church[]> {
     console.log('Supabase Churches: User has', churches?.length || 0, 'churches');
     return (churches || []).map(mapDbChurchToChurch);
   } catch (error) {
-    console.error('Supabase Churches: Error getting user churches:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error getting user churches:', errorMessage);
     return [];
   }
 }
@@ -358,13 +387,21 @@ export async function getChurchMembership(churchId: string, userId: string): Pro
       if (error.code === 'PGRST116') {
         return null;
       }
-      console.error('Supabase Churches: Error getting membership:', error);
+      const errorMessage = error.message || error.code || JSON.stringify(error);
+      console.error('Supabase Churches: Error getting membership:', errorMessage);
+      
+      // If the table doesn't exist, return null
+      if (error.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: church_memberships table does not exist yet');
+        return null;
+      }
       return null;
     }
 
     return mapDbMembershipToMembership(membership);
   } catch (error) {
-    console.error('Supabase Churches: Error getting membership:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error getting membership:', errorMessage);
     return null;
   }
 }
@@ -385,13 +422,21 @@ export async function getChurchSettings(churchId: string): Promise<ChurchSetting
       if (error.code === 'PGRST116') {
         return null;
       }
-      console.error('Supabase Churches: Error getting settings:', error);
+      const errorMessage = error.message || error.code || JSON.stringify(error);
+      console.error('Supabase Churches: Error getting settings:', errorMessage);
+      
+      // If the table doesn't exist, return null
+      if (error.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: church_settings table does not exist yet');
+        return null;
+      }
       return null;
     }
 
     return mapDbSettingsToSettings(settings);
   } catch (error) {
-    console.error('Supabase Churches: Error getting settings:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error getting settings:', errorMessage);
     return null;
   }
 }
@@ -650,13 +695,21 @@ export async function getChurchMembers(churchId: string): Promise<ChurchMembersh
       .eq('is_active', true);
 
     if (error) {
-      console.error('Supabase Churches: Error getting members:', error);
+      const errorMessage = error.message || error.code || JSON.stringify(error);
+      console.error('Supabase Churches: Error getting members:', errorMessage);
+      
+      // If the table doesn't exist, return empty array
+      if (error.code === '42P01' || errorMessage.includes('does not exist')) {
+        console.log('Supabase Churches: church_memberships table does not exist yet');
+        return [];
+      }
       return [];
     }
 
     return (memberships || []).map(mapDbMembershipToMembership);
   } catch (error) {
-    console.error('Supabase Churches: Error getting members:', error);
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error);
+    console.error('Supabase Churches: Error getting members:', errorMessage);
     return [];
   }
 }

@@ -34,6 +34,7 @@ const getApiUrl = (): string => {
     console.log("tRPC: Base URL:", baseUrl, "-> API URL:", apiUrl);
     return apiUrl;
   }
+  console.warn("tRPC: EXPO_PUBLIC_RORK_API_BASE_URL not set, using relative path");
   return "/api/trpc";
 };
 
@@ -109,9 +110,16 @@ const fetchWithRetry = async (
                           errorMessage.includes("Network") ||
                           errorMessage.includes("Server error") ||
                           errorMessage.includes("timed out") ||
-                          errorMessage.includes("ECONNREFUSED");
+                          errorMessage.includes("ECONNREFUSED") ||
+                          errorMessage.includes("ERR_CONNECTION");
       
-      console.error(`tRPC: Fetch attempt ${attempt + 1} failed:`, errorMessage);
+      // Log more details about fetch failures
+      if (errorMessage.includes("Failed to fetch")) {
+        console.error(`tRPC: Fetch attempt ${attempt + 1} failed - URL: ${urlString.split('?')[0]}`);
+        console.error(`tRPC: This usually means the backend is not reachable or CORS is blocking the request`);
+      } else {
+        console.error(`tRPC: Fetch attempt ${attempt + 1} failed:`, errorMessage);
+      }
       
       if (attempt < retries && isRetryable) {
         const delay = Math.min(1000 * Math.pow(2, attempt), 5000);
@@ -160,15 +168,21 @@ export function getTRPCErrorMessage(error: unknown): string {
     if (message.includes("UNAUTHORIZED")) {
       return "Please sign in to continue.";
     }
+    if (message.includes("Failed to fetch") || message.includes("Network")) {
+      return "Unable to connect to server. Please check your internet connection.";
+    }
     return message;
   }
   if (error instanceof Error) {
     const message = error.message;
-    if (message.includes("Failed to fetch") || message.includes("Network")) {
-      return "Unable to connect to server. Please check your internet connection and try again.";
+    if (message.includes("Failed to fetch") || message.includes("Network") || message.includes("ERR_CONNECTION")) {
+      return "Unable to connect to server. Please check your internet connection.";
     }
     if (message.includes("timed out")) {
       return "Request timed out. Please try again.";
+    }
+    if (message.includes("ECONNREFUSED")) {
+      return "Server is not available. Please try again later.";
     }
     return message;
   }
