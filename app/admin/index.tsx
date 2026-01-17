@@ -340,13 +340,6 @@ export default function AdminDashboard() {
             onPress={() => setInviteModalVisible(true)}
           />
           <QuickAction
-            icon={<ClipboardList size={20} color={Colors.primary} />}
-            title="Ministry Requests"
-            subtitle="Review pending join requests"
-            onPress={() => router.push("/admin/requests" as any)}
-            badge={pendingRequests}
-          />
-          <QuickAction
             icon={<Shield size={20} color={Colors.primary} />}
             title="Roles & Permissions"
             subtitle="Configure access levels"
@@ -362,6 +355,13 @@ export default function AdminDashboard() {
             title="Ministry Management"
             subtitle="Create, edit, and manage ministries"
             onPress={() => router.push("/admin/ministries" as any)}
+          />
+          <QuickAction
+            icon={<ClipboardList size={20} color={Colors.primary} />}
+            title="Ministry Requests"
+            subtitle="Review pending join requests"
+            onPress={() => router.push("/admin/requests" as any)}
+            badge={pendingRequests}
             showBorder={false}
           />
         </View>
