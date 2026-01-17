@@ -1,9 +1,5 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSupabaseClient } from './supabase-auth';
 import { Church, ChurchSettings, ChurchMembership, ChurchRole } from '@/types';
-
-const CHURCHES_STORAGE_KEY = '@churches_data';
-const CHURCH_SETTINGS_STORAGE_KEY = '@church_settings_data';
-const CHURCH_MEMBERSHIPS_STORAGE_KEY = '@church_memberships_data';
 
 export interface CreateChurchInput {
   name: string;
@@ -38,73 +34,61 @@ function generateId(): string {
   return `${timestamp}${randomPart}${randomPart2}`;
 }
 
-async function getStoredChurches(): Promise<Church[]> {
-  try {
-    const data = await AsyncStorage.getItem(CHURCHES_STORAGE_KEY);
-    if (data) {
-      const parsed = JSON.parse(data);
-      console.log('Churches Storage: Loaded', parsed.length, 'churches from storage');
-      return parsed;
-    }
-    return [];
-  } catch (error) {
-    console.error('Churches Storage: Error loading churches:', error);
-    return [];
-  }
+function mapDbChurchToChurch(dbChurch: Record<string, unknown>): Church {
+  return {
+    id: dbChurch.id as string,
+    name: dbChurch.name as string,
+    denomination: dbChurch.denomination as string | undefined,
+    description: dbChurch.description as string,
+    address: dbChurch.address as string,
+    city: dbChurch.city as string,
+    state: dbChurch.state as string,
+    zip: dbChurch.zip as string,
+    country: dbChurch.country as string,
+    email: dbChurch.email as string,
+    phone: dbChurch.phone as string,
+    website: dbChurch.website as string | undefined,
+    logo: dbChurch.logo as string | undefined,
+    bannerImage: dbChurch.banner_image as string | undefined,
+    socialLinks: dbChurch.social_links as { facebook?: string; instagram?: string; twitter?: string; youtube?: string } | undefined,
+    createdBy: dbChurch.created_by as string,
+    createdAt: dbChurch.created_at as string,
+    updatedAt: dbChurch.updated_at as string,
+  };
 }
 
-async function saveChurches(churches: Church[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CHURCHES_STORAGE_KEY, JSON.stringify(churches));
-    console.log('Churches Storage: Saved', churches.length, 'churches to storage');
-  } catch (error) {
-    console.error('Churches Storage: Error saving churches:', error);
-    throw new Error('Failed to save church data');
-  }
+function mapDbSettingsToSettings(dbSettings: Record<string, unknown>): ChurchSettings {
+  return {
+    id: dbSettings.id as string,
+    churchId: dbSettings.church_id as string,
+    visibility: dbSettings.visibility as "public" | "private",
+    modulesEnabled: dbSettings.modules_enabled as {
+      events: boolean;
+      announcements: boolean;
+      donations: boolean;
+      media: boolean;
+      ministries: boolean;
+      messaging: boolean;
+    },
+    notificationPreferences: dbSettings.notification_preferences as {
+      newMembers: boolean;
+      events: boolean;
+      announcements: boolean;
+      donations: boolean;
+    },
+    updatedAt: dbSettings.updated_at as string,
+  };
 }
 
-async function getStoredSettings(): Promise<ChurchSettings[]> {
-  try {
-    const data = await AsyncStorage.getItem(CHURCH_SETTINGS_STORAGE_KEY);
-    if (data) {
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Churches Storage: Error loading settings:', error);
-    return [];
-  }
-}
-
-async function saveSettings(settings: ChurchSettings[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CHURCH_SETTINGS_STORAGE_KEY, JSON.stringify(settings));
-  } catch (error) {
-    console.error('Churches Storage: Error saving settings:', error);
-    throw new Error('Failed to save settings data');
-  }
-}
-
-async function getStoredMemberships(): Promise<ChurchMembership[]> {
-  try {
-    const data = await AsyncStorage.getItem(CHURCH_MEMBERSHIPS_STORAGE_KEY);
-    if (data) {
-      return JSON.parse(data);
-    }
-    return [];
-  } catch (error) {
-    console.error('Churches Storage: Error loading memberships:', error);
-    return [];
-  }
-}
-
-async function saveMemberships(memberships: ChurchMembership[]): Promise<void> {
-  try {
-    await AsyncStorage.setItem(CHURCH_MEMBERSHIPS_STORAGE_KEY, JSON.stringify(memberships));
-  } catch (error) {
-    console.error('Churches Storage: Error saving memberships:', error);
-    throw new Error('Failed to save membership data');
-  }
+function mapDbMembershipToMembership(dbMembership: Record<string, unknown>): ChurchMembership {
+  return {
+    id: dbMembership.id as string,
+    churchId: dbMembership.church_id as string,
+    userId: dbMembership.user_id as string,
+    role: dbMembership.role as ChurchRole,
+    joinedAt: dbMembership.joined_at as string,
+    isActive: dbMembership.is_active as boolean,
+  };
 }
 
 export async function createChurch(
@@ -115,31 +99,37 @@ export async function createChurch(
   membership: ChurchMembership;
   settings: ChurchSettings;
 }> {
-  console.log('Churches Storage: Creating church:', input.name);
-  console.log('Churches Storage: User ID:', userId);
+  console.log('Supabase Churches: Creating church:', input.name);
+  console.log('Supabase Churches: User ID:', userId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const existingChurches = await getStoredChurches();
+    const { data: existingChurches, error: fetchError } = await supabase
+      .from('churches')
+      .select('id, name, city, state')
+      .ilike('name', input.name.trim())
+      .ilike('city', input.city.trim())
+      .ilike('state', input.state.trim());
     
-    const duplicate = existingChurches.find(
-      (c) => c.name.toLowerCase() === input.name.toLowerCase() &&
-             c.city.toLowerCase() === input.city.toLowerCase() &&
-             c.state.toLowerCase() === input.state.toLowerCase()
-    );
-
-    if (duplicate) {
-      console.log('Churches Storage: Duplicate church found:', duplicate.id);
+    if (fetchError) {
+      console.error('Supabase Churches: Error checking duplicates:', fetchError);
+      throw new Error(fetchError.message || 'Failed to check for existing churches');
+    }
+    
+    if (existingChurches && existingChurches.length > 0) {
+      console.log('Supabase Churches: Duplicate church found');
       throw new Error('A church with this name already exists in this location');
     }
 
     const churchId = generateId();
     const now = new Date().toISOString();
-    console.log('Churches Storage: Generated church ID:', churchId);
+    console.log('Supabase Churches: Generated church ID:', churchId);
 
-    const newChurch: Church = {
+    const churchData = {
       id: churchId,
       name: input.name.trim(),
-      denomination: input.denomination?.trim(),
+      denomination: input.denomination?.trim() || null,
       description: input.description.trim(),
       address: input.address.trim(),
       city: input.city.trim(),
@@ -148,21 +138,35 @@ export async function createChurch(
       country: input.country.trim(),
       email: input.email.trim().toLowerCase(),
       phone: input.phone.trim(),
-      website: input.website?.trim() || undefined,
+      website: input.website?.trim() || null,
       logo: input.logo?.trim() || `https://ui-avatars.com/api/?name=${encodeURIComponent(input.name)}&background=1A7B74&color=fff&size=200`,
-      bannerImage: input.bannerImage?.trim() || undefined,
-      socialLinks: input.socialLinks || undefined,
-      createdBy: userId,
-      createdAt: now,
-      updatedAt: now,
+      banner_image: input.bannerImage?.trim() || null,
+      social_links: input.socialLinks || null,
+      created_by: userId,
+      created_at: now,
+      updated_at: now,
     };
 
+    console.log('Supabase Churches: Inserting church record...');
+    const { data: createdChurch, error: churchError } = await supabase
+      .from('churches')
+      .insert(churchData)
+      .select()
+      .single();
+
+    if (churchError) {
+      console.error('Supabase Churches: Error creating church:', churchError);
+      throw new Error(churchError.message || 'Failed to create church');
+    }
+
+    console.log('Supabase Churches: Church created:', createdChurch.id);
+
     const settingsId = generateId();
-    const defaultSettings: ChurchSettings = {
+    const settingsData = {
       id: settingsId,
-      churchId: churchId,
-      visibility: "public",
-      modulesEnabled: {
+      church_id: churchId,
+      visibility: 'public',
+      modules_enabled: {
         events: true,
         announcements: true,
         donations: true,
@@ -170,125 +174,224 @@ export async function createChurch(
         ministries: true,
         messaging: true,
       },
-      notificationPreferences: {
+      notification_preferences: {
         newMembers: true,
         events: true,
         announcements: true,
         donations: true,
       },
-      updatedAt: now,
+      updated_at: now,
     };
+
+    console.log('Supabase Churches: Creating settings record...');
+    const { data: createdSettings, error: settingsError } = await supabase
+      .from('church_settings')
+      .insert(settingsData)
+      .select()
+      .single();
+
+    if (settingsError) {
+      console.error('Supabase Churches: Error creating settings:', settingsError);
+      await supabase.from('churches').delete().eq('id', churchId);
+      throw new Error(settingsError.message || 'Failed to create church settings');
+    }
+
+    console.log('Supabase Churches: Settings created:', createdSettings.id);
 
     const membershipId = generateId();
-    const membership: ChurchMembership = {
+    const membershipData = {
       id: membershipId,
-      churchId: churchId,
-      userId: userId,
-      role: "super_admin" as ChurchRole,
-      joinedAt: now,
-      isActive: true,
+      church_id: churchId,
+      user_id: userId,
+      role: 'super_admin',
+      joined_at: now,
+      is_active: true,
     };
 
-    await saveChurches([...existingChurches, newChurch]);
-    console.log('Churches Storage: Church saved successfully');
+    console.log('Supabase Churches: Creating membership record...');
+    const { data: createdMembership, error: membershipError } = await supabase
+      .from('church_memberships')
+      .insert(membershipData)
+      .select()
+      .single();
 
-    const existingSettings = await getStoredSettings();
-    await saveSettings([...existingSettings, defaultSettings]);
-    console.log('Churches Storage: Settings saved successfully');
+    if (membershipError) {
+      console.error('Supabase Churches: Error creating membership:', membershipError);
+      await supabase.from('church_settings').delete().eq('id', settingsId);
+      await supabase.from('churches').delete().eq('id', churchId);
+      throw new Error(membershipError.message || 'Failed to create church membership');
+    }
 
-    const existingMemberships = await getStoredMemberships();
-    await saveMemberships([...existingMemberships, membership]);
-    console.log('Churches Storage: Membership saved successfully');
+    console.log('Supabase Churches: Membership created:', createdMembership.id);
+    console.log('Supabase Churches: Church creation completed successfully');
 
-    console.log('Churches Storage: Church creation completed:', churchId);
-
-    return { 
-      church: newChurch, 
-      membership,
-      settings: defaultSettings,
+    return {
+      church: mapDbChurchToChurch(createdChurch),
+      membership: mapDbMembershipToMembership(createdMembership),
+      settings: mapDbSettingsToSettings(createdSettings),
     };
   } catch (error) {
-    console.error('Churches Storage: Error creating church:', error);
+    console.error('Supabase Churches: Error creating church:', error);
     throw error instanceof Error ? error : new Error('Failed to create church');
   }
 }
 
 export async function listChurches(): Promise<Church[]> {
-  console.log('Churches Storage: Listing all churches');
+  console.log('Supabase Churches: Listing all churches');
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const churches = await getStoredChurches();
-    const allSettings = await getStoredSettings();
-    
-    const publicChurches = churches.filter(church => {
-      const settings = allSettings.find(s => s.churchId === church.id);
-      return !settings || settings.visibility === "public";
+    const { data: churches, error } = await supabase
+      .from('churches')
+      .select('*')
+      .order('created_at', { ascending: false });
+
+    if (error) {
+      console.error('Supabase Churches: Error listing churches:', error);
+      return [];
+    }
+
+    const { data: settings } = await supabase
+      .from('church_settings')
+      .select('church_id, visibility');
+
+    const publicChurches = (churches || []).filter(church => {
+      const churchSettings = settings?.find(s => s.church_id === church.id);
+      return !churchSettings || churchSettings.visibility === 'public';
     });
-    
-    console.log('Churches Storage: Found', publicChurches.length, 'public churches');
-    return publicChurches;
+
+    console.log('Supabase Churches: Found', publicChurches.length, 'public churches');
+    return publicChurches.map(mapDbChurchToChurch);
   } catch (error) {
-    console.error('Churches Storage: Error listing churches:', error);
+    console.error('Supabase Churches: Error listing churches:', error);
     return [];
   }
 }
 
 export async function getChurchById(churchId: string): Promise<Church | null> {
-  console.log('Churches Storage: Getting church by ID:', churchId);
+  console.log('Supabase Churches: Getting church by ID:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const churches = await getStoredChurches();
-    const church = churches.find(c => c.id === churchId);
-    console.log('Churches Storage: Found church:', church?.name || 'not found');
-    return church || null;
+    const { data: church, error } = await supabase
+      .from('churches')
+      .select('*')
+      .eq('id', churchId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        console.log('Supabase Churches: Church not found:', churchId);
+        return null;
+      }
+      console.error('Supabase Churches: Error getting church:', error);
+      return null;
+    }
+
+    console.log('Supabase Churches: Found church:', church.name);
+    return mapDbChurchToChurch(church);
   } catch (error) {
-    console.error('Churches Storage: Error getting church:', error);
+    console.error('Supabase Churches: Error getting church:', error);
     return null;
   }
 }
 
 export async function getUserChurches(userId: string): Promise<Church[]> {
-  console.log('Churches Storage: Getting churches for user:', userId);
+  console.log('Supabase Churches: Getting churches for user:', userId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const memberships = await getStoredMemberships();
-    const userMemberships = memberships.filter(m => m.userId === userId && m.isActive);
-    
-    const churches = await getStoredChurches();
-    const userChurches = churches.filter(church => 
-      userMemberships.some(m => m.churchId === church.id)
-    );
-    
-    console.log('Churches Storage: User has', userChurches.length, 'churches');
-    return userChurches;
+    const { data: memberships, error: membershipError } = await supabase
+      .from('church_memberships')
+      .select('church_id')
+      .eq('user_id', userId)
+      .eq('is_active', true);
+
+    if (membershipError) {
+      console.error('Supabase Churches: Error getting memberships:', membershipError);
+      return [];
+    }
+
+    if (!memberships || memberships.length === 0) {
+      console.log('Supabase Churches: No memberships found for user');
+      return [];
+    }
+
+    const churchIds = memberships.map(m => m.church_id);
+
+    const { data: churches, error: churchError } = await supabase
+      .from('churches')
+      .select('*')
+      .in('id', churchIds);
+
+    if (churchError) {
+      console.error('Supabase Churches: Error getting churches:', churchError);
+      return [];
+    }
+
+    console.log('Supabase Churches: User has', churches?.length || 0, 'churches');
+    return (churches || []).map(mapDbChurchToChurch);
   } catch (error) {
-    console.error('Churches Storage: Error getting user churches:', error);
+    console.error('Supabase Churches: Error getting user churches:', error);
     return [];
   }
 }
 
 export async function getChurchMembership(churchId: string, userId: string): Promise<ChurchMembership | null> {
-  console.log('Churches Storage: Getting membership for church:', churchId);
+  console.log('Supabase Churches: Getting membership for church:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const memberships = await getStoredMemberships();
-    const membership = memberships.find(m => m.churchId === churchId && m.userId === userId && m.isActive);
-    return membership || null;
+    const { data: membership, error } = await supabase
+      .from('church_memberships')
+      .select('*')
+      .eq('church_id', churchId)
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Supabase Churches: Error getting membership:', error);
+      return null;
+    }
+
+    return mapDbMembershipToMembership(membership);
   } catch (error) {
-    console.error('Churches Storage: Error getting membership:', error);
+    console.error('Supabase Churches: Error getting membership:', error);
     return null;
   }
 }
 
 export async function getChurchSettings(churchId: string): Promise<ChurchSettings | null> {
-  console.log('Churches Storage: Getting settings for church:', churchId);
+  console.log('Supabase Churches: Getting settings for church:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const allSettings = await getStoredSettings();
-    const settings = allSettings.find(s => s.churchId === churchId);
-    return settings || null;
+    const { data: settings, error } = await supabase
+      .from('church_settings')
+      .select('*')
+      .eq('church_id', churchId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return null;
+      }
+      console.error('Supabase Churches: Error getting settings:', error);
+      return null;
+    }
+
+    return mapDbSettingsToSettings(settings);
   } catch (error) {
-    console.error('Churches Storage: Error getting settings:', error);
+    console.error('Supabase Churches: Error getting settings:', error);
     return null;
   }
 }
@@ -297,30 +400,41 @@ export async function updateChurchSettings(
   churchId: string, 
   updates: Partial<Omit<ChurchSettings, 'id' | 'churchId'>>
 ): Promise<ChurchSettings | null> {
-  console.log('Churches Storage: Updating settings for church:', churchId);
+  console.log('Supabase Churches: Updating settings for church:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const allSettings = await getStoredSettings();
-    const index = allSettings.findIndex(s => s.churchId === churchId);
-    
-    if (index === -1) {
-      console.log('Churches Storage: Settings not found for church:', churchId);
-      return null;
-    }
-    
-    const updatedSettings: ChurchSettings = {
-      ...allSettings[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
     };
-    
-    allSettings[index] = updatedSettings;
-    await saveSettings(allSettings);
-    
-    console.log('Churches Storage: Settings updated for church:', churchId);
-    return updatedSettings;
+
+    if (updates.visibility !== undefined) {
+      updateData.visibility = updates.visibility;
+    }
+    if (updates.modulesEnabled !== undefined) {
+      updateData.modules_enabled = updates.modulesEnabled;
+    }
+    if (updates.notificationPreferences !== undefined) {
+      updateData.notification_preferences = updates.notificationPreferences;
+    }
+
+    const { data: updatedSettings, error } = await supabase
+      .from('church_settings')
+      .update(updateData)
+      .eq('church_id', churchId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase Churches: Error updating settings:', error);
+      throw new Error(error.message || 'Failed to update settings');
+    }
+
+    console.log('Supabase Churches: Settings updated for church:', churchId);
+    return mapDbSettingsToSettings(updatedSettings);
   } catch (error) {
-    console.error('Churches Storage: Error updating settings:', error);
+    console.error('Supabase Churches: Error updating settings:', error);
     throw error instanceof Error ? error : new Error('Failed to update settings');
   }
 }
@@ -329,54 +443,249 @@ export async function updateChurch(
   churchId: string,
   updates: Partial<Omit<Church, 'id' | 'createdBy' | 'createdAt'>>
 ): Promise<Church | null> {
-  console.log('Churches Storage: Updating church:', churchId);
+  console.log('Supabase Churches: Updating church:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const churches = await getStoredChurches();
-    const index = churches.findIndex(c => c.id === churchId);
-    
-    if (index === -1) {
-      console.log('Churches Storage: Church not found:', churchId);
-      return null;
-    }
-    
-    const updatedChurch: Church = {
-      ...churches[index],
-      ...updates,
-      updatedAt: new Date().toISOString(),
+    const updateData: Record<string, unknown> = {
+      updated_at: new Date().toISOString(),
     };
-    
-    churches[index] = updatedChurch;
-    await saveChurches(churches);
-    
-    console.log('Churches Storage: Church updated:', churchId);
-    return updatedChurch;
+
+    if (updates.name !== undefined) updateData.name = updates.name;
+    if (updates.denomination !== undefined) updateData.denomination = updates.denomination;
+    if (updates.description !== undefined) updateData.description = updates.description;
+    if (updates.address !== undefined) updateData.address = updates.address;
+    if (updates.city !== undefined) updateData.city = updates.city;
+    if (updates.state !== undefined) updateData.state = updates.state;
+    if (updates.zip !== undefined) updateData.zip = updates.zip;
+    if (updates.country !== undefined) updateData.country = updates.country;
+    if (updates.email !== undefined) updateData.email = updates.email;
+    if (updates.phone !== undefined) updateData.phone = updates.phone;
+    if (updates.website !== undefined) updateData.website = updates.website;
+    if (updates.logo !== undefined) updateData.logo = updates.logo;
+    if (updates.bannerImage !== undefined) updateData.banner_image = updates.bannerImage;
+    if (updates.socialLinks !== undefined) updateData.social_links = updates.socialLinks;
+
+    const { data: updatedChurch, error } = await supabase
+      .from('churches')
+      .update(updateData)
+      .eq('id', churchId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase Churches: Error updating church:', error);
+      throw new Error(error.message || 'Failed to update church');
+    }
+
+    console.log('Supabase Churches: Church updated:', churchId);
+    return mapDbChurchToChurch(updatedChurch);
   } catch (error) {
-    console.error('Churches Storage: Error updating church:', error);
+    console.error('Supabase Churches: Error updating church:', error);
     throw error instanceof Error ? error : new Error('Failed to update church');
   }
 }
 
 export async function deleteChurch(churchId: string): Promise<boolean> {
-  console.log('Churches Storage: Deleting church:', churchId);
+  console.log('Supabase Churches: Deleting church:', churchId);
+  
+  const supabase = getSupabaseClient();
   
   try {
-    const churches = await getStoredChurches();
-    const filteredChurches = churches.filter(c => c.id !== churchId);
-    await saveChurches(filteredChurches);
-    
-    const settings = await getStoredSettings();
-    const filteredSettings = settings.filter(s => s.churchId !== churchId);
-    await saveSettings(filteredSettings);
-    
-    const memberships = await getStoredMemberships();
-    const filteredMemberships = memberships.filter(m => m.churchId !== churchId);
-    await saveMemberships(filteredMemberships);
-    
-    console.log('Churches Storage: Church deleted successfully');
+    const { error: membershipError } = await supabase
+      .from('church_memberships')
+      .delete()
+      .eq('church_id', churchId);
+
+    if (membershipError) {
+      console.error('Supabase Churches: Error deleting memberships:', membershipError);
+    }
+
+    const { error: settingsError } = await supabase
+      .from('church_settings')
+      .delete()
+      .eq('church_id', churchId);
+
+    if (settingsError) {
+      console.error('Supabase Churches: Error deleting settings:', settingsError);
+    }
+
+    const { error: churchError } = await supabase
+      .from('churches')
+      .delete()
+      .eq('id', churchId);
+
+    if (churchError) {
+      console.error('Supabase Churches: Error deleting church:', churchError);
+      throw new Error(churchError.message || 'Failed to delete church');
+    }
+
+    console.log('Supabase Churches: Church deleted successfully');
     return true;
   } catch (error) {
-    console.error('Churches Storage: Error deleting church:', error);
+    console.error('Supabase Churches: Error deleting church:', error);
     throw error instanceof Error ? error : new Error('Failed to delete church');
+  }
+}
+
+export async function joinChurch(churchId: string, userId: string): Promise<ChurchMembership> {
+  console.log('Supabase Churches: User joining church:', churchId);
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data: existing } = await supabase
+      .from('church_memberships')
+      .select('*')
+      .eq('church_id', churchId)
+      .eq('user_id', userId)
+      .single();
+
+    if (existing) {
+      if (existing.is_active) {
+        throw new Error('You are already a member of this church');
+      }
+      const { data: reactivated, error } = await supabase
+        .from('church_memberships')
+        .update({ is_active: true, joined_at: new Date().toISOString() })
+        .eq('id', existing.id)
+        .select()
+        .single();
+
+      if (error) {
+        throw new Error(error.message || 'Failed to rejoin church');
+      }
+
+      return mapDbMembershipToMembership(reactivated);
+    }
+
+    const membershipId = generateId();
+    const membershipData = {
+      id: membershipId,
+      church_id: churchId,
+      user_id: userId,
+      role: 'member',
+      joined_at: new Date().toISOString(),
+      is_active: true,
+    };
+
+    const { data: membership, error } = await supabase
+      .from('church_memberships')
+      .insert(membershipData)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase Churches: Error joining church:', error);
+      throw new Error(error.message || 'Failed to join church');
+    }
+
+    console.log('Supabase Churches: User joined church:', churchId);
+    return mapDbMembershipToMembership(membership);
+  } catch (error) {
+    console.error('Supabase Churches: Error joining church:', error);
+    throw error instanceof Error ? error : new Error('Failed to join church');
+  }
+}
+
+export async function leaveChurch(churchId: string, userId: string): Promise<boolean> {
+  console.log('Supabase Churches: User leaving church:', churchId);
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data: membership, error: fetchError } = await supabase
+      .from('church_memberships')
+      .select('*')
+      .eq('church_id', churchId)
+      .eq('user_id', userId)
+      .eq('is_active', true)
+      .single();
+
+    if (fetchError || !membership) {
+      throw new Error('You are not a member of this church');
+    }
+
+    if (membership.role === 'super_admin') {
+      const { data: superAdmins } = await supabase
+        .from('church_memberships')
+        .select('id')
+        .eq('church_id', churchId)
+        .eq('role', 'super_admin')
+        .eq('is_active', true);
+
+      if (superAdmins && superAdmins.length <= 1) {
+        throw new Error('You are the only super admin. Please promote another member before leaving.');
+      }
+    }
+
+    const { error: updateError } = await supabase
+      .from('church_memberships')
+      .update({ is_active: false })
+      .eq('id', membership.id);
+
+    if (updateError) {
+      throw new Error(updateError.message || 'Failed to leave church');
+    }
+
+    console.log('Supabase Churches: User left church:', churchId);
+    return true;
+  } catch (error) {
+    console.error('Supabase Churches: Error leaving church:', error);
+    throw error instanceof Error ? error : new Error('Failed to leave church');
+  }
+}
+
+export async function getChurchMembers(churchId: string): Promise<ChurchMembership[]> {
+  console.log('Supabase Churches: Getting members for church:', churchId);
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data: memberships, error } = await supabase
+      .from('church_memberships')
+      .select('*')
+      .eq('church_id', churchId)
+      .eq('is_active', true);
+
+    if (error) {
+      console.error('Supabase Churches: Error getting members:', error);
+      return [];
+    }
+
+    return (memberships || []).map(mapDbMembershipToMembership);
+  } catch (error) {
+    console.error('Supabase Churches: Error getting members:', error);
+    return [];
+  }
+}
+
+export async function updateMemberRole(
+  membershipId: string,
+  role: ChurchRole
+): Promise<ChurchMembership | null> {
+  console.log('Supabase Churches: Updating member role:', membershipId);
+  
+  const supabase = getSupabaseClient();
+  
+  try {
+    const { data: updatedMembership, error } = await supabase
+      .from('church_memberships')
+      .update({ role })
+      .eq('id', membershipId)
+      .select()
+      .single();
+
+    if (error) {
+      console.error('Supabase Churches: Error updating role:', error);
+      throw new Error(error.message || 'Failed to update member role');
+    }
+
+    console.log('Supabase Churches: Member role updated');
+    return mapDbMembershipToMembership(updatedMembership);
+  } catch (error) {
+    console.error('Supabase Churches: Error updating role:', error);
+    throw error instanceof Error ? error : new Error('Failed to update member role');
   }
 }
