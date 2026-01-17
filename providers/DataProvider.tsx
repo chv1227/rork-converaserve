@@ -159,6 +159,17 @@ export const [DataProvider, useData] = createContextHook(() => {
     return limit ? sorted.slice(0, limit) : sorted;
   }, [state.announcements]);
 
+  const getGeneralAnnouncements = useCallback((limit?: number) => {
+    const filtered = state.announcements
+      .filter(a => !a.ministryId)
+      .sort((a, b) => {
+        if (a.isPinned && !b.isPinned) return -1;
+        if (!a.isPinned && b.isPinned) return 1;
+        return new Date(b.date).getTime() - new Date(a.date).getTime();
+      });
+    return limit ? filtered.slice(0, limit) : filtered;
+  }, [state.announcements]);
+
   const getMinistryById = useCallback((id: string) => {
     return state.ministries.find(m => m.id === id) || null;
   }, [state.ministries]);
@@ -308,6 +319,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     refresh,
     getUpcomingEvents,
     getAnnouncements,
+    getGeneralAnnouncements,
     getMinistryById,
     getEventsByDate,
     getTotalUnread,

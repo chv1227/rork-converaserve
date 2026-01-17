@@ -20,13 +20,13 @@ export default function HomeScreen() {
     isRefreshing, 
     refresh, 
     getUpcomingEvents, 
-    getAnnouncements, 
+    getGeneralAnnouncements, 
     userMinistries,
     getTotalUnread,
   } = useData();
   const [localRefreshing, setLocalRefreshing] = useState(false);
 
-  const announcements = getAnnouncements(2);
+  const announcements = getGeneralAnnouncements(2);
   const upcomingEvents = getUpcomingEvents(3);
   const totalUnread = getTotalUnread();
 
@@ -107,7 +107,7 @@ export default function HomeScreen() {
         <SectionHeader
           title="Announcements"
           actionText="View all"
-          onActionPress={() => {}}
+          onActionPress={() => router.push("/announcements" as Href)}
         />
         <View style={styles.announcementsContainer}>
           {isLoading && announcements.length === 0 ? (

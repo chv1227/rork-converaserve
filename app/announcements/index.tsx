@@ -23,29 +23,39 @@ import {
   X,
   Filter,
   Search,
+  Globe,
+  Users,
+  ChevronDown,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
 import { trpc } from '@/lib/trpc';
 import { useAuth } from '@/providers/AuthProvider';
-import { Announcement } from '@/types';
+import { useData } from '@/providers/DataProvider';
+import { Announcement, Ministry } from '@/types';
 
 type FilterType = 'all' | 'pinned' | 'high' | 'normal' | 'low';
+type AnnouncementType = 'all' | 'general' | 'ministry';
 
 export default function AnnouncementsScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, currentOrganization } = useAuth();
+  const { ministries } = useData();
   const [refreshing, setRefreshing] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [filterType, setFilterType] = useState<FilterType>('all');
+  const [announcementType, setAnnouncementType] = useState<AnnouncementType>('all');
   const [showFilterModal, setShowFilterModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
   const [selectedAnnouncement, setSelectedAnnouncement] = useState<Announcement | null>(null);
+  const [showMinistryPicker, setShowMinistryPicker] = useState(false);
 
   const [newTitle, setNewTitle] = useState('');
   const [newContent, setNewContent] = useState('');
   const [newPriority, setNewPriority] = useState<'high' | 'normal' | 'low'>('normal');
+  const [selectedMinistry, setSelectedMinistry] = useState<Ministry | null>(null);
+  const [isGeneralAnnouncement, setIsGeneralAnnouncement] = useState(true);
 
   const announcementsQuery = trpc.announcements.list.useQuery(
     { organizationId: currentOrganization?.id },
@@ -68,6 +78,8 @@ export default function AnnouncementsScreen() {
     setNewTitle('');
     setNewContent('');
     setNewPriority('normal');
+    setSelectedMinistry(null);
+    setIsGeneralAnnouncement(true);
   };
 
   const onRefresh = useCallback(async () => {
@@ -78,6 +90,16 @@ export default function AnnouncementsScreen() {
 
   const filteredAnnouncements = React.useMemo(() => {
     let result = announcementsQuery.data || [];
+
+    // Filter by announcement type (general vs ministry)
+    switch (announcementType) {
+      case 'general':
+        result = result.filter((a) => !a.ministryId);
+        break;
+      case 'ministry':
+        result = result.filter((a) => !!a.ministryId);
+        break;
+    }
 
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase();
@@ -105,11 +127,16 @@ export default function AnnouncementsScreen() {
     }
 
     return result;
-  }, [announcementsQuery.data, searchQuery, filterType]);
+  }, [announcementsQuery.data, searchQuery, filterType, announcementType]);
 
   const handleCreateAnnouncement = () => {
     if (!newTitle.trim() || !newContent.trim()) {
       Alert.alert('Error', 'Please fill in all required fields');
+      return;
+    }
+
+    if (!isGeneralAnnouncement && !selectedMinistry) {
+      Alert.alert('Error', 'Please select a ministry for this announcement');
       return;
     }
 
@@ -118,6 +145,7 @@ export default function AnnouncementsScreen() {
       content: newContent.trim(),
       priority: newPriority,
       organizationId: currentOrganization?.id,
+      ministryId: isGeneralAnnouncement ? undefined : selectedMinistry?.id,
     });
   };
 
@@ -154,12 +182,24 @@ export default function AnnouncementsScreen() {
       onPress={() => setSelectedAnnouncement(announcement)}
       activeOpacity={0.7}
     >
-      {announcement.isPinned && (
-        <View style={styles.pinnedBadge}>
-          <Pin size={12} color={Colors.primary} />
-          <Text style={styles.pinnedText}>Pinned</Text>
+      <View style={styles.cardTopRow}>
+        {announcement.isPinned && (
+          <View style={styles.pinnedBadge}>
+            <Pin size={12} color={Colors.primary} />
+            <Text style={styles.pinnedText}>Pinned</Text>
+          </View>
+        )}
+        <View style={[styles.typeBadge, announcement.ministryId ? styles.ministryTypeBadge : styles.generalTypeBadge]}>
+          {announcement.ministryId ? (
+            <Users size={10} color={Colors.secondary} />
+          ) : (
+            <Globe size={10} color={Colors.primary} />
+          )}
+          <Text style={[styles.typeBadgeText, { color: announcement.ministryId ? Colors.secondary : Colors.primary }]}>
+            {announcement.ministryId ? 'Ministry' : 'General'}
+          </Text>
         </View>
-      )}
+      </View>
 
       <View style={styles.cardHeader}>
         <Image
@@ -188,6 +228,7 @@ export default function AnnouncementsScreen() {
 
       {announcement.ministryName && (
         <View style={styles.ministryTag}>
+          <Users size={12} color={Colors.textSecondary} />
           <Text style={styles.ministryTagText}>{announcement.ministryName}</Text>
         </View>
       )}
@@ -240,6 +281,35 @@ export default function AnnouncementsScreen() {
           onPress={() => setShowFilterModal(true)}
         >
           <Filter size={20} color={filterType !== 'all' ? Colors.primary : Colors.textSecondary} />
+        </TouchableOpacity>
+      </View>
+
+      <View style={styles.typeFilterContainer}>
+        <TouchableOpacity
+          style={[styles.typeFilterTab, announcementType === 'all' && styles.typeFilterTabActive]}
+          onPress={() => setAnnouncementType('all')}
+        >
+          <Text style={[styles.typeFilterText, announcementType === 'all' && styles.typeFilterTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.typeFilterTab, announcementType === 'general' && styles.typeFilterTabActive]}
+          onPress={() => setAnnouncementType('general')}
+        >
+          <Globe size={14} color={announcementType === 'general' ? Colors.primary : Colors.textSecondary} />
+          <Text style={[styles.typeFilterText, announcementType === 'general' && styles.typeFilterTextActive]}>
+            General
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.typeFilterTab, announcementType === 'ministry' && styles.typeFilterTabActive]}
+          onPress={() => setAnnouncementType('ministry')}
+        >
+          <Users size={14} color={announcementType === 'ministry' ? Colors.primary : Colors.textSecondary} />
+          <Text style={[styles.typeFilterText, announcementType === 'ministry' && styles.typeFilterTextActive]}>
+            Ministry
+          </Text>
         </TouchableOpacity>
       </View>
 
@@ -365,6 +435,63 @@ export default function AnnouncementsScreen() {
             </View>
 
             <ScrollView style={styles.createScroll} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Announcement Type *</Text>
+              <View style={styles.announcementTypeContainer}>
+                <TouchableOpacity
+                  style={[styles.announcementTypeOption, isGeneralAnnouncement && styles.announcementTypeOptionActive]}
+                  onPress={() => {
+                    setIsGeneralAnnouncement(true);
+                    setSelectedMinistry(null);
+                  }}
+                >
+                  <View style={[styles.announcementTypeIcon, isGeneralAnnouncement && styles.announcementTypeIconActive]}>
+                    <Globe size={18} color={isGeneralAnnouncement ? Colors.textInverse : Colors.primary} />
+                  </View>
+                  <View style={styles.announcementTypeTextContainer}>
+                    <Text style={[styles.announcementTypeTitle, isGeneralAnnouncement && styles.announcementTypeTitleActive]}>
+                      General
+                    </Text>
+                    <Text style={styles.announcementTypeDesc}>Visible to everyone on main page</Text>
+                  </View>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.announcementTypeOption, !isGeneralAnnouncement && styles.announcementTypeOptionActive]}
+                  onPress={() => setIsGeneralAnnouncement(false)}
+                >
+                  <View style={[styles.announcementTypeIcon, !isGeneralAnnouncement && styles.announcementTypeIconActiveSecondary]}>
+                    <Users size={18} color={!isGeneralAnnouncement ? Colors.textInverse : Colors.secondary} />
+                  </View>
+                  <View style={styles.announcementTypeTextContainer}>
+                    <Text style={[styles.announcementTypeTitle, !isGeneralAnnouncement && styles.announcementTypeTitleActiveSecondary]}>
+                      Ministry
+                    </Text>
+                    <Text style={styles.announcementTypeDesc}>Specific to a ministry group</Text>
+                  </View>
+                </TouchableOpacity>
+              </View>
+
+              {!isGeneralAnnouncement && (
+                <>
+                  <Text style={styles.inputLabel}>Select Ministry *</Text>
+                  <TouchableOpacity
+                    style={styles.ministrySelector}
+                    onPress={() => setShowMinistryPicker(true)}
+                  >
+                    <View style={styles.ministrySelectorContent}>
+                      {selectedMinistry ? (
+                        <>
+                          <View style={[styles.ministryColorDot, { backgroundColor: selectedMinistry.color }]} />
+                          <Text style={styles.ministrySelectorText}>{selectedMinistry.name}</Text>
+                        </>
+                      ) : (
+                        <Text style={styles.ministrySelectorPlaceholder}>Choose a ministry</Text>
+                      )}
+                    </View>
+                    <ChevronDown size={20} color={Colors.textSecondary} />
+                  </TouchableOpacity>
+                </>
+              )}
+
               <Text style={styles.inputLabel}>Title *</Text>
               <TextInput
                 style={styles.input}
@@ -423,6 +550,49 @@ export default function AnnouncementsScreen() {
             </ScrollView>
           </View>
         </View>
+      </Modal>
+    {/* Ministry Picker Modal */}
+      <Modal
+        visible={showMinistryPicker}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowMinistryPicker(false)}
+      >
+        <Pressable style={styles.modalOverlay} onPress={() => setShowMinistryPicker(false)}>
+          <View style={styles.ministryPickerContent}>
+            <Text style={styles.ministryPickerTitle}>Select Ministry</Text>
+            <ScrollView style={styles.ministryPickerScroll} showsVerticalScrollIndicator={false}>
+              {ministries.map((ministry) => (
+                <TouchableOpacity
+                  key={ministry.id}
+                  style={[
+                    styles.ministryPickerOption,
+                    selectedMinistry?.id === ministry.id && styles.ministryPickerOptionActive,
+                  ]}
+                  onPress={() => {
+                    setSelectedMinistry(ministry);
+                    setShowMinistryPicker(false);
+                  }}
+                >
+                  <View style={[styles.ministryColorDot, { backgroundColor: ministry.color }]} />
+                  <Text
+                    style={[
+                      styles.ministryPickerOptionText,
+                      selectedMinistry?.id === ministry.id && styles.ministryPickerOptionTextActive,
+                    ]}
+                  >
+                    {ministry.name}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+              {ministries.length === 0 && (
+                <View style={styles.emptyMinistryContainer}>
+                  <Text style={styles.emptyMinistryText}>No ministries available</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </Pressable>
       </Modal>
     </View>
   );
@@ -610,8 +780,79 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
     lineHeight: 20,
   },
+  cardTopRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    marginBottom: 12,
+  },
+  typeBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 8,
+  },
+  generalTypeBadge: {
+    backgroundColor: Colors.primaryLight + '20',
+  },
+  ministryTypeBadge: {
+    backgroundColor: Colors.secondary + '20',
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: '600' as const,
+    textTransform: 'uppercase',
+  },
+  typeFilterContainer: {
+    flexDirection: 'row',
+    marginHorizontal: 16,
+    marginBottom: 12,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    padding: 4,
+  },
+  typeFilterTab: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: 6,
+    paddingVertical: 10,
+    borderRadius: 10,
+  },
+  typeFilterTabActive: {
+    backgroundColor: Colors.surface,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 1px 2px rgba(0, 0, 0, 0.1)',
+      },
+    }),
+  },
+  typeFilterText: {
+    fontSize: 13,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
+  },
+  typeFilterTextActive: {
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
   ministryTag: {
     alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
     backgroundColor: Colors.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 5,
@@ -812,5 +1053,131 @@ const styles = StyleSheet.create({
     color: Colors.textInverse,
     fontSize: 16,
     fontWeight: '600' as const,
+  },
+  announcementTypeContainer: {
+    flexDirection: 'row',
+    gap: 12,
+  },
+  announcementTypeOption: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderRadius: 12,
+    borderWidth: 2,
+    borderColor: Colors.borderLight,
+    backgroundColor: Colors.surface,
+  },
+  announcementTypeOptionActive: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight + '10',
+  },
+  announcementTypeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.primaryLight + '30',
+  },
+  announcementTypeIconActive: {
+    backgroundColor: Colors.primary,
+  },
+  announcementTypeIconActiveSecondary: {
+    backgroundColor: Colors.secondary,
+  },
+  announcementTypeTextContainer: {
+    flex: 1,
+    marginLeft: 10,
+  },
+  announcementTypeTitle: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: Colors.text,
+  },
+  announcementTypeTitleActive: {
+    color: Colors.primary,
+  },
+  announcementTypeTitleActiveSecondary: {
+    color: Colors.secondary,
+  },
+  announcementTypeDesc: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+    marginTop: 2,
+  },
+  ministrySelector: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    padding: 14,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  ministrySelectorContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    flex: 1,
+  },
+  ministrySelectorText: {
+    fontSize: 15,
+    color: Colors.text,
+    fontWeight: '500' as const,
+  },
+  ministrySelectorPlaceholder: {
+    fontSize: 15,
+    color: Colors.textTertiary,
+  },
+  ministryColorDot: {
+    width: 12,
+    height: 12,
+    borderRadius: 6,
+    marginRight: 10,
+  },
+  ministryPickerContent: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 20,
+    width: '100%',
+    maxWidth: 360,
+    maxHeight: 400,
+  },
+  ministryPickerTitle: {
+    fontSize: 18,
+    fontWeight: '700' as const,
+    color: Colors.text,
+    marginBottom: 16,
+  },
+  ministryPickerScroll: {
+    maxHeight: 300,
+  },
+  ministryPickerOption: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    marginBottom: 4,
+  },
+  ministryPickerOptionActive: {
+    backgroundColor: Colors.primaryLight + '20',
+  },
+  ministryPickerOptionText: {
+    fontSize: 15,
+    color: Colors.text,
+  },
+  ministryPickerOptionTextActive: {
+    color: Colors.primary,
+    fontWeight: '600' as const,
+  },
+  emptyMinistryContainer: {
+    padding: 20,
+    alignItems: 'center',
+  },
+  emptyMinistryText: {
+    fontSize: 14,
+    color: Colors.textTertiary,
   },
 });
