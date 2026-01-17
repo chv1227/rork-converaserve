@@ -22,6 +22,7 @@ import {
   BellRing,
   Building2,
   Cog,
+  Church,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -217,7 +218,7 @@ export default function ProfileScreen() {
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
-                    style={[styles.managementAction, styles.managementActionLast]}
+                    style={styles.managementAction}
                     onPress={() => router.push("/organization/edit" as any)}
                     activeOpacity={0.7}
                   >
@@ -230,6 +231,23 @@ export default function ProfileScreen() {
                     </View>
                     <ChevronRight size={16} color={Colors.textTertiary} />
                   </TouchableOpacity>
+                  
+                  {isSuperAdmin && (
+                    <TouchableOpacity 
+                      style={[styles.managementAction, styles.managementActionLast]}
+                      onPress={() => router.push("/churches" as any)}
+                      activeOpacity={0.7}
+                    >
+                      <View style={[styles.managementActionIcon, { backgroundColor: "#0EA5E9" + "15" }]}>
+                        <Church size={18} color="#0EA5E9" />
+                      </View>
+                      <View style={styles.managementActionContent}>
+                        <Text style={styles.managementActionTitle}>Manage Churches</Text>
+                        <Text style={styles.managementActionSubtitle}>Create and edit churches</Text>
+                      </View>
+                      <ChevronRight size={16} color={Colors.textTertiary} />
+                    </TouchableOpacity>
+                  )}
                 </View>
               </View>
             ) : (

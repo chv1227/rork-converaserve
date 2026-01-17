@@ -221,6 +221,20 @@ function RootLayoutNav() {
           presentation: "card",
         }} 
       />
+      <Stack.Screen 
+        name="churches/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="church/[id]/settings" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
     </Stack>
   );
 }
