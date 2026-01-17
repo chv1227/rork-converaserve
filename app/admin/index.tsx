@@ -362,13 +362,6 @@ export default function AdminDashboard() {
             title="Ministry Management"
             subtitle="Create, edit, and manage ministries"
             onPress={() => router.push("/admin/ministries" as any)}
-          />
-          <QuickAction
-            icon={<AlertTriangle size={20} color={Colors.warning} />}
-            title="Content Moderation"
-            subtitle="Review reported content"
-            onPress={() => router.push("/admin/moderation" as any)}
-            badge={stats?.pendingReports}
             showBorder={false}
           />
         </View>
@@ -430,6 +423,13 @@ export default function AdminDashboard() {
           <>
             <Text style={styles.sectionTitle}>Super Admin</Text>
             <View style={styles.quickActionsSection}>
+              <QuickAction
+                icon={<AlertTriangle size={20} color={Colors.warning} />}
+                title="Content Moderation"
+                subtitle="Review reported content"
+                onPress={() => router.push("/admin/moderation" as any)}
+                badge={stats?.pendingReports}
+              />
               <QuickAction
                 icon={<Trash2 size={20} color={Colors.error} />}
                 title="Danger Zone"
