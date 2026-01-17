@@ -641,21 +641,6 @@ export default function ChurchManagementScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity
-          style={styles.settingsItem}
-          onPress={() => router.push('/settings' as any)}
-          activeOpacity={0.7}
-        >
-          <View style={[styles.settingsIcon, { backgroundColor: Colors.warning + '15' }]}>
-            <Settings size={20} color={Colors.warning} />
-          </View>
-          <View style={styles.settingsContent}>
-            <Text style={styles.settingsTitle}>Admin Settings</Text>
-            <Text style={styles.settingsSubtitle}>Manage users and content</Text>
-          </View>
-          <ChevronRight size={18} color={Colors.textTertiary} />
-        </TouchableOpacity>
-
-        <TouchableOpacity
           style={[styles.settingsItem, styles.settingsItemNoBorder]}
           onPress={() => router.push('/admin' as any)}
           activeOpacity={0.7}

@@ -13,7 +13,6 @@ import {
   Calendar,
   Users,
   Crown,
-  Wrench,
   X,
   MessageCircle,
   FileText,
@@ -322,14 +321,8 @@ export default function ProfileScreen() {
               <MenuItem
                 icon={<Shield size={20} color="#7C3AED" />}
                 title="Admin Dashboard"
-                subtitle="View stats and manage app"
+                subtitle="Manage users, content, and settings"
                 onPress={() => router.push("/admin" as any)}
-              />
-              <MenuItem
-                icon={<Wrench size={20} color={Colors.primary} />}
-                title="Admin Settings"
-                subtitle="Configure organization settings"
-                onPress={() => router.push("/settings" as any)}
                 showBorder={false}
               />
             </View>
