@@ -16,9 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   ArrowLeft,
   Users,
-  Calendar,
-  Megaphone,
-  Music,
   Shield,
   ChevronRight,
   UserPlus,
@@ -303,35 +300,6 @@ export default function SettingsScreen() {
             title="Roles & Permissions"
             subtitle="Configure access levels"
             onPress={() => handleNavigation("/admin/users")}
-            showBorder={false}
-          />
-        </View>
-
-        <Text style={styles.sectionTitle}>Content Management</Text>
-        <View style={styles.menuSection}>
-          <AdminMenuItem
-            icon={<UsersRound size={20} color={Colors.primary} />}
-            title="Manage Ministries"
-            subtitle="View and manage ministries"
-            onPress={() => handleNavigation("/admin/groups")}
-          />
-          <AdminMenuItem
-            icon={<Calendar size={20} color={Colors.primary} />}
-            title="Manage Events"
-            subtitle="Create and edit events"
-            onPress={() => handleNavigation("/(tabs)/calendar")}
-          />
-          <AdminMenuItem
-            icon={<Megaphone size={20} color={Colors.primary} />}
-            title="Announcements"
-            subtitle="Post organization announcements"
-            onPress={() => handleNavigation("/(tabs)")}
-          />
-          <AdminMenuItem
-            icon={<Music size={20} color={Colors.primary} />}
-            title="Worship Songs"
-            subtitle="Manage worship team content"
-            onPress={() => handleNavigation("/(tabs)/worship/manage")}
             showBorder={false}
           />
         </View>

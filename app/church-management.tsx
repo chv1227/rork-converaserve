@@ -37,6 +37,10 @@ import {
   Globe,
   Bell,
   Database,
+  Calendar,
+  Megaphone,
+  Music,
+  UsersRound,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
@@ -662,6 +666,69 @@ export default function ChurchManagementScreen() {
           <View style={styles.settingsContent}>
             <Text style={styles.settingsTitle}>Admin Dashboard</Text>
             <Text style={styles.settingsSubtitle}>View statistics and manage app</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+      </View>
+
+      <Text style={styles.settingsSectionTitle}>Content Management</Text>
+      <View style={styles.settingsSection}>
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => router.push('/admin/ministries' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.primary + '15' }]}>
+            <UsersRound size={20} color={Colors.primary} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Manage Ministries</Text>
+            <Text style={styles.settingsSubtitle}>View and manage ministries</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => router.push('/(tabs)/calendar' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.secondary + '15' }]}>
+            <Calendar size={20} color={Colors.secondary} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Manage Events</Text>
+            <Text style={styles.settingsSubtitle}>Create and edit events</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={styles.settingsItem}
+          onPress={() => router.push('/(tabs)' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: Colors.warning + '15' }]}>
+            <Megaphone size={20} color={Colors.warning} />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Announcements</Text>
+            <Text style={styles.settingsSubtitle}>Post organization announcements</Text>
+          </View>
+          <ChevronRight size={18} color={Colors.textTertiary} />
+        </TouchableOpacity>
+
+        <TouchableOpacity
+          style={[styles.settingsItem, styles.settingsItemNoBorder]}
+          onPress={() => router.push('/worship/manage' as any)}
+          activeOpacity={0.7}
+        >
+          <View style={[styles.settingsIcon, { backgroundColor: '#7C3AED' + '15' }]}>
+            <Music size={20} color="#7C3AED" />
+          </View>
+          <View style={styles.settingsContent}>
+            <Text style={styles.settingsTitle}>Worship Songs</Text>
+            <Text style={styles.settingsSubtitle}>Manage worship team content</Text>
           </View>
           <ChevronRight size={18} color={Colors.textTertiary} />
         </TouchableOpacity>
