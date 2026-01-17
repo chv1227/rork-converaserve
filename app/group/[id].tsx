@@ -38,6 +38,7 @@ import {
   Vote,
   Trash2,
   XCircle,
+  Bell,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { trpc } from "@/lib/trpc";
@@ -55,7 +56,7 @@ import {
   getAnnouncementsForMinistry,
   getMissionStatement,
 } from "@/mocks/ministryData";
-import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement, Poll, PollOption } from "@/types";
+import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement, Poll, PollOption, Announcement } from "@/types";
 
 type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'music';
 
@@ -81,6 +82,10 @@ export default function GroupDetailScreen() {
   const [pollOptions, setPollOptions] = useState<string[]>(["", ""]);
   const [allowMultiple, setAllowMultiple] = useState(false);
   const [selectedOptions, setSelectedOptions] = useState<Set<string>>(new Set());
+  const [showAnnouncementModal, setShowAnnouncementModal] = useState(false);
+  const [newAnnouncementTitle, setNewAnnouncementTitle] = useState("");
+  const [newAnnouncementContent, setNewAnnouncementContent] = useState("");
+  const [announcementPriority, setAnnouncementPriority] = useState<"normal" | "high" | "low">("normal");
 
   const isDefaultMinistry = id?.startsWith('worship-') || id?.startsWith('prayer-') || id?.startsWith('deacon-') || id?.startsWith('children');
 
@@ -162,14 +167,55 @@ export default function GroupDetailScreen() {
     },
   });
 
+  const announcementsQuery = trpc.announcements.list.useQuery(
+    { ministryId: id || "", organizationId: currentOrganization?.id },
+    { enabled: !!id && !!currentOrganization?.id }
+  );
+
+  const createAnnouncementMutation = trpc.announcements.create.useMutation({
+    onSuccess: (result) => {
+      console.log("Announcement created:", result);
+      queryClient.invalidateQueries({ queryKey: [['announcements', 'list']] });
+      announcementsQuery.refetch();
+      setShowAnnouncementModal(false);
+      setNewAnnouncementTitle("");
+      setNewAnnouncementContent("");
+      setAnnouncementPriority("normal");
+      if (result.pending) {
+        Alert.alert("Submitted", "Your announcement has been submitted for approval.");
+      } else {
+        Alert.alert("Success", "Announcement created successfully!");
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to create announcement:", error);
+      Alert.alert("Error", "Failed to create announcement. Please try again.");
+    },
+  });
+
   const polls = pollsQuery.data || [];
+  const dbAnnouncements = announcementsQuery.data || [];
+
+  const isAdminOrLeader = user?.role === "admin" || user?.role === "super_admin" || user?.role === "leader";
 
   const ministry = isDefaultMinistry ? mockMinistry : ministryQuery.data;
   const events = isDefaultMinistry ? mockEvents : (eventsQuery.data || []);
   const members = useMemo(() => isDefaultMinistry ? getMembersForMinistry(id || '') : [], [isDefaultMinistry, id]);
   const discussions = isDefaultMinistry ? mockDiscussions : [];
   const prayerRequests = isDefaultMinistry ? mockPrayerRequests : [];
-  const announcements = isDefaultMinistry ? mockAnnouncements : [];
+  const mappedDbAnnouncements: MinistryAnnouncement[] = dbAnnouncements.map((a: Announcement) => ({
+    id: a.id,
+    ministryId: a.ministryId || id || '',
+    authorId: '',
+    authorName: a.author,
+    authorAvatar: a.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
+    authorRole: 'leader' as const,
+    title: a.title,
+    content: a.content,
+    createdAt: a.date,
+    priority: a.priority,
+  }));
+  const announcements = isDefaultMinistry ? mockAnnouncements : mappedDbAnnouncements;
   const leaders = useMemo(() => members.filter(m => m.role === 'leader' || m.role === 'admin'), [members]);
 
   const isMember = useMemo(
@@ -349,6 +395,30 @@ export default function GroupDetailScreen() {
     ]);
   };
 
+  const handleCreateAnnouncement = () => {
+    if (!newAnnouncementTitle.trim()) {
+      Alert.alert("Error", "Please enter a title");
+      return;
+    }
+    if (newAnnouncementContent.trim().length < 10) {
+      Alert.alert("Error", "Content must be at least 10 characters");
+      return;
+    }
+    if (!currentOrganization) {
+      Alert.alert("Error", "Organization not found");
+      return;
+    }
+
+    createAnnouncementMutation.mutate({
+      title: newAnnouncementTitle.trim(),
+      content: newAnnouncementContent.trim(),
+      priority: announcementPriority,
+      isPinned: false,
+      ministryId: id || undefined,
+      organizationId: currentOrganization.id,
+    });
+  };
+
   const isLoading = !isDefaultMinistry && ministryQuery.isLoading;
   const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
 
@@ -449,10 +519,29 @@ export default function GroupDetailScreen() {
         )}
       </View>
 
-      {announcements.length > 0 && (
-        <View style={styles.section}>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
           <Text style={styles.sectionTitle}>Announcements</Text>
-          {announcements.map((announcement: MinistryAnnouncement) => (
+          {isAdminOrLeader && (
+            <TouchableOpacity
+              style={[styles.addButton, { backgroundColor: ministry.color }]}
+              onPress={() => setShowAnnouncementModal(true)}
+            >
+              <Plus size={16} color={Colors.textInverse} />
+              <Text style={styles.addButtonText}>Add</Text>
+            </TouchableOpacity>
+          )}
+        </View>
+        {announcements.length === 0 ? (
+          <View style={styles.emptyCard}>
+            <Bell size={32} color={Colors.textTertiary} />
+            <Text style={styles.emptyText}>No announcements yet</Text>
+            {isAdminOrLeader && (
+              <Text style={styles.emptySubtext}>Tap + to create one</Text>
+            )}
+          </View>
+        ) : (
+          announcements.map((announcement: MinistryAnnouncement) => (
             <View key={announcement.id} style={[styles.announcementCard, announcement.priority === 'high' && styles.announcementCardHigh]}>
               <View style={styles.announcementHeader}>
                 <Image source={{ uri: announcement.authorAvatar }} style={styles.announcementAvatar} />
@@ -471,9 +560,9 @@ export default function GroupDetailScreen() {
               <Text style={styles.announcementTitle}>{announcement.title}</Text>
               <Text style={styles.announcementContent}>{announcement.content}</Text>
             </View>
-          ))}
-        </View>
-      )}
+          ))
+        )}
+      </View>
 
       
     </>
@@ -1152,6 +1241,88 @@ export default function GroupDetailScreen() {
                 <>
                   <BarChart3 size={18} color={Colors.textInverse} />
                   <Text style={styles.submitButtonText}>Create Poll</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      <Modal
+        visible={showAnnouncementModal}
+        animationType="slide"
+        transparent
+        onRequestClose={() => setShowAnnouncementModal(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === "ios" ? "padding" : "height"}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>New Announcement</Text>
+              <TouchableOpacity onPress={() => setShowAnnouncementModal(false)}>
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
+              <Text style={styles.inputLabel}>Title</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="Announcement title..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newAnnouncementTitle}
+                onChangeText={setNewAnnouncementTitle}
+              />
+              <Text style={styles.inputLabel}>Content</Text>
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Write your announcement..."
+                placeholderTextColor={Colors.textTertiary}
+                value={newAnnouncementContent}
+                onChangeText={setNewAnnouncementContent}
+                multiline
+                numberOfLines={4}
+              />
+              <Text style={styles.inputLabel}>Priority</Text>
+              <View style={styles.priorityOptions}>
+                {(["low", "normal", "high"] as const).map((priority) => (
+                  <TouchableOpacity
+                    key={priority}
+                    style={[
+                      styles.priorityOption,
+                      announcementPriority === priority && {
+                        backgroundColor: priority === "high" ? Colors.error + "20" : priority === "low" ? Colors.info + "20" : ministry.color + "20",
+                        borderColor: priority === "high" ? Colors.error : priority === "low" ? Colors.info : ministry.color,
+                      },
+                    ]}
+                    onPress={() => setAnnouncementPriority(priority)}
+                  >
+                    <Text
+                      style={[
+                        styles.priorityOptionText,
+                        announcementPriority === priority && {
+                          color: priority === "high" ? Colors.error : priority === "low" ? Colors.info : ministry.color,
+                        },
+                      ]}
+                    >
+                      {priority.charAt(0).toUpperCase() + priority.slice(1)}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </ScrollView>
+            <TouchableOpacity
+              style={[styles.submitButton, { backgroundColor: ministry.color }]}
+              onPress={handleCreateAnnouncement}
+              disabled={createAnnouncementMutation.isPending}
+            >
+              {createAnnouncementMutation.isPending ? (
+                <ActivityIndicator size="small" color={Colors.textInverse} />
+              ) : (
+                <>
+                  <Megaphone size={18} color={Colors.textInverse} />
+                  <Text style={styles.submitButtonText}>Post Announcement</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -2099,5 +2270,24 @@ const styles = StyleSheet.create({
   addOptionText: {
     fontSize: 14,
     fontWeight: '600' as const,
+  },
+  priorityOptions: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 4,
+  },
+  priorityOption: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: Colors.border,
+    alignItems: 'center',
+    backgroundColor: Colors.surfaceSecondary,
+  },
+  priorityOptionText: {
+    fontSize: 14,
+    fontWeight: '500' as const,
+    color: Colors.textSecondary,
   },
 });
