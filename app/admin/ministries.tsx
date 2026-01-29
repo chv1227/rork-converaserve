@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useRef } from "react";
 import {
   View,
   Text,
@@ -10,6 +10,7 @@ import {
   Alert,
   Platform,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Stack } from "expo-router";
@@ -31,12 +32,21 @@ import {
   Baby,
   HandHeart,
   Video,
+  Sparkles,
+  Shield,
+  Star,
+  Zap,
+  Coffee,
+  Trophy,
+  Globe,
+  Clock,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
 import { Ministry } from "@/types";
 import { getMinistryColor } from "@/constants/ministryColors";
+import { ministryTemplates, MinistryTemplate, MINISTRY_CATEGORIES } from "@/mocks/ministryTemplates";
 
 const PRESET_COLORS = [
   "#3B82F6",
@@ -68,6 +78,14 @@ const iconMap: Record<string, IconComponentType> = {
   Baby,
   HandHeart,
   Video,
+  Sparkles,
+  Shield,
+  Star,
+  Zap,
+  Palette,
+  Coffee,
+  Trophy,
+  Globe,
 };
 
 interface MinistryFormData {
@@ -75,6 +93,64 @@ interface MinistryFormData {
   description: string;
   color: string;
   icon: string;
+  templateId?: string;
+}
+
+interface TemplateCardProps {
+  template: MinistryTemplate;
+  onSelect: () => void;
+}
+
+function TemplateCard({ template, onSelect }: TemplateCardProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const IconComponent = iconMap[template.icon] || Users;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.97,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={[styles.templateCard, { transform: [{ scale: scaleAnim }] }]}>
+      <TouchableOpacity
+        activeOpacity={0.9}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        onPress={onSelect}
+      >
+        <View style={styles.templateImageContainer}>
+          <Image source={{ uri: template.coverImage }} style={styles.templateImage} />
+          <View style={[styles.templateBadge, { backgroundColor: template.color }]}>
+            <IconComponent size={14} color="#fff" />
+          </View>
+        </View>
+        <View style={styles.templateContent}>
+          <Text style={styles.templateName}>{template.name}</Text>
+          <Text style={styles.templateCategory}>{template.category}</Text>
+          <Text style={styles.templateDescription} numberOfLines={2}>
+            {template.description}
+          </Text>
+          <View style={styles.templateMeta}>
+            <View style={styles.metaItem}>
+              <Clock size={12} color={Colors.textTertiary} />
+              <Text style={styles.metaText}>
+                {template.defaultSchedule[0]?.day} {template.defaultSchedule[0]?.time}
+              </Text>
+            </View>
+          </View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
 }
 
 interface MemberItemProps {
@@ -110,7 +186,10 @@ export default function AdminMinistriesScreen() {
   const utils = trpc.useUtils();
 
   const [searchQuery, setSearchQuery] = useState("");
+  const [templateSearchQuery, setTemplateSearchQuery] = useState("");
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [modalVisible, setModalVisible] = useState(false);
+  const [templateModalVisible, setTemplateModalVisible] = useState(false);
   const [editingMinistry, setEditingMinistry] = useState<Ministry | null>(null);
   const [selectedMinistryId, setSelectedMinistryId] = useState<string | null>(null);
   const [formData, setFormData] = useState<MinistryFormData>({
@@ -199,9 +278,22 @@ export default function AdminMinistriesScreen() {
     },
   });
 
+  const filteredTemplates = ministryTemplates.filter((template) => {
+    const matchesSearch =
+      templateSearchQuery === "" ||
+      template.name.toLowerCase().includes(templateSearchQuery.toLowerCase()) ||
+      template.description.toLowerCase().includes(templateSearchQuery.toLowerCase()) ||
+      template.keywords.some((k) => k.toLowerCase().includes(templateSearchQuery.toLowerCase()));
+    const matchesCategory = !selectedCategory || template.category === selectedCategory;
+    return matchesSearch && matchesCategory;
+  });
+
   const resetForm = () => {
     setModalVisible(false);
+    setTemplateModalVisible(false);
     setEditingMinistry(null);
+    setTemplateSearchQuery("");
+    setSelectedCategory(null);
     setFormData({
       name: "",
       description: "",
@@ -212,12 +304,20 @@ export default function AdminMinistriesScreen() {
 
   const openCreateModal = () => {
     setEditingMinistry(null);
+    setTemplateSearchQuery("");
+    setSelectedCategory(null);
+    setTemplateModalVisible(true);
+  };
+
+  const handleSelectTemplate = (template: MinistryTemplate) => {
     setFormData({
-      name: "",
-      description: "",
-      color: PRESET_COLORS[0],
-      icon: "users",
+      name: template.name,
+      description: template.description,
+      color: template.color,
+      icon: template.icon,
+      templateId: template.id,
     });
+    setTemplateModalVisible(false);
     setModalVisible(true);
   };
 
@@ -648,6 +748,95 @@ export default function AdminMinistriesScreen() {
               <Text style={styles.emptyMembersText}>No members in this ministry</Text>
             </View>
           )}
+        </View>
+      </Modal>
+
+      {/* Template Selection Modal */}
+      <Modal
+        visible={templateModalVisible}
+        animationType="slide"
+        presentationStyle="pageSheet"
+        onRequestClose={() => setTemplateModalVisible(false)}
+      >
+        <View style={[styles.templateModalContainer, { paddingTop: insets.top + 20 }]}>
+          <View style={styles.templateModalHeader}>
+            <TouchableOpacity onPress={() => setTemplateModalVisible(false)}>
+              <X size={24} color={Colors.text} />
+            </TouchableOpacity>
+            <Text style={styles.templateModalTitle}>Choose a Template</Text>
+            <View style={{ width: 24 }} />
+          </View>
+
+          <Text style={styles.templateModalSubtitle}>
+            Select from 14 pre-designed ministry templates
+          </Text>
+
+          <View style={styles.templateSearchContainer}>
+            <Search size={18} color={Colors.textSecondary} />
+            <TextInput
+              style={styles.templateSearchInput}
+              placeholder="Search templates..."
+              placeholderTextColor={Colors.textTertiary}
+              value={templateSearchQuery}
+              onChangeText={setTemplateSearchQuery}
+            />
+            {templateSearchQuery.length > 0 && (
+              <TouchableOpacity onPress={() => setTemplateSearchQuery("")}>
+                <X size={18} color={Colors.textSecondary} />
+              </TouchableOpacity>
+            )}
+          </View>
+
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            style={styles.categoriesScroll}
+            contentContainerStyle={styles.categoriesContainer}
+          >
+            <TouchableOpacity
+              style={[styles.categoryChip, !selectedCategory && styles.categoryChipActive]}
+              onPress={() => setSelectedCategory(null)}
+              activeOpacity={0.7}
+            >
+              <Text style={[styles.categoryChipText, !selectedCategory && styles.categoryChipTextActive]}>
+                All
+              </Text>
+            </TouchableOpacity>
+            {MINISTRY_CATEGORIES.map((category) => (
+              <TouchableOpacity
+                key={category}
+                style={[styles.categoryChip, selectedCategory === category && styles.categoryChipActive]}
+                onPress={() => setSelectedCategory(category)}
+                activeOpacity={0.7}
+              >
+                <Text
+                  style={[styles.categoryChipText, selectedCategory === category && styles.categoryChipTextActive]}
+                >
+                  {category}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+
+          <ScrollView style={styles.templatesScroll} showsVerticalScrollIndicator={false}>
+            {filteredTemplates.length === 0 ? (
+              <View style={styles.emptyTemplates}>
+                <Search size={40} color={Colors.textTertiary} />
+                <Text style={styles.emptyTemplatesText}>No templates found</Text>
+              </View>
+            ) : (
+              <View style={styles.templatesGrid}>
+                {filteredTemplates.map((template) => (
+                  <TemplateCard
+                    key={template.id}
+                    template={template}
+                    onSelect={() => handleSelectTemplate(template)}
+                  />
+                ))}
+              </View>
+            )}
+            <View style={{ height: 40 }} />
+          </ScrollView>
         </View>
       </Modal>
     </View>
@@ -1089,6 +1278,148 @@ const styles = StyleSheet.create({
     paddingVertical: 60,
   },
   emptyMembersText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  templateModalContainer: {
+    flex: 1,
+    backgroundColor: Colors.background,
+  },
+  templateModalHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    marginBottom: 8,
+  },
+  templateModalTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  templateModalSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    paddingHorizontal: 20,
+    marginBottom: 16,
+  },
+  templateSearchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    paddingHorizontal: 12,
+    marginHorizontal: 20,
+    gap: 8,
+    marginBottom: 12,
+  },
+  templateSearchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 15,
+    color: Colors.text,
+  },
+  categoriesScroll: {
+    maxHeight: 44,
+    marginBottom: 16,
+  },
+  categoriesContainer: {
+    paddingHorizontal: 20,
+    gap: 8,
+  },
+  categoryChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+  },
+  categoryChipActive: {
+    backgroundColor: Colors.primary,
+  },
+  categoryChipText: {
+    fontSize: 13,
+    fontWeight: "500" as const,
+    color: Colors.textSecondary,
+  },
+  categoryChipTextActive: {
+    color: "#fff",
+  },
+  templatesScroll: {
+    flex: 1,
+    paddingHorizontal: 20,
+  },
+  templatesGrid: {
+    gap: 16,
+  },
+  templateCard: {
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.06,
+    shadowRadius: 8,
+    elevation: 3,
+  },
+  templateImageContainer: {
+    position: "relative",
+    height: 120,
+  },
+  templateImage: {
+    width: "100%",
+    height: "100%",
+  },
+  templateBadge: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  templateContent: {
+    padding: 14,
+  },
+  templateName: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginBottom: 2,
+  },
+  templateCategory: {
+    fontSize: 11,
+    color: Colors.primary,
+    fontWeight: "500" as const,
+    marginBottom: 6,
+  },
+  templateDescription: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    lineHeight: 18,
+    marginBottom: 10,
+  },
+  templateMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  metaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  metaText: {
+    fontSize: 11,
+    color: Colors.textTertiary,
+  },
+  emptyTemplates: {
+    alignItems: "center",
+    paddingVertical: 60,
+    gap: 12,
+  },
+  emptyTemplatesText: {
     fontSize: 14,
     color: Colors.textSecondary,
   },
