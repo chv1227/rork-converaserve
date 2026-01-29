@@ -13,6 +13,7 @@ import { givingRouter } from "./routes/giving";
 import { churchManagementRouter } from "./routes/churchManagement";
 import { pollsRouter } from "./routes/polls";
 import { churchesRouter } from "./routes/churches";
+import { ministryTemplatesRouter } from "./routes/ministryTemplates";
 
 export const appRouter = createTRPCRouter({
   auth: authRouter,
@@ -29,6 +30,7 @@ export const appRouter = createTRPCRouter({
   churchManagement: churchManagementRouter,
   polls: pollsRouter,
   churches: churchesRouter,
+  ministryTemplates: ministryTemplatesRouter,
 });
 
 export type AppRouter = typeof appRouter;

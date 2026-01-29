@@ -373,3 +373,92 @@ export interface ChurchInvite {
   createdAt: string;
   updatedAt: string;
 }
+
+export type MinistryLeaderRole = 'primary_leader' | 'co_leader';
+export type MinistryLeaderStatus = 'active' | 'pending' | 'transferred';
+export type LeadershipTransferType = 'complete_handoff' | 'add_co_leader' | 'gradual_transition';
+export type LeadershipInviteStatus = 'pending' | 'accepted' | 'declined' | 'expired';
+export type ActiveMinistryStatus = 'draft' | 'published' | 'archived';
+
+export interface MinistryLeader {
+  id: string;
+  ministryId: string;
+  userId: string;
+  userName: string;
+  userAvatar: string;
+  userEmail: string;
+  role: MinistryLeaderRole;
+  status: MinistryLeaderStatus;
+  invitedBy?: string;
+  invitedAt?: string;
+  acceptedAt?: string;
+  transferDate?: string;
+  notes?: string;
+}
+
+export interface LeadershipInvitation {
+  id: string;
+  ministryId: string;
+  ministryName: string;
+  organizationId: string;
+  inviterId: string;
+  inviterName: string;
+  inviterAvatar: string;
+  inviteeId?: string;
+  inviteeEmail: string;
+  inviteeName?: string;
+  role: MinistryLeaderRole;
+  transferType?: LeadershipTransferType;
+  scheduledTransferDate?: string;
+  message?: string;
+  token: string;
+  status: LeadershipInviteStatus;
+  expiresAt: string;
+  createdAt: string;
+  respondedAt?: string;
+}
+
+export interface MinistryScheduleItem {
+  day: string;
+  time: string;
+  frequency: string;
+  location?: string;
+}
+
+export interface ActiveMinistry {
+  id: string;
+  templateId: string;
+  organizationId: string;
+  name: string;
+  description: string;
+  missionStatement: string;
+  icon: string;
+  color: string;
+  coverImage: string;
+  galleryImages: string[];
+  schedule: MinistryScheduleItem[];
+  contactEmail?: string;
+  contactPhone?: string;
+  enabledSections: string[];
+  customContent: Record<string, string>;
+  status: ActiveMinistryStatus;
+  memberCount: number;
+  leaders: MinistryLeader[];
+  createdBy: string;
+  createdAt: string;
+  updatedAt: string;
+  publishedAt?: string;
+}
+
+export interface MinistryAuditLog {
+  id: string;
+  ministryId: string;
+  organizationId: string;
+  action: 'created' | 'updated' | 'published' | 'archived' | 'leader_added' | 'leader_removed' | 'leader_transferred' | 'member_joined' | 'member_left';
+  performedBy: string;
+  performedByName: string;
+  targetUserId?: string;
+  targetUserName?: string;
+  details?: Record<string, unknown>;
+  createdAt: string;
+}
