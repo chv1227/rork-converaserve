@@ -9,6 +9,10 @@ import {
   Share,
   Platform,
   Alert,
+  Modal,
+  TextInput,
+  ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
@@ -38,13 +42,17 @@ import {
   Edit3,
   UserPlus,
   Heart,
+  X,
+  Check,
+  Video,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { ministryTemplates } from "@/mocks/ministryTemplates";
-import { ministryMembers, ministryEvents, getMissionStatement } from "@/mocks/ministryData";
+import { trpc } from "@/lib/trpc";
+import { Ministry } from "@/types";
+import { getMinistryColor } from "@/constants/ministryColors";
 
-const { width: screenWidth } = Dimensions.get("window");
+Dimensions.get("window");
 const HEADER_MAX_HEIGHT = 280;
 const HEADER_MIN_HEIGHT = 100;
 
@@ -64,7 +72,44 @@ const iconMap: Record<string, IconComponentType> = {
   Palette,
   Coffee,
   Trophy,
+  Video,
 };
+
+const PRESET_COLORS = [
+  "#3B82F6",
+  "#8B5CF6",
+  "#10B981",
+  "#F59E0B",
+  "#EC4899",
+  "#F472B6",
+  "#6366F1",
+  "#14B8A6",
+  "#F97316",
+  "#06B6D4",
+  "#EF4444",
+  "#84CC16",
+  "#A855F7",
+  "#0EA5E9",
+  "#E11D48",
+  "#22C55E",
+];
+
+const ICON_OPTIONS = [
+  { name: "Users", icon: Users },
+  { name: "Music", icon: Music },
+  { name: "Heart", icon: Heart },
+  { name: "Baby", icon: Baby },
+  { name: "Sparkles", icon: Sparkles },
+  { name: "Globe", icon: Globe },
+  { name: "Shield", icon: Shield },
+  { name: "Star", icon: Star },
+  { name: "HandHeart", icon: HandHeart },
+  { name: "Zap", icon: Zap },
+  { name: "Palette", icon: Palette },
+  { name: "Coffee", icon: Coffee },
+  { name: "Trophy", icon: Trophy },
+  { name: "Video", icon: Video },
+];
 
 interface ScheduleItemProps {
   day: string;
@@ -94,25 +139,25 @@ function ScheduleItem({ day, time, frequency, location, color }: ScheduleItemPro
   );
 }
 
-interface LeaderCardProps {
-  leader: {
+interface MemberCardProps {
+  member: {
     id: string;
     name: string;
     avatar: string;
     role: string;
-    email?: string;
   };
   color: string;
+  isLeader?: boolean;
 }
 
-function LeaderCard({ leader, color }: LeaderCardProps) {
+function MemberCard({ member, color, isLeader }: MemberCardProps) {
   return (
     <TouchableOpacity style={styles.leaderCard} activeOpacity={0.7}>
-      <Image source={{ uri: leader.avatar }} style={styles.leaderAvatar} />
+      <Image source={{ uri: member.avatar }} style={styles.leaderAvatar} />
       <View style={styles.leaderInfo}>
-        <Text style={styles.leaderName}>{leader.name}</Text>
+        <Text style={styles.leaderName}>{member.name}</Text>
         <Text style={[styles.leaderRole, { color }]}>
-          {leader.role === "leader" ? "Ministry Leader" : leader.role === "admin" ? "Co-Leader" : "Team Member"}
+          {isLeader ? "Ministry Leader" : member.role === "admin" ? "Co-Leader" : "Member"}
         </Text>
       </View>
       <TouchableOpacity style={[styles.contactButton, { backgroundColor: color + "15" }]}>
@@ -122,40 +167,141 @@ function LeaderCard({ leader, color }: LeaderCardProps) {
   );
 }
 
-interface EventCardProps {
-  event: {
-    id: string;
-    title: string;
-    description: string;
-    date: string;
-    time: string;
-    location: string;
-    attendeesCount: number;
-  };
-  color: string;
+interface SettingsModalProps {
+  visible: boolean;
+  onClose: () => void;
+  ministry: Ministry;
+  onSave: (data: { name: string; description: string; color: string; icon: string }) => void;
+  isLoading: boolean;
 }
 
-function EventCard({ event, color }: EventCardProps) {
-  const eventDate = new Date(event.date);
-  const day = eventDate.getDate();
-  const month = eventDate.toLocaleDateString("en-US", { month: "short" });
+function SettingsModal({ visible, onClose, ministry, onSave, isLoading }: SettingsModalProps) {
+  const insets = useSafeAreaInsets();
+  const [name, setName] = useState(ministry.name);
+  const [description, setDescription] = useState(ministry.description);
+  const [color, setColor] = useState(ministry.color || getMinistryColor(ministry.name, ministry.id));
+  const [icon, setIcon] = useState(ministry.icon || "Users");
+
+  const handleSave = () => {
+    if (!name.trim()) {
+      Alert.alert("Error", "Ministry name is required");
+      return;
+    }
+    if (description.length < 10) {
+      Alert.alert("Error", "Description must be at least 10 characters");
+      return;
+    }
+    onSave({ name: name.trim(), description: description.trim(), color, icon });
+  };
+
+  const IconComponent = iconMap[icon] || Users;
 
   return (
-    <TouchableOpacity style={styles.eventCard} activeOpacity={0.7}>
-      <View style={[styles.eventDateBox, { backgroundColor: color + "15" }]}>
-        <Text style={[styles.eventDay, { color }]}>{day}</Text>
-        <Text style={[styles.eventMonth, { color }]}>{month}</Text>
-      </View>
-      <View style={styles.eventInfo}>
-        <Text style={styles.eventTitle} numberOfLines={1}>{event.title}</Text>
-        <Text style={styles.eventTime}>{event.time}</Text>
-        <View style={styles.eventMeta}>
-          <MapPin size={12} color={Colors.textTertiary} />
-          <Text style={styles.eventLocation} numberOfLines={1}>{event.location}</Text>
+    <Modal visible={visible} animationType="slide" transparent onRequestClose={onClose}>
+      <View style={styles.modalOverlay}>
+        <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+          <View style={styles.modalHeader}>
+            <Text style={styles.modalTitle}>Ministry Settings</Text>
+            <TouchableOpacity onPress={onClose} style={styles.modalCloseButton}>
+              <X size={24} color={Colors.text} />
+            </TouchableOpacity>
+          </View>
+
+          <ScrollView style={styles.modalScroll} showsVerticalScrollIndicator={false}>
+            <View style={styles.previewCard}>
+              <View style={[styles.previewIcon, { backgroundColor: color }]}>
+                <IconComponent size={28} color="#fff" />
+              </View>
+              <Text style={styles.previewName}>{name || "Ministry Name"}</Text>
+              <Text style={styles.previewDescription} numberOfLines={2}>
+                {description || "Ministry description"}
+              </Text>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Ministry Name</Text>
+              <TextInput
+                style={styles.formInput}
+                value={name}
+                onChangeText={setName}
+                placeholder="Enter ministry name"
+                placeholderTextColor={Colors.textTertiary}
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Description</Text>
+              <TextInput
+                style={[styles.formInput, styles.formTextArea]}
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Describe the ministry..."
+                placeholderTextColor={Colors.textTertiary}
+                multiline
+                numberOfLines={4}
+                textAlignVertical="top"
+              />
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Icon</Text>
+              <View style={styles.iconGrid}>
+                {ICON_OPTIONS.map((opt) => {
+                  const OptIcon = opt.icon;
+                  return (
+                    <TouchableOpacity
+                      key={opt.name}
+                      style={[
+                        styles.iconOption,
+                        { backgroundColor: color + "15" },
+                        icon === opt.name && styles.iconOptionSelected,
+                      ]}
+                      onPress={() => setIcon(opt.name)}
+                      activeOpacity={0.7}
+                    >
+                      <OptIcon size={22} color={icon === opt.name ? color : Colors.textSecondary} />
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.formGroup}>
+              <Text style={styles.formLabel}>Color</Text>
+              <View style={styles.colorGrid}>
+                {PRESET_COLORS.map((c) => (
+                  <TouchableOpacity
+                    key={c}
+                    style={[
+                      styles.colorOption,
+                      { backgroundColor: c },
+                      color === c && styles.colorOptionSelected,
+                    ]}
+                    onPress={() => setColor(c)}
+                    activeOpacity={0.7}
+                  >
+                    {color === c && <Check size={16} color="#fff" />}
+                  </TouchableOpacity>
+                ))}
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.saveButton, isLoading && styles.saveButtonDisabled]}
+              onPress={handleSave}
+              disabled={isLoading}
+              activeOpacity={0.8}
+            >
+              {isLoading ? (
+                <ActivityIndicator size="small" color="#fff" />
+              ) : (
+                <Text style={styles.saveButtonText}>Save Changes</Text>
+              )}
+            </TouchableOpacity>
+          </ScrollView>
         </View>
       </View>
-      <ChevronRight size={18} color={Colors.textTertiary} />
-    </TouchableOpacity>
+    </Modal>
   );
 }
 
@@ -163,17 +309,62 @@ export default function MinistryPageScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, isAdmin } = useAuth();
+  const { user, isAdmin, currentOrganization } = useAuth();
+  const utils = trpc.useUtils();
 
   const scrollY = useRef(new Animated.Value(0)).current;
-  const [isJoining, setIsJoining] = useState(false);
+  const [settingsVisible, setSettingsVisible] = useState(false);
 
-  const template = ministryTemplates.find((t) => t.id === id);
-  const members = ministryMembers[id || ""] || [];
-  const events = ministryEvents[id || ""] || [];
-  const missionStatement = getMissionStatement(id || "");
+  const ministryQuery = trpc.ministries.getById.useQuery(
+    { id: id || "" },
+    { enabled: !!id }
+  );
+
+  const membersQuery = trpc.ministries.getMembers.useQuery(
+    { ministryId: id || "" },
+    { enabled: !!id }
+  );
+
+  const updateMutation = trpc.ministries.update.useMutation({
+    onSuccess: () => {
+      console.log("Ministry updated successfully");
+      utils.ministries.getById.invalidate({ id: id || "" });
+      utils.ministries.list.invalidate();
+      setSettingsVisible(false);
+      if (Platform.OS !== "web") {
+        Alert.alert("Success", "Ministry updated successfully");
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to update ministry:", error);
+      if (Platform.OS === "web") {
+        alert(error.message || "Failed to update ministry");
+      } else {
+        Alert.alert("Error", error.message || "Failed to update ministry");
+      }
+    },
+  });
+
+  const joinMutation = trpc.ministries.join.useMutation({
+    onSuccess: (result) => {
+      if (Platform.OS === "web") {
+        alert(result.message || "Your request to join has been submitted!");
+      } else {
+        Alert.alert("Request Sent", result.message || "Your request to join this ministry has been submitted for approval.");
+      }
+    },
+    onError: (error) => {
+      if (Platform.OS === "web") {
+        alert(error.message || "Failed to submit join request");
+      } else {
+        Alert.alert("Error", error.message || "Failed to submit join request");
+      }
+    },
+  });
+
+  const ministry = ministryQuery.data;
+  const members = membersQuery.data || [];
   const leaders = members.filter((m) => m.role === "leader" || m.role === "admin");
-
   const canManage = isAdmin;
 
   const headerHeight = scrollY.interpolate({
@@ -195,74 +386,92 @@ export default function MinistryPageScreen() {
   });
 
   const handleShare = useCallback(async () => {
+    if (!ministry) return;
     try {
       await Share.share({
-        message: `Check out the ${template?.name} at our church!`,
-        title: template?.name,
+        message: `Check out the ${ministry.name} at our church!`,
+        title: ministry.name,
       });
     } catch (error) {
       console.error("Share error:", error);
     }
-  }, [template]);
+  }, [ministry]);
 
   const handleJoin = useCallback(async () => {
     if (!user) {
       router.push("/login");
       return;
     }
+    if (!id) return;
+    joinMutation.mutate({ 
+      ministryId: id, 
+      organizationId: currentOrganization?.id 
+    });
+  }, [user, router, id, currentOrganization, joinMutation]);
 
-    setIsJoining(true);
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (Platform.OS === "web") {
-        alert("Your request to join has been submitted!");
-      } else {
-        Alert.alert("Request Sent", "Your request to join this ministry has been submitted for approval.");
-      }
-    } catch (error) {
-      console.error("Join error:", error);
-    } finally {
-      setIsJoining(false);
-    }
-  }, [user, router]);
+  const handleSaveSettings = useCallback((data: { name: string; description: string; color: string; icon: string }) => {
+    if (!id) return;
+    updateMutation.mutate({
+      id,
+      name: data.name,
+      description: data.description,
+      color: data.color,
+      icon: data.icon,
+    });
+  }, [id, updateMutation]);
 
-  if (!template) {
+  if (ministryQuery.isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Text style={styles.errorText}>Ministry not found</Text>
+        <ActivityIndicator size="large" color={Colors.primary} />
+        <Text style={styles.loadingText}>Loading ministry...</Text>
       </View>
     );
   }
 
-  const IconComponent = iconMap[template.icon] || Users;
+  if (!ministry) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Text style={styles.errorText}>Ministry not found</Text>
+        <TouchableOpacity 
+          style={styles.backButtonCentered} 
+          onPress={() => router.back()}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.backButtonText}>Go Back</Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  const color = ministry.color || getMinistryColor(ministry.name, ministry.id);
+  const IconComponent = iconMap[ministry.icon || ""] || Users;
+  const coverImage = ministry.image || `https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop`;
+
+  const isMember = user?.ministries?.includes(ministry.id);
 
   return (
     <View style={styles.container}>
       <Stack.Screen options={{ headerShown: false }} />
 
       <Animated.View style={[styles.header, { height: headerHeight }]}>
-        <Image source={{ uri: template.coverImage }} style={StyleSheet.absoluteFillObject} />
+        <Image source={{ uri: coverImage }} style={StyleSheet.absoluteFillObject} />
         <LinearGradient
           colors={["transparent", "rgba(0,0,0,0.7)"]}
           style={StyleSheet.absoluteFillObject}
         />
         
         <Animated.View style={[styles.headerContent, { opacity: headerOpacity }]}>
-          <View style={[styles.ministryBadge, { backgroundColor: template.color }]}>
+          <View style={[styles.ministryBadge, { backgroundColor: color }]}>
             <IconComponent size={32} color="#fff" />
           </View>
-          <Text style={styles.ministryName}>{template.name}</Text>
-          <Text style={styles.ministryCategory}>{template.category}</Text>
+          <Text style={styles.ministryName}>{ministry.name}</Text>
           <View style={styles.statsRow}>
             <View style={styles.statItem}>
               <Users size={14} color="#fff" />
-              <Text style={styles.statText}>{members.length} members</Text>
-            </View>
-            <View style={styles.statDivider} />
-            <View style={styles.statItem}>
-              <Calendar size={14} color="#fff" />
-              <Text style={styles.statText}>{events.length} events</Text>
+              <Text style={styles.statText}>{ministry.memberCount} members</Text>
             </View>
           </View>
         </Animated.View>
@@ -273,14 +482,14 @@ export default function MinistryPageScreen() {
           </TouchableOpacity>
           
           <Animated.Text style={[styles.navTitle, { opacity: titleOpacity }]} numberOfLines={1}>
-            {template.name}
+            {ministry.name}
           </Animated.Text>
 
           <View style={styles.navActions}>
             {canManage && (
               <TouchableOpacity 
                 style={styles.navButton} 
-                onPress={() => router.push(`/admin/ministry-edit/${id}` as any)}
+                onPress={() => setSettingsVisible(true)}
                 activeOpacity={0.7}
               >
                 <Settings size={20} color="#fff" />
@@ -305,30 +514,25 @@ export default function MinistryPageScreen() {
         <View style={styles.content}>
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>About</Text>
-            <Text style={styles.descriptionText}>{template.description}</Text>
+            <Text style={styles.descriptionText}>{ministry.description}</Text>
           </View>
-
-          {missionStatement && (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Our Mission</Text>
-              <View style={[styles.missionCard, { borderLeftColor: template.color }]}>
-                <Text style={styles.missionText}>{missionStatement}</Text>
-              </View>
-            </View>
-          )}
 
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Meeting Times</Text>
-            {template.defaultSchedule.map((schedule, index) => (
-              <ScheduleItem
-                key={index}
-                day={schedule.day}
-                time={schedule.time}
-                frequency={schedule.frequency}
-                location="Main Campus"
-                color={template.color}
-              />
-            ))}
+            <ScheduleItem
+              day="Sunday"
+              time="10:00 AM"
+              frequency="Weekly"
+              location="Main Campus"
+              color={color}
+            />
+            <ScheduleItem
+              day="Wednesday"
+              time="7:00 PM"
+              frequency="Weekly"
+              location="Fellowship Hall"
+              color={color}
+            />
           </View>
 
           {leaders.length > 0 && (
@@ -338,7 +542,7 @@ export default function MinistryPageScreen() {
                 {canManage && (
                   <TouchableOpacity 
                     style={styles.manageButton}
-                    onPress={() => router.push(`/admin/ministry-leaders/${id}` as any)}
+                    onPress={() => router.push(`/admin/ministries` as any)}
                     activeOpacity={0.7}
                   >
                     <Edit3 size={14} color={Colors.primary} />
@@ -347,23 +551,28 @@ export default function MinistryPageScreen() {
                 )}
               </View>
               {leaders.map((leader) => (
-                <LeaderCard key={leader.id} leader={leader} color={template.color} />
+                <MemberCard key={leader.id} member={leader} color={color} isLeader />
               ))}
             </View>
           )}
 
-          {events.length > 0 && (
+          {members.length > leaders.length && (
             <View style={styles.section}>
               <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>Upcoming Events</Text>
-                <TouchableOpacity style={styles.seeAllButton} activeOpacity={0.7}>
-                  <Text style={styles.seeAllText}>See All</Text>
-                  <ChevronRight size={16} color={Colors.primary} />
-                </TouchableOpacity>
+                <Text style={styles.sectionTitle}>Members</Text>
+                <Text style={styles.memberCountText}>{members.length - leaders.length}</Text>
               </View>
-              {events.slice(0, 3).map((event) => (
-                <EventCard key={event.id} event={event} color={template.color} />
+              {members.filter(m => m.role !== "leader" && m.role !== "admin").slice(0, 5).map((member) => (
+                <MemberCard key={member.id} member={member} color={color} />
               ))}
+              {members.length - leaders.length > 5 && (
+                <TouchableOpacity style={styles.seeAllMembersButton} activeOpacity={0.7}>
+                  <Text style={[styles.seeAllMembersText, { color }]}>
+                    View all {members.length - leaders.length} members
+                  </Text>
+                  <ChevronRight size={16} color={color} />
+                </TouchableOpacity>
+              )}
             </View>
           )}
 
@@ -371,19 +580,19 @@ export default function MinistryPageScreen() {
             <Text style={styles.sectionTitle}>Contact</Text>
             <View style={styles.contactCard}>
               <TouchableOpacity style={styles.contactItem} activeOpacity={0.7}>
-                <View style={[styles.contactIcon, { backgroundColor: template.color + "15" }]}>
-                  <Mail size={18} color={template.color} />
+                <View style={[styles.contactIcon, { backgroundColor: color + "15" }]}>
+                  <Mail size={18} color={color} />
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactLabel}>Email</Text>
-                  <Text style={styles.contactValue}>{template.id}@church.org</Text>
+                  <Text style={styles.contactValue}>{ministry.id}@church.org</Text>
                 </View>
                 <ChevronRight size={18} color={Colors.textTertiary} />
               </TouchableOpacity>
               <View style={styles.contactDivider} />
               <TouchableOpacity style={styles.contactItem} activeOpacity={0.7}>
-                <View style={[styles.contactIcon, { backgroundColor: template.color + "15" }]}>
-                  <MessageCircle size={18} color={template.color} />
+                <View style={[styles.contactIcon, { backgroundColor: color + "15" }]}>
+                  <MessageCircle size={18} color={color} />
                 </View>
                 <View style={styles.contactInfo}>
                   <Text style={styles.contactLabel}>Message</Text>
@@ -399,22 +608,39 @@ export default function MinistryPageScreen() {
       </Animated.ScrollView>
 
       <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
-        <TouchableOpacity 
-          style={[styles.joinButton, { backgroundColor: template.color }]} 
-          onPress={handleJoin}
-          disabled={isJoining}
-          activeOpacity={0.8}
-        >
-          {isJoining ? (
-            <Text style={styles.joinButtonText}>Sending Request...</Text>
-          ) : (
-            <>
-              <UserPlus size={20} color="#fff" />
-              <Text style={styles.joinButtonText}>Join This Ministry</Text>
-            </>
-          )}
-        </TouchableOpacity>
+        {isMember ? (
+          <View style={[styles.memberBadge, { backgroundColor: color + "15" }]}>
+            <Check size={20} color={color} />
+            <Text style={[styles.memberBadgeText, { color }]}>You are a Member</Text>
+          </View>
+        ) : (
+          <TouchableOpacity 
+            style={[styles.joinButton, { backgroundColor: color }]} 
+            onPress={handleJoin}
+            disabled={joinMutation.isPending}
+            activeOpacity={0.8}
+          >
+            {joinMutation.isPending ? (
+              <ActivityIndicator size="small" color="#fff" />
+            ) : (
+              <>
+                <UserPlus size={20} color="#fff" />
+                <Text style={styles.joinButtonText}>Join This Ministry</Text>
+              </>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
+
+      {ministry && settingsVisible && (
+        <SettingsModal
+          visible={settingsVisible}
+          onClose={() => setSettingsVisible(false)}
+          ministry={ministry}
+          onSave={handleSaveSettings}
+          isLoading={updateMutation.isPending}
+        />
+      )}
     </View>
   );
 }
@@ -428,9 +654,26 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
+  loadingText: {
+    marginTop: 12,
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
   errorText: {
     fontSize: 16,
     color: Colors.error,
+    marginBottom: 16,
+  },
+  backButtonCentered: {
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+  },
+  backButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "600" as const,
   },
   header: {
     position: "absolute",
@@ -495,15 +738,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: "700" as const,
     color: "#fff",
-    marginBottom: 4,
+    marginBottom: 8,
     textShadowColor: "rgba(0, 0, 0, 0.5)",
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 4,
-  },
-  ministryCategory: {
-    fontSize: 14,
-    color: "rgba(255, 255, 255, 0.8)",
-    marginBottom: 12,
   },
   statsRow: {
     flexDirection: "row",
@@ -521,12 +759,6 @@ const styles = StyleSheet.create({
   statText: {
     fontSize: 13,
     color: "#fff",
-  },
-  statDivider: {
-    width: 1,
-    height: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.3)",
-    marginHorizontal: 12,
   },
   scrollView: {
     flex: 1,
@@ -561,18 +793,6 @@ const styles = StyleSheet.create({
     fontSize: 15,
     color: Colors.textSecondary,
     lineHeight: 24,
-  },
-  missionCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 16,
-    borderLeftWidth: 4,
-  },
-  missionText: {
-    fontSize: 14,
-    color: Colors.text,
-    lineHeight: 22,
-    fontStyle: "italic",
   },
   scheduleItem: {
     flexDirection: "row",
@@ -627,6 +847,15 @@ const styles = StyleSheet.create({
     fontWeight: "500" as const,
     color: Colors.primary,
   },
+  memberCountText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.textSecondary,
+    backgroundColor: Colors.surfaceSecondary,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 10,
+  },
   leaderCard: {
     flexDirection: "row",
     alignItems: "center",
@@ -661,64 +890,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  seeAllButton: {
+  seeAllMembersButton: {
     flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
-  },
-  seeAllText: {
-    fontSize: 14,
-    fontWeight: "500" as const,
-    color: Colors.primary,
-  },
-  eventCard: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    padding: 12,
-    marginBottom: 10,
-  },
-  eventDateBox: {
-    width: 52,
-    height: 52,
-    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    marginRight: 14,
-  },
-  eventDay: {
-    fontSize: 20,
-    fontWeight: "700" as const,
-  },
-  eventMonth: {
-    fontSize: 11,
-    fontWeight: "600" as const,
-    textTransform: "uppercase",
-  },
-  eventInfo: {
-    flex: 1,
-  },
-  eventTitle: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  eventTime: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginBottom: 4,
-  },
-  eventMeta: {
-    flexDirection: "row",
-    alignItems: "center",
+    paddingVertical: 12,
     gap: 4,
   },
-  eventLocation: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    flex: 1,
+  seeAllMembersText: {
+    fontSize: 14,
+    fontWeight: "600" as const,
   },
   contactCard: {
     backgroundColor: Colors.surface,
@@ -776,6 +957,153 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   joinButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: "#fff",
+  },
+  memberBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 10,
+    paddingVertical: 16,
+    borderRadius: 14,
+  },
+  memberBadgeText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0, 0, 0, 0.5)",
+    justifyContent: "flex-end",
+  },
+  modalContent: {
+    backgroundColor: Colors.surface,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
+    maxHeight: "90%",
+  },
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  modalCloseButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  modalScroll: {
+    flexGrow: 0,
+  },
+  previewCard: {
+    backgroundColor: Colors.background,
+    borderRadius: 16,
+    padding: 20,
+    alignItems: "center",
+    marginBottom: 24,
+  },
+  previewIcon: {
+    width: 56,
+    height: 56,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  previewName: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    marginBottom: 4,
+  },
+  previewDescription: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+    textAlign: "center",
+  },
+  formGroup: {
+    marginBottom: 20,
+  },
+  formLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginBottom: 10,
+  },
+  formInput: {
+    backgroundColor: Colors.background,
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    fontSize: 16,
+    color: Colors.text,
+    borderWidth: 1,
+    borderColor: Colors.borderLight,
+  },
+  formTextArea: {
+    minHeight: 100,
+    paddingTop: 14,
+  },
+  iconGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  iconOption: {
+    width: 48,
+    height: 48,
+    borderRadius: 12,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  iconOptionSelected: {
+    borderWidth: 2,
+    borderColor: Colors.primary,
+  },
+  colorGrid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: 10,
+  },
+  colorOption: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  colorOptionSelected: {
+    borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
+  },
+  saveButton: {
+    backgroundColor: Colors.primary,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    marginTop: 12,
+  },
+  saveButtonDisabled: {
+    opacity: 0.7,
+  },
+  saveButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
     color: "#fff",
