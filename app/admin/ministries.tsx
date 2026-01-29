@@ -120,9 +120,10 @@ export default function AdminMinistriesScreen() {
     icon: "users",
   });
 
-  const ministriesQuery = trpc.ministries.list.useQuery({
-    organizationId: currentOrganization?.id,
-  });
+  const ministriesQuery = trpc.ministries.list.useQuery(
+    { organizationId: currentOrganization?.id ?? "" },
+    { enabled: !!currentOrganization?.id }
+  );
 
   const membersQuery = trpc.admin.getMinistryMembers.useQuery(
     { ministryId: selectedMinistryId || "" },

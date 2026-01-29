@@ -5,12 +5,12 @@ import { createTRPCRouter, publicProcedure, protectedProcedure, adminProcedure }
 import { persistentDb, generateId } from "@/backend/db/persistent";
 
 const createAnnouncementSchema = z.object({
+  organizationId: z.string().min(1),
   title: z.string().min(2),
   content: z.string().min(10),
   priority: z.enum(["high", "normal", "low"]).default("normal"),
   isPinned: z.boolean().default(false),
   ministryId: z.string().optional(),
-  organizationId: z.string().optional(),
 });
 
 const updateAnnouncementSchema = z.object({
@@ -25,31 +25,27 @@ export const announcementsRouter = createTRPCRouter({
   list: publicProcedure
     .input(
       z.object({
+        organizationId: z.string().min(1),
         ministryId: z.string().optional(),
         limit: z.number().optional(),
-        organizationId: z.string().optional(),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
       console.log("Fetching announcements with filters:", input);
 
-      let announcements = input?.organizationId
-        ? await persistentDb.announcements.findByOrganization(input.organizationId)
-        : await persistentDb.announcements.getAll();
+      const announcements = await persistentDb.announcements.findByOrganization(input.organizationId);
 
-      if (input?.ministryId) {
-        announcements = announcements.filter(
-          (a) => a.ministryId === input.ministryId || !a.ministryId
-        );
-      }
+      const filtered = input.ministryId
+        ? announcements.filter((a) => a.ministryId === input.ministryId || !a.ministryId)
+        : announcements;
 
-      announcements.sort((a, b) => {
+      filtered.sort((a, b) => {
         if (a.isPinned && !b.isPinned) return -1;
         if (!a.isPinned && b.isPinned) return 1;
         return new Date(b.date).getTime() - new Date(a.date).getTime();
       });
 
-      return input?.limit ? announcements.slice(0, input.limit) : announcements;
+      return input.limit ? filtered.slice(0, input.limit) : filtered;
     }),
 
   getById: publicProcedure
@@ -70,20 +66,40 @@ export const announcementsRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       console.log("Creating new announcement:", input.title);
 
-      const isAdminOrLeader = ctx.user.role === "admin" || ctx.user.role === "super_admin" || ctx.user.role === "leader";
+      const settings = await persistentDb.churchSettings.findByChurchId(input.organizationId);
+      if (settings && !settings.modulesEnabled.announcements) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Announcements are not enabled for this church",
+        });
+      }
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, input.organizationId);
+      if (!membership || !membership.isActive) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this church",
+        });
+      }
+
+      const canCreateDirectly = ["super_admin", "admin", "staff"].includes(membership.role);
 
       let ministryName: string | undefined;
       if (input.ministryId) {
         const ministry = await persistentDb.ministries.findById(input.ministryId);
-        ministryName = ministry?.name;
+        if (!ministry || ministry.organizationId !== input.organizationId) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid ministry",
+          });
+        }
+        ministryName = ministry.name;
       }
 
-      const orgId = input.organizationId || "default";
-
-      if (!isAdminOrLeader) {
+      if (!canCreateDirectly) {
         await persistentDb.workflowRequests.create({
           id: generateId(),
-          organizationId: orgId,
+          organizationId: input.organizationId,
           type: "create_announcement",
           requesterId: ctx.user.id,
           data: { ...input, ministryName },
@@ -97,7 +113,7 @@ export const announcementsRouter = createTRPCRouter({
 
       const newAnnouncement = {
         id: generateId(),
-        organizationId: orgId,
+        organizationId: input.organizationId,
         title: input.title,
         content: input.content,
         author: ctx.user.name,

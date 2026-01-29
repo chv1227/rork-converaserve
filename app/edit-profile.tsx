@@ -52,8 +52,11 @@ export default function EditProfileScreen() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const ministriesQuery = trpc.ministries.list.useQuery();
-  const availableMinistries = ministriesQuery.data || [];
+  const ministriesQuery = trpc.ministries.list.useQuery(
+    { organizationId: "" },
+    { enabled: false }
+  );
+  const availableMinistries: Ministry[] = ministriesQuery.data || [];
 
   useEffect(() => {
     if (user?.ministries) {

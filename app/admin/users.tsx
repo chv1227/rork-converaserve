@@ -217,7 +217,10 @@ export default function UserManagement() {
     { enabled: isAdmin }
   );
 
-  const ministriesQuery = trpc.ministries.list.useQuery(undefined, { enabled: isAdmin });
+  const ministriesQuery = trpc.ministries.list.useQuery(
+    { organizationId: "" },
+    { enabled: false }
+  );
   const invitationsQuery = trpc.admin.getInvitations.useQuery(undefined, { enabled: isAdmin });
 
   const toggleStatusMutation = trpc.admin.toggleUserStatus.useMutation({

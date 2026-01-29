@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Pin, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
@@ -11,15 +11,38 @@ interface AnnouncementCardProps {
 }
 
 export default function AnnouncementCard({ announcement, onPress }: AnnouncementCardProps) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
   return (
     <TouchableOpacity 
-      style={[
-        styles.container,
-        announcement.isPinned && styles.pinnedContainer
-      ]} 
       onPress={onPress}
-      activeOpacity={0.7}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
     >
+      <Animated.View style={[
+        styles.container,
+        announcement.isPinned && styles.pinnedContainer,
+        { transform: [{ scale: scaleAnim }] }
+      ]}>
       {announcement.isPinned && (
         <View style={styles.pinnedBadge}>
           <Pin size={12} color={Colors.primary} />
@@ -55,6 +78,7 @@ export default function AnnouncementCard({ announcement, onPress }: Announcement
         <Text style={styles.readMore}>Read more</Text>
         <ChevronRight size={16} color={Colors.primary} />
       </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 }

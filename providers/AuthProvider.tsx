@@ -60,6 +60,58 @@ interface AuthState {
 const USER_KEY = "supabase_user_v1";
 const ORG_KEY = "current_organization_v1";
 
+async function fetchUserChurch(userId: string, token: string): Promise<Organization | null> {
+  try {
+    console.log("AuthProvider: Fetching user's active church...");
+    const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/churches.getUserActiveChurch`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (response.ok) {
+      const data = await response.json();
+      if (data?.result?.data?.church) {
+        const church = data.result.data.church;
+        console.log("AuthProvider: Found active church:", church.name);
+        return {
+          id: church.id,
+          name: church.name,
+          description: church.description || '',
+          logo: church.logo,
+          createdAt: church.createdAt,
+          updatedAt: church.updatedAt,
+        };
+      }
+    }
+    
+    console.log("AuthProvider: No active church found via API, trying organizations...");
+    const orgResponse = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/organizations.getUserOrganizations`, {
+      method: 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+    });
+    
+    if (orgResponse.ok) {
+      const orgData = await orgResponse.json();
+      if (orgData?.result?.data && orgData.result.data.length > 0) {
+        const org = orgData.result.data[0];
+        console.log("AuthProvider: Found organization:", org.name);
+        return org;
+      }
+    }
+    
+    return null;
+  } catch (error) {
+    console.error("AuthProvider: Error fetching user church:", error);
+    return null;
+  }
+}
+
 async function getStoredValue(key: string): Promise<string | null> {
   try {
     if (Platform.OS === "web") {
@@ -239,11 +291,19 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         setAuthToken(session.access_token);
         
         
+        let currentOrg = cachedOrg;
+        if (!currentOrg && session?.access_token) {
+          currentOrg = await fetchUserChurch(user.id, session.access_token);
+          if (currentOrg) {
+            await setStoredValue(ORG_KEY, JSON.stringify(currentOrg));
+          }
+        }
+        
         setState({
           user,
           session,
           isAuthenticated: true,
-          currentOrganization: cachedOrg,
+          currentOrganization: currentOrg,
           currentMembership: null,
           organizations: [],
           isLoading: false,

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,6 +11,8 @@ import {
   ActivityIndicator,
   Alert,
   Modal,
+  Animated,
+  Easing,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -19,6 +21,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { resendVerificationEmail } from "@/lib/supabase-auth";
+import { useButtonPress } from "@/hooks/useAnimations";
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -30,6 +33,49 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
+  const headerSlide = useRef(new Animated.Value(-20)).current;
+  const headerOpacity = useRef(new Animated.Value(0)).current;
+  
+  const loginButtonAnim = useButtonPress();
+  const registerButtonAnim = useButtonPress();
+  const createOrgButtonAnim = useButtonPress();
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(headerOpacity, {
+        toValue: 1,
+        duration: 600,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(headerSlide, {
+        toValue: 0,
+        duration: 600,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 500,
+        delay: 200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 500,
+        delay: 200,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim, headerOpacity, headerSlide]);
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -150,10 +196,10 @@ export default function LoginScreen() {
         colors={[Colors.primary, "#0D5C56"]}
         style={styles.headerGradient}
       >
-        <View style={[styles.headerContent, { paddingTop: insets.top + 40 }]}>
+        <Animated.View style={[styles.headerContent, { paddingTop: insets.top + 40, opacity: headerOpacity, transform: [{ translateY: headerSlide }] }]}>
           <Text style={styles.logo}>Church Connect</Text>
           <Text style={styles.tagline}>Stay connected with your community</Text>
-        </View>
+        </Animated.View>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -165,7 +211,7 @@ export default function LoginScreen() {
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.formCard}>
+          <Animated.View style={[styles.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
             <Text style={styles.welcomeText}>Welcome Back</Text>
             <Text style={styles.subtitle}>Sign in to continue</Text>
 
@@ -230,17 +276,22 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={[styles.loginButton, isLoading && styles.loginButtonDisabled]}
               onPress={handleLogin}
+              onPressIn={loginButtonAnim.onPressIn}
+              onPressOut={loginButtonAnim.onPressOut}
               disabled={isLoading}
+              activeOpacity={1}
               testID="login-button"
             >
-              {isLoading ? (
-                <ActivityIndicator color={Colors.textInverse} />
-              ) : (
-                <>
-                  <Text style={styles.loginButtonText}>Sign In</Text>
-                  <ArrowRight size={20} color={Colors.textInverse} />
-                </>
-              )}
+              <Animated.View style={[styles.buttonInner, { transform: [{ scale: loginButtonAnim.scale }], opacity: loginButtonAnim.opacity }]}>
+                {isLoading ? (
+                  <ActivityIndicator color={Colors.textInverse} />
+                ) : (
+                  <>
+                    <Text style={styles.loginButtonText}>Sign In</Text>
+                    <ArrowRight size={20} color={Colors.textInverse} />
+                  </>
+                )}
+              </Animated.View>
             </TouchableOpacity>
 
             <View style={styles.divider}>
@@ -252,9 +303,14 @@ export default function LoginScreen() {
             <TouchableOpacity
               style={styles.registerButton}
               onPress={() => router.push("/register" as never)}
+              onPressIn={registerButtonAnim.onPressIn}
+              onPressOut={registerButtonAnim.onPressOut}
               disabled={isLoading}
+              activeOpacity={1}
             >
-              <Text style={styles.registerButtonText}>Create an Account</Text>
+              <Animated.View style={[styles.buttonInner, { transform: [{ scale: registerButtonAnim.scale }] }]}>
+                <Text style={styles.registerButtonText}>Create an Account</Text>
+              </Animated.View>
             </TouchableOpacity>
 
             <View style={styles.createOrgSection}>
@@ -262,13 +318,18 @@ export default function LoginScreen() {
               <TouchableOpacity
                 style={styles.createOrgButton}
                 onPress={() => router.push("/register?createOrg=true" as never)}
+                onPressIn={createOrgButtonAnim.onPressIn}
+                onPressOut={createOrgButtonAnim.onPressOut}
                 disabled={isLoading}
+                activeOpacity={1}
               >
-                <Building2 size={20} color={Colors.primary} />
-                <Text style={styles.createOrgButtonText}>Create a New Church</Text>
+                <Animated.View style={[styles.buttonInnerRow, { transform: [{ scale: createOrgButtonAnim.scale }] }]}>
+                  <Building2 size={20} color={Colors.primary} />
+                  <Text style={styles.createOrgButtonText}>Create a New Church</Text>
+                </Animated.View>
               </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </ScrollView>
       </KeyboardAvoidingView>
 
@@ -547,10 +608,18 @@ const styles = StyleSheet.create({
   loginButton: {
     backgroundColor: Colors.primary,
     borderRadius: 16,
+    overflow: "hidden",
+  },
+  buttonInner: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
     paddingVertical: 16,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    gap: 8,
+  },
+  buttonInnerRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
     gap: 8,
   },
   loginButtonDisabled: {
@@ -601,9 +670,6 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   createOrgButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderWidth: 2,

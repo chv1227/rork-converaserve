@@ -1,5 +1,5 @@
-import { useCallback, useState, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform } from "react-native";
+import { useCallback, useState, useMemo, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform, Animated, Easing } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
@@ -54,6 +54,26 @@ export default function GroupsScreen() {
   const [selectedColor, setSelectedColor] = useState("#FF6B6B");
   const [selectedIcon, setSelectedIcon] = useState("Users");
   const [isCreating, setIsCreating] = useState(false);
+
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const sectionsAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(sectionsAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, [headerAnim, sectionsAnim]);
 
   const MINISTRY_COLORS = [
     "#FF6B6B", "#4ECDC4", "#6C5CE7", "#00D4AA", "#FFE66D", "#74B9FF", "#FF7675", "#A29BFE"
@@ -140,20 +160,41 @@ export default function GroupsScreen() {
     }
   };
 
-  const renderMinistrySectionCard = (section: typeof MINISTRY_SECTIONS[0]) => {
+  const renderMinistrySectionCard = (section: typeof MINISTRY_SECTIONS[0], index: number) => {
     const ministry = defaultMinistries.find(m => m.id === section.id);
     const members = getMembersForMinistry(section.id);
     const events = getEventsForMinistry(section.id);
     const upcomingEvent = events[0];
     const IconComponent = section.icon;
+    const cardScale = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+      Animated.spring(cardScale, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 4,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(cardScale, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 4,
+      }).start();
+    };
 
     return (
       <TouchableOpacity
         key={section.id}
-        style={styles.sectionCard}
         onPress={() => router.push(`/group/${section.id}` as Href)}
-        activeOpacity={0.7}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
       >
+        <Animated.View style={[styles.sectionCard, { transform: [{ scale: cardScale }] }]}>
         <View style={styles.sectionCardHeader}>
           <View style={[styles.sectionIconContainer, { backgroundColor: section.color + '15' }]}>
             <IconComponent size={24} color={section.color} />
@@ -199,6 +240,7 @@ export default function GroupsScreen() {
         </View>
 
         <View style={[styles.sectionCardAccent, { backgroundColor: section.color }]} />
+        </Animated.View>
       </TouchableOpacity>
     );
   };
@@ -227,9 +269,9 @@ export default function GroupsScreen() {
           Join a ministry to connect, serve, and grow together
         </Text>
 
-        <View style={styles.ministrySections}>
-          {MINISTRY_SECTIONS.map(renderMinistrySectionCard)}
-        </View>
+        <Animated.View style={[styles.ministrySections, { opacity: sectionsAnim, transform: [{ translateY: sectionsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
+          {MINISTRY_SECTIONS.map((section, index) => renderMinistrySectionCard(section, index))}
+        </Animated.View>
 
         {isLoading && ministries.length === 0 && currentOrganization && (
           <View style={styles.loadingContainer}>

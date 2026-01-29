@@ -58,7 +58,7 @@ export default function AnnouncementsScreen() {
   const [isGeneralAnnouncement, setIsGeneralAnnouncement] = useState(true);
 
   const announcementsQuery = trpc.announcements.list.useQuery(
-    { organizationId: currentOrganization?.id },
+    { organizationId: currentOrganization?.id ?? "" },
     { enabled: !!currentOrganization?.id }
   );
 
@@ -140,11 +140,16 @@ export default function AnnouncementsScreen() {
       return;
     }
 
+    if (!currentOrganization?.id) {
+      Alert.alert('Error', 'Please select a church first');
+      return;
+    }
+
     createMutation.mutate({
+      organizationId: currentOrganization.id,
       title: newTitle.trim(),
       content: newContent.trim(),
       priority: newPriority,
-      organizationId: currentOrganization?.id,
       ministryId: isGeneralAnnouncement ? undefined : selectedMinistry?.id,
     });
   };

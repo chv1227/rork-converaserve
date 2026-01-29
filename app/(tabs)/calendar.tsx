@@ -1,5 +1,5 @@
-import { useState, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
+import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Animated, Easing } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight } from "lucide-react-native";
 
@@ -14,6 +14,26 @@ export default function CalendarScreen() {
   const { events, isLoading, isRefreshing, refresh } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [localRefreshing, setLocalRefreshing] = useState(false);
+
+  const calendarAnim = useRef(new Animated.Value(0)).current;
+  const eventsAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.stagger(150, [
+      Animated.timing(calendarAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(eventsAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, [calendarAnim, eventsAnim]);
 
   const onRefresh = useCallback(async () => {
     console.log("Refreshing calendar...");
@@ -112,7 +132,7 @@ export default function CalendarScreen() {
           </View>
         )}
 
-        <View style={styles.calendarCard}>
+        <Animated.View style={[styles.calendarCard, { opacity: calendarAnim, transform: [{ translateY: calendarAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
           <View style={styles.monthNav}>
             <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.navButton}>
               <ChevronLeft size={24} color={Colors.text} />
@@ -164,9 +184,9 @@ export default function CalendarScreen() {
               </TouchableOpacity>
             ))}
           </View>
-        </View>
+        </Animated.View>
 
-        <View style={styles.eventsSection}>
+        <Animated.View style={[styles.eventsSection, { opacity: eventsAnim, transform: [{ translateY: eventsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
           <Text style={styles.sectionTitle}>
             Events on {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </Text>
@@ -183,7 +203,7 @@ export default function CalendarScreen() {
               <Text style={styles.noEventsText}>No events scheduled for this day</Text>
             </View>
           )}
-        </View>
+        </Animated.View>
 
         <View style={{ height: 100 }} />
       </ScrollView>

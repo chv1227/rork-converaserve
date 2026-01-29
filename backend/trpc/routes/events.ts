@@ -28,18 +28,16 @@ export const eventsRouter = createTRPCRouter({
   list: publicProcedure
     .input(
       z.object({
+        organizationId: z.string().min(1),
         ministryId: z.string().optional(),
         fromDate: z.string().optional(),
         toDate: z.string().optional(),
-        organizationId: z.string().optional(),
-      }).optional()
+      })
     )
     .query(async ({ input }) => {
       console.log("Fetching events with filters:", input);
-      
-      let events = input?.organizationId 
-        ? await persistentDb.events.findByOrganization(input.organizationId)
-        : await persistentDb.events.getAll();
+
+      let events = await persistentDb.events.findByOrganization(input.organizationId);
 
       if (input?.ministryId) {
         events = events.filter((e) => e.ministryId === input.ministryId);
@@ -70,13 +68,11 @@ export const eventsRouter = createTRPCRouter({
     }),
 
   getUpcoming: publicProcedure
-    .input(z.object({ limit: z.number().optional(), organizationId: z.string().optional() }).optional())
+    .input(z.object({ organizationId: z.string().min(1), limit: z.number().optional() }))
     .query(async ({ input }) => {
       const today = new Date().toISOString().split("T")[0];
-      
-      let events = input?.organizationId
-        ? await persistentDb.events.findByOrganization(input.organizationId)
-        : await persistentDb.events.getAll();
+
+      const events = await persistentDb.events.findByOrganization(input.organizationId);
 
       const upcoming = events
         .filter((e) => e.date >= today)
@@ -99,15 +95,39 @@ export const eventsRouter = createTRPCRouter({
       }
 
       const orgId = input.organizationId || ministry.organizationId;
-      const isAdminOrLeader = ctx.user.role === "admin" || ctx.user.role === "super_admin" || ctx.user.role === "leader";
 
-      if (!isAdminOrLeader) {
+      const settings = await persistentDb.churchSettings.findByChurchId(orgId);
+      if (settings && !settings.modulesEnabled.events) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "Events are not enabled for this church",
+        });
+      }
+
+      const membership = await persistentDb.churchMemberships.findByUserAndChurch(ctx.user.id, orgId);
+      if (!membership || !membership.isActive) {
+        throw new TRPCError({
+          code: "FORBIDDEN",
+          message: "You are not a member of this church",
+        });
+      }
+
+      if (ministry.organizationId !== orgId) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Invalid ministry",
+        });
+      }
+
+      const canCreateDirectly = ["super_admin", "admin", "staff"].includes(membership.role);
+
+      if (!canCreateDirectly) {
         await persistentDb.workflowRequests.create({
           id: generateId(),
           organizationId: orgId,
           type: "create_event",
           requesterId: ctx.user.id,
-          data: { ...input, ministryName: ministry.name },
+          data: { ...input, organizationId: orgId, ministryName: ministry.name },
           status: "pending",
           createdAt: new Date().toISOString(),
           updatedAt: new Date().toISOString(),

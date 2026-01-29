@@ -1,8 +1,8 @@
-import { useCallback, useState } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator } from "react-native";
+import { useCallback, useState, useRef, useEffect } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Search, Heart } from "lucide-react-native";
+import { Bell, Search, Heart, Calendar, Users } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -10,6 +10,7 @@ import { useData } from "@/providers/DataProvider";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EventCard from "@/components/EventCard";
 import SectionHeader from "@/components/SectionHeader";
+import { useScalePress } from "@/hooks/useAnimations";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -25,6 +26,36 @@ export default function HomeScreen() {
     getTotalUnread,
   } = useData();
   const [localRefreshing, setLocalRefreshing] = useState(false);
+
+  const headerAnim = useRef(new Animated.Value(0)).current;
+  const quickActionsAnim = useRef(new Animated.Value(0)).current;
+  const contentAnim = useRef(new Animated.Value(0)).current;
+  
+  const eventsCardAnim = useScalePress();
+  const givingCardAnim = useScalePress();
+
+  useEffect(() => {
+    Animated.stagger(100, [
+      Animated.timing(headerAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(quickActionsAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(contentAnim, {
+        toValue: 1,
+        duration: 400,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, [headerAnim, quickActionsAnim, contentAnim]);
 
   const announcements = getGeneralAnnouncements(2);
   const upcomingEvents = getUpcomingEvents(3);
@@ -84,25 +115,35 @@ export default function HomeScreen() {
           <RefreshControl refreshing={localRefreshing || isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
         }
       >
-        <View style={styles.quickActions}>
+        <Animated.View style={[styles.quickActions, { opacity: quickActionsAnim, transform: [{ translateY: quickActionsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
           <TouchableOpacity
             style={[styles.quickAction, { backgroundColor: Colors.primary }]}
             onPress={() => router.push("/(tabs)/calendar" as Href)}
+            onPressIn={eventsCardAnim.onPressIn}
+            onPressOut={eventsCardAnim.onPressOut}
+            activeOpacity={1}
           >
-            <Text style={styles.quickActionTitle}>Upcoming Events</Text>
-            <Text style={styles.quickActionSubtitle}>{upcomingEvents.length} this week</Text>
+            <Animated.View style={{ transform: [{ scale: eventsCardAnim.scale }] }}>
+              <Text style={styles.quickActionTitle}>Upcoming Events</Text>
+              <Text style={styles.quickActionSubtitle}>{upcomingEvents.length} this week</Text>
+            </Animated.View>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.quickAction, styles.givingAction]}
             onPress={() => router.push("/giving" as Href)}
+            onPressIn={givingCardAnim.onPressIn}
+            onPressOut={givingCardAnim.onPressOut}
+            activeOpacity={1}
           >
-            <View style={styles.givingIconContainer}>
-              <Heart size={18} color="#FFFFFF" />
-            </View>
-            <Text style={styles.quickActionTitle}>Giving</Text>
-            <Text style={styles.quickActionSubtitle}>Tithes & Offerings</Text>
+            <Animated.View style={{ transform: [{ scale: givingCardAnim.scale }] }}>
+              <View style={styles.givingIconContainer}>
+                <Heart size={18} color="#FFFFFF" />
+              </View>
+              <Text style={styles.quickActionTitle}>Giving</Text>
+              <Text style={styles.quickActionSubtitle}>Tithes & Offerings</Text>
+            </Animated.View>
           </TouchableOpacity>
-        </View>
+        </Animated.View>
 
         <SectionHeader
           title="Announcements"
@@ -130,30 +171,50 @@ export default function HomeScreen() {
         </View>
 
         <SectionHeader
-          title="Upcoming Events"
-          actionText="See all"
+          title="Weekly Highlights"
+          actionText="View all"
           onActionPress={() => router.push("/(tabs)/calendar" as Href)}
         />
-        <View style={styles.eventsContainer}>
-          {isLoading && upcomingEvents.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+        <View style={styles.highlightsContainer}>
+          <View style={styles.highlightCard}>
+            <View style={[styles.highlightIconContainer, { backgroundColor: Colors.primary + '15' }]}>
+              <Calendar size={20} color={Colors.primary} />
             </View>
-          ) : upcomingEvents.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No upcoming events</Text>
+            <View style={styles.highlightContent}>
+              <Text style={styles.highlightValue}>{upcomingEvents.length}</Text>
+              <Text style={styles.highlightLabel}>Events This Week</Text>
             </View>
-          ) : (
-            upcomingEvents.map((event) => (
-              <EventCard
-                key={event.id}
-                event={event}
-                compact
-                onPress={() => {}}
-              />
-            ))
-          )}
+          </View>
+          <View style={styles.highlightCard}>
+            <View style={[styles.highlightIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
+              <Users size={20} color={Colors.secondary} />
+            </View>
+            <View style={styles.highlightContent}>
+              <Text style={styles.highlightValue}>{userMinistries.length}</Text>
+              <Text style={styles.highlightLabel}>Your Ministries</Text>
+            </View>
+          </View>
         </View>
+
+        {upcomingEvents.length > 0 && (
+          <>
+            <SectionHeader
+              title="Upcoming Events"
+              actionText="See all"
+              onActionPress={() => router.push("/(tabs)/calendar" as Href)}
+            />
+            <View style={styles.eventsContainer}>
+              {upcomingEvents.slice(0, 2).map((event) => (
+                <EventCard
+                  key={event.id}
+                  event={event}
+                  compact
+                  onPress={() => {}}
+                />
+              ))}
+            </View>
+          </>
+        )}
 
         <SectionHeader
           title="Your Ministries"
@@ -361,5 +422,54 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 14,
     color: Colors.textSecondary,
+  },
+  highlightsContainer: {
+    flexDirection: "row" as const,
+    paddingHorizontal: 20,
+    gap: 12,
+    marginBottom: 8,
+  },
+  highlightCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.05,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
+      },
+    }),
+  },
+  highlightIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 12,
+    alignItems: "center" as const,
+    justifyContent: "center" as const,
+  },
+  highlightContent: {
+    flex: 1,
+  },
+  highlightValue: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  highlightLabel: {
+    fontSize: 12,
+    color: Colors.textSecondary,
+    marginTop: 2,
   },
 });

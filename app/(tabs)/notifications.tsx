@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -7,6 +7,7 @@ import {
   RefreshControl,
   TouchableOpacity,
   ActivityIndicator,
+  Animated,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
@@ -24,6 +25,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import React from "react";
 
 interface Notification {
   id: string;
@@ -82,6 +84,106 @@ const MOCK_NOTIFICATIONS: Notification[] = [
     actionUrl: "/groups",
   },
 ];
+
+function NotificationCard({ 
+  notification, 
+  onPress, 
+  onMarkAsRead, 
+  onDelete,
+  getIcon,
+  getTimeAgo,
+}: { 
+  notification: Notification;
+  onPress: () => void;
+  onMarkAsRead: () => void;
+  onDelete: () => void;
+  getIcon: (type: Notification["type"]) => React.ReactNode;
+  getTimeAgo: (dateStr: string) => string;
+}) {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  return (
+    <TouchableOpacity
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+    >
+      <Animated.View style={[
+        styles.notificationCard,
+        !notification.isRead && styles.unreadCard,
+        { transform: [{ scale: scaleAnim }] }
+      ]}>
+        <View style={styles.notificationContent}>
+          <View
+            style={[
+              styles.iconContainer,
+              !notification.isRead && styles.unreadIconContainer,
+            ]}
+          >
+            {getIcon(notification.type)}
+          </View>
+          <View style={styles.textContainer}>
+            <View style={styles.titleRow}>
+              <Text
+                style={[
+                  styles.notificationTitle,
+                  !notification.isRead && styles.unreadTitle,
+                ]}
+                numberOfLines={1}
+              >
+                {notification.title}
+              </Text>
+              {!notification.isRead && <View style={styles.unreadDot} />}
+            </View>
+            <Text style={styles.notificationMessage} numberOfLines={2}>
+              {notification.message}
+            </Text>
+            <Text style={styles.notificationTime}>
+              {getTimeAgo(notification.createdAt)}
+            </Text>
+          </View>
+        </View>
+        <View style={styles.actions}>
+          {!notification.isRead && (
+            <TouchableOpacity
+              style={styles.actionButton}
+              onPress={onMarkAsRead}
+              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+            >
+              <Check size={18} color={Colors.success} />
+            </TouchableOpacity>
+          )}
+          <TouchableOpacity
+            style={styles.actionButton}
+            onPress={onDelete}
+            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+          >
+            <Trash2 size={18} color={Colors.error} />
+          </TouchableOpacity>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
 
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
@@ -170,67 +272,6 @@ export default function NotificationsScreen() {
     return date.toLocaleDateString();
   };
 
-  const renderNotification = (notification: Notification) => (
-    <TouchableOpacity
-      key={notification.id}
-      style={[
-        styles.notificationCard,
-        !notification.isRead && styles.unreadCard,
-      ]}
-      onPress={() => handleNotificationPress(notification)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.notificationContent}>
-        <View
-          style={[
-            styles.iconContainer,
-            !notification.isRead && styles.unreadIconContainer,
-          ]}
-        >
-          {getNotificationIcon(notification.type)}
-        </View>
-        <View style={styles.textContainer}>
-          <View style={styles.titleRow}>
-            <Text
-              style={[
-                styles.notificationTitle,
-                !notification.isRead && styles.unreadTitle,
-              ]}
-              numberOfLines={1}
-            >
-              {notification.title}
-            </Text>
-            {!notification.isRead && <View style={styles.unreadDot} />}
-          </View>
-          <Text style={styles.notificationMessage} numberOfLines={2}>
-            {notification.message}
-          </Text>
-          <Text style={styles.notificationTime}>
-            {getTimeAgo(notification.createdAt)}
-          </Text>
-        </View>
-      </View>
-      <View style={styles.actions}>
-        {!notification.isRead && (
-          <TouchableOpacity
-            style={styles.actionButton}
-            onPress={() => markAsRead(notification.id)}
-            hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-          >
-            <Check size={18} color={Colors.success} />
-          </TouchableOpacity>
-        )}
-        <TouchableOpacity
-          style={styles.actionButton}
-          onPress={() => deleteNotification(notification.id)}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Trash2 size={18} color={Colors.error} />
-        </TouchableOpacity>
-      </View>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
@@ -293,7 +334,17 @@ export default function NotificationsScreen() {
           <>
             {notifications
               .filter((n) => !n.isRead)
-              .map((notification) => renderNotification(notification))}
+              .map((notification) => (
+                <NotificationCard
+                  key={notification.id}
+                  notification={notification}
+                  onPress={() => handleNotificationPress(notification)}
+                  onMarkAsRead={() => markAsRead(notification.id)}
+                  onDelete={() => deleteNotification(notification.id)}
+                  getIcon={getNotificationIcon}
+                  getTimeAgo={getTimeAgo}
+                />
+              ))}
             
             {notifications.filter((n) => n.isRead).length > 0 && (
               <>
@@ -302,7 +353,17 @@ export default function NotificationsScreen() {
                 )}
                 {notifications
                   .filter((n) => n.isRead)
-                  .map((notification) => renderNotification(notification))}
+                  .map((notification) => (
+                    <NotificationCard
+                      key={notification.id}
+                      notification={notification}
+                      onPress={() => handleNotificationPress(notification)}
+                      onMarkAsRead={() => markAsRead(notification.id)}
+                      onDelete={() => deleteNotification(notification.id)}
+                      getIcon={getNotificationIcon}
+                      getTimeAgo={getTimeAgo}
+                    />
+                  ))}
               </>
             )}
           </>
@@ -369,32 +430,6 @@ const styles = StyleSheet.create({
   },
   contentContainer: {
     padding: 16,
-  },
-  setupBanner: {
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  setupBannerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  setupBannerText: {
-    flex: 1,
-  },
-  setupBannerTitle: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  setupBannerSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
   },
   loadingContainer: {
     padding: 60,

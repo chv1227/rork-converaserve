@@ -148,7 +148,10 @@ export default function AdminDashboard() {
   const statsQuery = trpc.admin.getEnhancedStats.useQuery(undefined, { enabled: isAdmin });
   const stats = statsQuery.data;
 
-  const ministriesQuery = trpc.ministries.list.useQuery();
+  const ministriesQuery = trpc.ministries.list.useQuery(
+    { organizationId: "" },
+    { enabled: false }
+  );
   const pendingRequestsQuery = trpc.admin.getMinistryJoinRequests.useQuery(
     { status: "pending" },
     { enabled: isAdmin }

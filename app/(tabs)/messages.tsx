@@ -1,4 +1,4 @@
-import { useCallback, useState, useMemo } from "react";
+import { useCallback, useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -9,6 +9,7 @@ import {
   TouchableOpacity,
   TextInput,
   Modal,
+  Animated,
 } from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
@@ -148,14 +149,35 @@ export default function MessagesScreen() {
 
   const renderConversationItem = ({ item }: { item: Conversation }) => {
     const isUnread = item.unreadCount > 0;
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 0.98,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 4,
+      }).start();
+    };
+
+    const handlePressOut = () => {
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        speed: 50,
+        bounciness: 4,
+      }).start();
+    };
 
     return (
       <TouchableOpacity
-        style={styles.conversationItem}
         onPress={() => router.push(`/chat/${item.id}` as Href)}
-        activeOpacity={0.7}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
         testID={`conversation-${item.id}`}
       >
+        <Animated.View style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}>
         <View style={styles.avatarContainer}>
           <Image source={{ uri: item.avatar }} style={styles.avatar} />
           {item.type === "ministry" && item.ministryColor && (
@@ -202,6 +224,7 @@ export default function MessagesScreen() {
             )}
           </View>
         </View>
+        </Animated.View>
       </TouchableOpacity>
     );
   };

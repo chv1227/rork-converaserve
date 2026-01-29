@@ -15,14 +15,25 @@ async function validateChurchMinistriesEnabled(churchId: string): Promise<void> 
 }
 
 async function validateChurchAdmin(userId: string, churchId: string): Promise<void> {
-  const membership = await persistentDb.churchMemberships.findByUserAndChurch(userId, churchId);
+  // Check church memberships first
+  let membership = await persistentDb.churchMemberships.findByUserAndChurch(userId, churchId);
+  
+  // Also check organization memberships as fallback
   if (!membership || !membership.isActive) {
+    const orgMembership = await persistentDb.memberships.findByUserAndOrg(userId, churchId);
+    if (orgMembership && orgMembership.isActive) {
+      if (['super_admin', 'organization_admin', 'admin'].includes(orgMembership.role)) {
+        console.log("Ministries: User validated via organization membership");
+        return;
+      }
+    }
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "You are not a member of this church",
     });
   }
-  if (!['super_admin', 'admin'].includes(membership.role)) {
+  
+  if (!['super_admin', 'admin', 'staff'].includes(membership.role)) {
     throw new TRPCError({
       code: "FORBIDDEN",
       message: "Only admins can manage ministries",
@@ -50,14 +61,10 @@ const updateMinistrySchema = z.object({
 
 export const ministriesRouter = createTRPCRouter({
   list: publicProcedure
-    .input(z.object({ organizationId: z.string().optional() }).optional())
+    .input(z.object({ organizationId: z.string().min(1) }))
     .query(async ({ input }) => {
-      const orgId = input?.organizationId;
-      console.log("Fetching ministries for organization:", orgId || "all");
-      if (orgId) {
-        return await persistentDb.ministries.findByOrganization(orgId);
-      }
-      return await persistentDb.ministries.getAll();
+      console.log("Fetching ministries for organization:", input.organizationId);
+      return await persistentDb.ministries.findByOrganization(input.organizationId);
     }),
 
   getById: publicProcedure

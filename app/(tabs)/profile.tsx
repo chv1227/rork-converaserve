@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Modal, Linking } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Modal, Linking, TextInput } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
@@ -59,15 +59,23 @@ function MenuItem({ icon, title, subtitle, onPress, showBorder = true, danger = 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin } = useAuth();
+  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin, changePassword } = useAuth();
   
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [helpModalVisible, setHelpModalVisible] = useState(false);
+  const [changePasswordModalVisible, setChangePasswordModalVisible] = useState(false);
   const [pushNotifications, setPushNotifications] = useState(true);
   const [emailNotifications, setEmailNotifications] = useState(true);
+  const [currentPassword, setCurrentPassword] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const ministriesQuery = trpc.ministries.list.useQuery();
+  const ministriesQuery = trpc.ministries.list.useQuery(
+    { organizationId: currentOrganization?.id ?? "" },
+    { enabled: !!currentOrganization?.id }
+  );
   const ministries = ministriesQuery.data || [];
 
   const userMinistries = ministries.filter((m) => user?.ministries.includes(m.id));
@@ -458,7 +466,13 @@ export default function ProfileScreen() {
               </TouchableOpacity>
             </View>
             
-            <TouchableOpacity style={styles.privacyItem}>
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                setPrivacyModalVisible(false);
+                setChangePasswordModalVisible(true);
+              }}
+            >
               <Lock size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Change Password</Text>
@@ -467,7 +481,16 @@ export default function ProfileScreen() {
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.privacyItem}>
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                if (Platform.OS !== "web") {
+                  Alert.alert("Profile Visibility", "Your profile is visible to members of your church organization.");
+                } else {
+                  alert("Your profile is visible to members of your church organization.");
+                }
+              }}
+            >
               <Eye size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Profile Visibility</Text>
@@ -476,7 +499,12 @@ export default function ProfileScreen() {
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.privacyItem}>
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                Linking.openURL("https://churchconnect.org/privacy");
+              }}
+            >
               <FileText size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Privacy Policy</Text>
@@ -530,7 +558,12 @@ export default function ProfileScreen() {
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.privacyItem}>
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                Linking.openURL("https://churchconnect.org/faq");
+              }}
+            >
               <MessageCircle size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>FAQ</Text>
@@ -539,7 +572,12 @@ export default function ProfileScreen() {
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
             
-            <TouchableOpacity style={styles.privacyItem}>
+            <TouchableOpacity 
+              style={styles.privacyItem}
+              onPress={() => {
+                Linking.openURL("https://churchconnect.org/terms");
+              }}
+            >
               <FileText size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Terms of Service</Text>
@@ -558,6 +596,145 @@ export default function ProfileScreen() {
               onPress={() => setHelpModalVisible(false)}
             >
               <Text style={styles.modalButtonTextSecondary}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Change Password Modal */}
+      <Modal
+        visible={changePasswordModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setChangePasswordModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Change Password</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setChangePasswordModalVisible(false);
+                  setCurrentPassword('');
+                  setNewPassword('');
+                  setConfirmPassword('');
+                }}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+            
+            <View style={styles.passwordInputGroup}>
+              <Text style={styles.passwordInputLabel}>Current Password</Text>
+              <View style={styles.passwordInputContainer}>
+                <Lock size={18} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter current password"
+                  placeholderTextColor={Colors.textTertiary}
+                  secureTextEntry
+                  value={currentPassword}
+                  onChangeText={setCurrentPassword}
+                />
+              </View>
+            </View>
+
+            <View style={styles.passwordInputGroup}>
+              <Text style={styles.passwordInputLabel}>New Password</Text>
+              <View style={styles.passwordInputContainer}>
+                <Lock size={18} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Enter new password (min 6 characters)"
+                  placeholderTextColor={Colors.textTertiary}
+                  secureTextEntry
+                  value={newPassword}
+                  onChangeText={setNewPassword}
+                />
+              </View>
+            </View>
+
+            <View style={styles.passwordInputGroup}>
+              <Text style={styles.passwordInputLabel}>Confirm New Password</Text>
+              <View style={styles.passwordInputContainer}>
+                <Lock size={18} color={Colors.textSecondary} />
+                <TextInput
+                  style={styles.passwordInput}
+                  placeholder="Confirm new password"
+                  placeholderTextColor={Colors.textTertiary}
+                  secureTextEntry
+                  value={confirmPassword}
+                  onChangeText={setConfirmPassword}
+                />
+              </View>
+            </View>
+
+            <TouchableOpacity
+              style={[styles.modalButton, isChangingPassword && styles.modalButtonDisabled]}
+              onPress={async () => {
+                if (!currentPassword || !newPassword || !confirmPassword) {
+                  if (Platform.OS !== "web") {
+                    Alert.alert("Error", "Please fill in all fields");
+                  } else {
+                    alert("Please fill in all fields");
+                  }
+                  return;
+                }
+                if (newPassword.length < 6) {
+                  if (Platform.OS !== "web") {
+                    Alert.alert("Error", "Password must be at least 6 characters");
+                  } else {
+                    alert("Password must be at least 6 characters");
+                  }
+                  return;
+                }
+                if (newPassword !== confirmPassword) {
+                  if (Platform.OS !== "web") {
+                    Alert.alert("Error", "Passwords do not match");
+                  } else {
+                    alert("Passwords do not match");
+                  }
+                  return;
+                }
+                
+                setIsChangingPassword(true);
+                try {
+                  const result = await changePassword(newPassword);
+                  if (result.success) {
+                    setChangePasswordModalVisible(false);
+                    setCurrentPassword('');
+                    setNewPassword('');
+                    setConfirmPassword('');
+                    if (Platform.OS !== "web") {
+                      Alert.alert("Success", "Your password has been updated");
+                    } else {
+                      alert("Your password has been updated");
+                    }
+                  } else {
+                    if (Platform.OS !== "web") {
+                      Alert.alert("Error", result.error || "Failed to change password");
+                    } else {
+                      alert(result.error || "Failed to change password");
+                    }
+                  }
+                } catch {
+                  if (Platform.OS !== "web") {
+                    Alert.alert("Error", "Failed to change password. Please try again.");
+                  } else {
+                    alert("Failed to change password. Please try again.");
+                  }
+                } finally {
+                  setIsChangingPassword(false);
+                }
+              }}
+              disabled={isChangingPassword}
+            >
+              {isChangingPassword ? (
+                <ActivityIndicator color={Colors.textInverse} />
+              ) : (
+                <Text style={styles.modalButtonText}>Update Password</Text>
+              )}
             </TouchableOpacity>
           </View>
         </View>
@@ -1097,5 +1274,31 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "600" as const,
     color: Colors.primary,
+  },
+  passwordInputGroup: {
+    marginBottom: 16,
+  },
+  passwordInputLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  passwordInputContainer: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    gap: 10,
+  },
+  passwordInput: {
+    flex: 1,
+    fontSize: 15,
+    color: Colors.text,
+  },
+  modalButtonDisabled: {
+    opacity: 0.7,
   },
 });

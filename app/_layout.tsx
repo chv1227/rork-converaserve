@@ -68,7 +68,10 @@ function AuthGate({ children }: { children: ReactNode }) {
 
 function RootLayoutNav() {
   return (
-    <Stack screenOptions={{ headerBackTitle: "Back" }}>
+    <Stack screenOptions={{ 
+        headerBackTitle: "Back",
+        headerTintColor: Colors.primary,
+      }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen 
         name="login" 
@@ -108,6 +111,41 @@ function RootLayoutNav() {
         }} 
       />
       <Stack.Screen name="+not-found" options={{ headerShown: false }} />
+      <Stack.Screen 
+        name="announcements/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="giving" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="chat/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="church-management" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="admin/ministries" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
       <Stack.Screen 
         name="admin/index" 
         options={{ 

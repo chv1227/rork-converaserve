@@ -47,16 +47,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import DiscussionCard from "@/components/DiscussionCard";
 import PrayerRequestCard from "@/components/PrayerRequestCard";
 import MemberCard from "@/components/MemberCard";
-import {
-  getMinistryById,
-  getMembersForMinistry,
-  getDiscussionsForMinistry,
-  getPrayerRequestsForMinistry,
-  getEventsForMinistry,
-  getAnnouncementsForMinistry,
-  getMissionStatement,
-} from "@/mocks/ministryData";
-import { MinistryMember, DiscussionPost, PrayerRequest, MinistryEvent, MinistryAnnouncement, Poll, PollOption, Announcement } from "@/types";
+import { MinistryMember, DiscussionPost, PrayerRequest, MinistryAnnouncement, Poll, PollOption, Announcement } from "@/types";
 
 type TabType = 'about' | 'members' | 'discussions' | 'prayers' | 'music';
 
@@ -87,23 +78,18 @@ export default function GroupDetailScreen() {
   const [newAnnouncementContent, setNewAnnouncementContent] = useState("");
   const [announcementPriority, setAnnouncementPriority] = useState<"normal" | "high" | "low">("normal");
 
-  const isDefaultMinistry = id?.startsWith('worship-') || id?.startsWith('prayer-') || id?.startsWith('deacon-') || id?.startsWith('children');
+  const organizationId = currentOrganization?.id;
 
-  const mockMinistry = useMemo(() => isDefaultMinistry ? getMinistryById(id || '') : null, [isDefaultMinistry, id]);
-  const mockDiscussions = useMemo(() => isDefaultMinistry ? getDiscussionsForMinistry(id || '') : [], [isDefaultMinistry, id]);
-  const mockPrayerRequests = useMemo(() => isDefaultMinistry ? getPrayerRequestsForMinistry(id || '') : [], [isDefaultMinistry, id]);
-  const mockEvents = useMemo(() => isDefaultMinistry ? getEventsForMinistry(id || '') : [], [isDefaultMinistry, id]);
-  const mockAnnouncements = useMemo(() => isDefaultMinistry ? getAnnouncementsForMinistry(id || '') : [], [isDefaultMinistry, id]);
-  const missionStatement = useMemo(() => isDefaultMinistry ? getMissionStatement(id || '') : '', [isDefaultMinistry, id]);
+  const missionStatement = useMemo(() => "", []);
 
   const ministryQuery = trpc.ministries.getById.useQuery(
     { id: id || "" },
-    { enabled: !!id && !isDefaultMinistry }
+    { enabled: !!id }
   );
 
   const eventsQuery = trpc.events.list.useQuery(
-    { ministryId: id || "" },
-    { enabled: !!id && !isDefaultMinistry }
+    { organizationId: organizationId ?? "", ministryId: id || "" },
+    { enabled: !!id && !!organizationId }
   );
 
   const pollsQuery = trpc.polls.list.useQuery(
@@ -168,8 +154,8 @@ export default function GroupDetailScreen() {
   });
 
   const announcementsQuery = trpc.announcements.list.useQuery(
-    { ministryId: id || "", organizationId: currentOrganization?.id },
-    { enabled: !!id && !!currentOrganization?.id }
+    { organizationId: organizationId ?? "", ministryId: id || "" },
+    { enabled: !!id && !!organizationId }
   );
 
   const createAnnouncementMutation = trpc.announcements.create.useMutation({
@@ -198,15 +184,16 @@ export default function GroupDetailScreen() {
 
   const isAdminOrLeader = user?.role === "admin" || user?.role === "super_admin" || user?.role === "leader";
 
-  const ministry = isDefaultMinistry ? mockMinistry : ministryQuery.data;
-  const events = isDefaultMinistry ? mockEvents : (eventsQuery.data || []);
-  const members = useMemo(() => isDefaultMinistry ? getMembersForMinistry(id || '') : [], [isDefaultMinistry, id]);
-  const discussions = isDefaultMinistry ? mockDiscussions : [];
-  const prayerRequests = isDefaultMinistry ? mockPrayerRequests : [];
+  const ministry = ministryQuery.data;
+  const events = eventsQuery.data || [];
+  const members = useMemo<MinistryMember[]>(() => [], []);
+  const discussions = useMemo<DiscussionPost[]>(() => [], []);
+  const prayerRequests = useMemo<PrayerRequest[]>(() => [], []);
+
   const mappedDbAnnouncements: MinistryAnnouncement[] = dbAnnouncements.map((a: Announcement) => ({
     id: a.id,
     ministryId: a.ministryId || id || '',
-    authorId: '',
+    authorId: a.author,
     authorName: a.author,
     authorAvatar: a.authorAvatar || 'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop',
     authorRole: 'leader' as const,
@@ -215,12 +202,13 @@ export default function GroupDetailScreen() {
     createdAt: a.date,
     priority: a.priority,
   }));
-  const announcements = isDefaultMinistry ? mockAnnouncements : mappedDbAnnouncements;
+
+  const announcements = mappedDbAnnouncements;
   const leaders = useMemo(() => members.filter(m => m.role === 'leader' || m.role === 'admin'), [members]);
 
   const isMember = useMemo(
-    () => user?.ministries.includes(id || "") || isDefaultMinistry,
-    [user?.ministries, id, isDefaultMinistry]
+    () => user?.ministries.includes(id || "") ?? false,
+    [user?.ministries, id]
   );
 
   const joinMutation = trpc.ministries.join.useMutation({
@@ -255,18 +243,16 @@ export default function GroupDetailScreen() {
   const onRefresh = useCallback(() => {
     console.log("Refreshing group detail...");
     setIsRefreshing(true);
-    if (!isDefaultMinistry) {
-      ministryQuery.refetch();
-      eventsQuery.refetch();
-    }
+    ministryQuery.refetch();
+    eventsQuery.refetch();
     pollsQuery.refetch();
     setTimeout(() => setIsRefreshing(false), 1000);
-  }, [ministryQuery, eventsQuery, isDefaultMinistry, pollsQuery]);
+  }, [ministryQuery, eventsQuery, pollsQuery]);
 
   const handleJoinLeave = () => {
     if (!id) return;
 
-    if (isMember && !isDefaultMinistry) {
+    if (isMember) {
       if (Platform.OS === "web") {
         leaveMutation.mutate({ ministryId: id });
       } else {
@@ -279,10 +265,12 @@ export default function GroupDetailScreen() {
           },
         ]);
       }
-    } else if (!isDefaultMinistry) {
-      joinMutation.mutate({ ministryId: id });
     } else {
-      Alert.alert("Joined!", "You are now a member of this ministry.");
+      if (!organizationId) {
+        Alert.alert("Error", "Please select a church first");
+        return;
+      }
+      joinMutation.mutate({ ministryId: id, organizationId });
     }
   };
 
@@ -419,7 +407,7 @@ export default function GroupDetailScreen() {
     });
   };
 
-  const isLoading = !isDefaultMinistry && ministryQuery.isLoading;
+  const isLoading = ministryQuery.isLoading;
   const isActionLoading = joinMutation.isPending || leaveMutation.isPending;
 
   const tabs = useMemo(() => {
@@ -664,7 +652,7 @@ export default function GroupDetailScreen() {
         </View>
       ) : (
         <View style={styles.eventsListContainer}>
-          {(events as MinistryEvent[]).slice(0, 3).map((event, index) => (
+          {events.slice(0, 3).map((event, index) => (
             <TouchableOpacity 
               key={event.id} 
               style={[
@@ -693,15 +681,11 @@ export default function GroupDetailScreen() {
                     <Text style={styles.eventMetaTextTop} numberOfLines={1}>{event.location}</Text>
                   </View>
                 </View>
-                {event.isRecurring && (
-                  <View style={styles.recurringBadgeTop}>
-                    <Text style={styles.recurringTextTop}>{event.recurrencePattern}</Text>
-                  </View>
-                )}
+
               </View>
               <View style={[styles.eventAttendeesTop, { backgroundColor: ministry.color + '10' }]}>
                 <Users size={12} color={ministry.color} />
-                <Text style={[styles.eventAttendeesTextTop, { color: ministry.color }]}>{event.attendeesCount}</Text>
+                <Text style={[styles.eventAttendeesTextTop, { color: ministry.color }]}>{event.attendees}</Text>
               </View>
             </TouchableOpacity>
           ))}

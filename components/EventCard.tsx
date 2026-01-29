@@ -1,5 +1,5 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import React, { useRef, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { MapPin, Clock, Users } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Event } from '@/types';
@@ -16,9 +16,30 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
   const dayNum = eventDate.getDate();
   const month = eventDate.toLocaleDateString('en-US', { month: 'short' });
 
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
   if (compact) {
     return (
-      <TouchableOpacity style={styles.compactContainer} onPress={onPress} activeOpacity={0.7}>
+      <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
+        <Animated.View style={[styles.compactContainer, { transform: [{ scale: scaleAnim }] }]}>
         <View style={[styles.compactDateBox, { backgroundColor: event.color + '15' }]}>
           <Text style={[styles.compactDayNum, { color: event.color }]}>{dayNum}</Text>
           <Text style={[styles.compactMonth, { color: event.color }]}>{month}</Text>
@@ -32,12 +53,14 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
             <Text style={styles.compactMinistry}>{event.ministryName}</Text>
           </View>
         </View>
+        </Animated.View>
       </TouchableOpacity>
     );
   }
 
   return (
-    <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.7}>
+    <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
+      <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.dateColumn}>
         <View style={[styles.dateBox, { backgroundColor: event.color }]}>
           <Text style={styles.dayName}>{dayName}</Text>
@@ -71,6 +94,7 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
           <Text style={styles.attendeesText}>{event.attendees} attending</Text>
         </View>
       </View>
+      </Animated.View>
     </TouchableOpacity>
   );
 }
