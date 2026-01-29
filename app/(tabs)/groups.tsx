@@ -1,95 +1,363 @@
 import { useCallback, useState, useMemo, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, RefreshControl, ActivityIndicator, Alert, TouchableOpacity, Modal, TextInput, KeyboardAvoidingView, Platform, Animated, Easing } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  RefreshControl,
+  ActivityIndicator,
+  Alert,
+  TouchableOpacity,
+  Modal,
+  TextInput,
+  KeyboardAvoidingView,
+  Platform,
+  Animated,
+  Easing,
+  Dimensions,
+} from "react-native";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
-import { Plus, X, Music, Heart, BookOpen, Users, Coffee, Sparkles, ChevronRight, Calendar, MessageSquare } from "lucide-react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import {
+  Plus,
+  X,
+  Music,
+  Heart,
+  BookOpen,
+  Users,
+  Coffee,
+  Sparkles,
+  ChevronRight,
+  Search,
+  Settings,
+  Check,
+  Clock,
+  Baby,
+  HandHeart,
+  Video,
+  Star,
+  TrendingUp,
+} from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
-import MinistryCard from "@/components/MinistryCard";
-import { defaultMinistries, getEventsForMinistry, getMembersForMinistry } from "@/mocks/ministryData";
+import { Ministry } from "@/types";
+import React from "react";
 
-const MINISTRY_SECTIONS = [
-  { 
-    id: 'worship-ministry', 
-    title: 'Worship Ministry',
-    icon: Music,
-    color: '#6366F1',
-    description: 'Leading worship through music and song'
-  },
-  { 
-    id: 'prayer-ministry', 
-    title: 'Prayer Ministry',
-    icon: Heart,
-    color: '#8B5CF6',
-    description: 'Interceding for our church family'
-  },
-  { 
-    id: 'deacon-board', 
-    title: 'Deacon Board',
-    icon: Users,
-    color: '#0EA5E9',
-    description: 'Serving the practical needs of the church'
-  },
-  { 
-    id: 'childrens-ministry', 
-    title: "Children's Ministry",
-    icon: Sparkles,
-    color: '#F59E0B',
-    description: 'Nurturing young hearts with faith'
-  },
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+type IconComponentType = React.ComponentType<{ size: number; color: string }>;
+
+const iconMap: Record<string, IconComponentType> = {
+  Music,
+  Users,
+  Heart,
+  Baby,
+  HandHeart,
+  Video,
+  BookOpen,
+  Coffee,
+  Sparkles,
+};
+
+const MINISTRY_COLORS = [
+  "#3B82F6",
+  "#8B5CF6",
+  "#10B981",
+  "#F59E0B",
+  "#EC4899",
+  "#6366F1",
+  "#14B8A6",
+  "#F97316",
 ];
 
-export default function GroupsScreen() {
-  const insets = useSafeAreaInsets();
-  const router = useRouter();
-  const { currentOrganization } = useAuth();
-  const { ministries, isLoading, isRefreshing, refresh, userMinistries, joinMinistry, leaveMinistry, createMinistry, isMinistryMember } = useData();
-  const [localRefreshing, setLocalRefreshing] = useState(false);
-  const [pendingMinistryIds, setPendingMinistryIds] = useState<Set<string>>(new Set());
-  const [showCreateModal, setShowCreateModal] = useState(false);
-  const [newMinistryName, setNewMinistryName] = useState("");
-  const [newMinistryDescription, setNewMinistryDescription] = useState("");
-  const [selectedColor, setSelectedColor] = useState("#FF6B6B");
-  const [selectedIcon, setSelectedIcon] = useState("Users");
-  const [isCreating, setIsCreating] = useState(false);
+const MINISTRY_ICONS = [
+  { name: "Users", icon: Users },
+  { name: "Music", icon: Music },
+  { name: "Heart", icon: Heart },
+  { name: "BookOpen", icon: BookOpen },
+  { name: "Coffee", icon: Coffee },
+  { name: "Sparkles", icon: Sparkles },
+  { name: "Baby", icon: Baby },
+  { name: "HandHeart", icon: HandHeart },
+];
 
-  const headerAnim = useRef(new Animated.Value(0)).current;
-  const sectionsAnim = useRef(new Animated.Value(0)).current;
+interface MinistryCardAnimatedProps {
+  ministry: Ministry;
+  index: number;
+  isMember: boolean;
+  isPending: boolean;
+  onPress: () => void;
+  onAction: () => void;
+}
+
+function MinistryCardAnimated({
+  ministry,
+  index,
+  isMember,
+  isPending,
+  onPress,
+  onAction,
+}: MinistryCardAnimatedProps) {
+  const cardScale = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(30)).current;
 
   useEffect(() => {
-    Animated.stagger(100, [
-      Animated.timing(headerAnim, {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 400,
+        delay: index * 80,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
-      Animated.timing(sectionsAnim, {
-        toValue: 1,
+      Animated.timing(slideAnim, {
+        toValue: 0,
         duration: 400,
+        delay: index * 80,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
     ]).start();
-  }, [headerAnim, sectionsAnim]);
+  }, [fadeAnim, slideAnim, index]);
 
-  const MINISTRY_COLORS = [
-    "#FF6B6B", "#4ECDC4", "#6C5CE7", "#00D4AA", "#FFE66D", "#74B9FF", "#FF7675", "#A29BFE"
-  ];
+  const handlePressIn = () => {
+    Animated.spring(cardScale, {
+      toValue: 0.97,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
 
-  const MINISTRY_ICONS = [
-    { name: "Users", icon: Users },
-    { name: "Music", icon: Music },
-    { name: "Heart", icon: Heart },
-    { name: "BookOpen", icon: BookOpen },
-    { name: "Coffee", icon: Coffee },
-    { name: "Sparkles", icon: Sparkles },
-  ];
+  const handlePressOut = () => {
+    Animated.spring(cardScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const IconComponent = iconMap[ministry.icon] || Users;
+  const color = ministry.color || "#6366F1";
+
+  return (
+    <Animated.View
+      style={[
+        styles.cardWrapper,
+        {
+          opacity: fadeAnim,
+          transform: [{ translateY: slideAnim }, { scale: cardScale }],
+        },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        style={styles.ministryCard}
+      >
+        <Image
+          source={{ uri: ministry.image }}
+          style={styles.cardImage}
+          contentFit="cover"
+        />
+        <LinearGradient
+          colors={["transparent", "rgba(0,0,0,0.7)", "rgba(0,0,0,0.9)"]}
+          style={styles.cardGradient}
+        />
+
+        <View style={styles.cardContent}>
+          <View style={styles.cardTopRow}>
+            <View style={[styles.cardIconBadge, { backgroundColor: color }]}>
+              <IconComponent size={18} color="#fff" />
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.cardActionButton,
+                isMember
+                  ? styles.cardActionMember
+                  : isPending
+                  ? styles.cardActionPending
+                  : styles.cardActionJoin,
+              ]}
+              onPress={(e) => {
+                e.stopPropagation();
+                if (!isPending) {
+                  onAction();
+                }
+              }}
+              activeOpacity={isPending ? 1 : 0.7}
+            >
+              {isMember ? (
+                <>
+                  <Check size={14} color={Colors.primary} />
+                  <Text style={styles.actionTextMember}>Joined</Text>
+                </>
+              ) : isPending ? (
+                <>
+                  <Clock size={14} color={Colors.warning} />
+                  <Text style={styles.actionTextPending}>Pending</Text>
+                </>
+              ) : (
+                <>
+                  <Plus size={14} color="#fff" />
+                  <Text style={styles.actionTextJoin}>Join</Text>
+                </>
+              )}
+            </TouchableOpacity>
+          </View>
+
+          <View style={styles.cardInfo}>
+            <Text style={styles.cardTitle}>{ministry.name}</Text>
+            <Text style={styles.cardDescription} numberOfLines={2}>
+              {ministry.description}
+            </Text>
+            <View style={styles.cardMeta}>
+              <View style={styles.cardMetaItem}>
+                <Users size={13} color="rgba(255,255,255,0.8)" />
+                <Text style={styles.cardMetaText}>
+                  {ministry.memberCount} members
+                </Text>
+              </View>
+              <View style={[styles.colorDot, { backgroundColor: color }]} />
+            </View>
+          </View>
+        </View>
+
+        <View style={[styles.cardAccent, { backgroundColor: color }]} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+interface CompactMinistryCardProps {
+  ministry: Ministry;
+  index: number;
+  isMember: boolean;
+  onPress: () => void;
+}
+
+function CompactMinistryCard({
+  ministry,
+  index,
+  isMember,
+  onPress,
+}: CompactMinistryCardProps) {
+  const cardScale = useRef(new Animated.Value(1)).current;
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(fadeAnim, {
+      toValue: 1,
+      duration: 300,
+      delay: index * 60,
+      useNativeDriver: true,
+    }).start();
+  }, [fadeAnim, index]);
+
+  const handlePressIn = () => {
+    Animated.spring(cardScale, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(cardScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  };
+
+  const IconComponent = iconMap[ministry.icon] || Users;
+  const color = ministry.color || "#6366F1";
+
+  return (
+    <Animated.View
+      style={[
+        styles.compactCardWrapper,
+        { opacity: fadeAnim, transform: [{ scale: cardScale }] },
+      ]}
+    >
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+        style={styles.compactCard}
+      >
+        <View style={[styles.compactIconContainer, { backgroundColor: color + "20" }]}>
+          <IconComponent size={22} color={color} />
+        </View>
+        <View style={styles.compactInfo}>
+          <Text style={styles.compactTitle} numberOfLines={1}>
+            {ministry.name}
+          </Text>
+          <Text style={styles.compactMeta}>
+            {ministry.memberCount} members
+          </Text>
+        </View>
+        {isMember && (
+          <View style={styles.memberBadge}>
+            <Check size={12} color={Colors.success} />
+          </View>
+        )}
+        <ChevronRight size={18} color={Colors.textTertiary} />
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
+
+export default function GroupsScreen() {
+  const insets = useSafeAreaInsets();
+  const router = useRouter();
+  const { currentOrganization, isAdmin } = useAuth();
+  const {
+    ministries,
+    isLoading,
+    isRefreshing,
+    refresh,
+    userMinistries,
+    joinMinistry,
+    leaveMinistry,
+    createMinistry,
+    isMinistryMember,
+  } = useData();
+
+  const [localRefreshing, setLocalRefreshing] = useState(false);
+  const [pendingMinistryIds, setPendingMinistryIds] = useState<Set<string>>(new Set());
+  const [showCreateModal, setShowCreateModal] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [newMinistryName, setNewMinistryName] = useState("");
+  const [newMinistryDescription, setNewMinistryDescription] = useState("");
+  const [selectedColor, setSelectedColor] = useState(MINISTRY_COLORS[0]);
+  const [selectedIcon, setSelectedIcon] = useState("Users");
+  const [isCreating, setIsCreating] = useState(false);
+
+  const headerAnim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.timing(headerAnim, {
+      toValue: 1,
+      duration: 500,
+      useNativeDriver: true,
+      easing: Easing.out(Easing.cubic),
+    }).start();
+  }, [headerAnim]);
 
   const onRefresh = useCallback(async () => {
-    console.log("Refreshing groups...");
+    console.log("Refreshing ministries...");
     setLocalRefreshing(true);
     try {
       await refresh();
@@ -100,17 +368,44 @@ export default function GroupsScreen() {
     }
   }, [refresh]);
 
+  const filteredMinistries = useMemo(() => {
+    if (!searchQuery.trim()) return ministries;
+    const query = searchQuery.toLowerCase();
+    return ministries.filter(
+      (m) =>
+        m.name.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query)
+    );
+  }, [ministries, searchQuery]);
+
   const otherMinistries = useMemo(() => {
-    return ministries.filter((m) => !isMinistryMember(m.id));
-  }, [ministries, isMinistryMember]);
+    return filteredMinistries.filter((m) => !isMinistryMember(m.id));
+  }, [filteredMinistries, isMinistryMember]);
+
+  const myMinistries = useMemo(() => {
+    if (!searchQuery.trim()) return userMinistries;
+    const query = searchQuery.toLowerCase();
+    return userMinistries.filter(
+      (m) =>
+        m.name.toLowerCase().includes(query) ||
+        m.description.toLowerCase().includes(query)
+    );
+  }, [userMinistries, searchQuery]);
+
+  const featuredMinistries = useMemo(() => {
+    return filteredMinistries
+      .filter((m) => m.memberCount >= 0)
+      .sort((a, b) => b.memberCount - a.memberCount)
+      .slice(0, 3);
+  }, [filteredMinistries]);
 
   const handleCreateMinistry = async () => {
     if (!newMinistryName.trim()) {
       Alert.alert("Error", "Please enter a ministry name");
       return;
     }
-    if (!newMinistryDescription.trim()) {
-      Alert.alert("Error", "Please enter a ministry description");
+    if (!newMinistryDescription.trim() || newMinistryDescription.length < 10) {
+      Alert.alert("Error", "Please enter a description (at least 10 characters)");
       return;
     }
     if (!currentOrganization) {
@@ -134,8 +429,10 @@ export default function GroupsScreen() {
         setShowCreateModal(false);
         setNewMinistryName("");
         setNewMinistryDescription("");
-        setSelectedColor("#FF6B6B");
+        setSelectedColor(MINISTRY_COLORS[0]);
         setSelectedIcon("Users");
+      } else {
+        Alert.alert("Error", result.message || "Failed to create ministry");
       }
     } catch (error) {
       console.error("Create ministry error:", error);
@@ -145,112 +442,117 @@ export default function GroupsScreen() {
     }
   };
 
-  const handleMinistryAction = async (ministryId: string, isMember: boolean, isPending: boolean) => {
+  const handleMinistryAction = async (
+    ministryId: string,
+    isMember: boolean,
+    isPending: boolean
+  ) => {
     if (isMember) {
-      const result = await leaveMinistry(ministryId);
-      if (result.success) {
-        console.log("Left ministry");
-      }
+      Alert.alert(
+        "Leave Ministry",
+        "Are you sure you want to leave this ministry?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Leave",
+            style: "destructive",
+            onPress: async () => {
+              const result = await leaveMinistry(ministryId);
+              if (result.success) {
+                console.log("Left ministry");
+              }
+            },
+          },
+        ]
+      );
     } else if (!isPending) {
-      setPendingMinistryIds(prev => new Set([...prev, ministryId]));
+      setPendingMinistryIds((prev) => new Set([...prev, ministryId]));
       const result = await joinMinistry(ministryId);
       if (result.success) {
-        Alert.alert("Request Sent", "Your request to join has been submitted. An admin will review it shortly.");
+        Alert.alert(
+          "Request Sent",
+          "Your request to join has been submitted. An admin will review it shortly."
+        );
+      } else {
+        setPendingMinistryIds((prev) => {
+          const newSet = new Set(prev);
+          newSet.delete(ministryId);
+          return newSet;
+        });
+        Alert.alert("Error", result.message || "Failed to send request");
       }
     }
   };
 
-  const renderMinistrySectionCard = (section: typeof MINISTRY_SECTIONS[0], index: number) => {
-    const ministry = defaultMinistries.find(m => m.id === section.id);
-    const members = getMembersForMinistry(section.id);
-    const events = getEventsForMinistry(section.id);
-    const upcomingEvent = events[0];
-    const IconComponent = section.icon;
-    const cardScale = useRef(new Animated.Value(1)).current;
-
-    const handlePressIn = () => {
-      Animated.spring(cardScale, {
-        toValue: 0.98,
-        useNativeDriver: true,
-        speed: 50,
-        bounciness: 4,
-      }).start();
-    };
-
-    const handlePressOut = () => {
-      Animated.spring(cardScale, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 50,
-        bounciness: 4,
-      }).start();
-    };
-
-    return (
-      <TouchableOpacity
-        key={section.id}
-        onPress={() => router.push(`/group/${section.id}` as Href)}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
-      >
-        <Animated.View style={[styles.sectionCard, { transform: [{ scale: cardScale }] }]}>
-        <View style={styles.sectionCardHeader}>
-          <View style={[styles.sectionIconContainer, { backgroundColor: section.color + '15' }]}>
-            <IconComponent size={24} color={section.color} />
-          </View>
-          <View style={styles.sectionCardInfo}>
-            <Text style={styles.sectionCardTitle}>{section.title}</Text>
-            <Text style={styles.sectionCardDescription} numberOfLines={1}>
-              {section.description}
-            </Text>
-          </View>
-          <ChevronRight size={20} color={Colors.textTertiary} />
-        </View>
-
-        <View style={styles.sectionCardStats}>
-          <View style={styles.statItem}>
-            <Users size={14} color={Colors.textSecondary} />
-            <Text style={styles.statText}>{ministry?.memberCount || members.length} members</Text>
-          </View>
-          {upcomingEvent && (
-            <View style={styles.statItem}>
-              <Calendar size={14} color={Colors.textSecondary} />
-              <Text style={styles.statText} numberOfLines={1}>{upcomingEvent.title}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={styles.sectionCardMembers}>
-          {members.slice(0, 4).map((member, index) => (
-            <Image
-              key={member.id}
-              source={{ uri: member.avatar }}
-              style={[
-                styles.memberAvatar,
-                { marginLeft: index > 0 ? -10 : 0, zIndex: 4 - index }
-              ]}
-            />
-          ))}
-          {members.length > 4 && (
-            <View style={[styles.memberAvatar, styles.memberAvatarMore, { marginLeft: -10 }]}>
-              <Text style={styles.memberAvatarMoreText}>+{members.length - 4}</Text>
-            </View>
-          )}
-        </View>
-
-        <View style={[styles.sectionCardAccent, { backgroundColor: section.color }]} />
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  };
+  const hasNoMinistries = ministries.length === 0 && !isLoading;
+  const hasNoResults = filteredMinistries.length === 0 && searchQuery.trim() && !isLoading;
 
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.title}>Ministries</Text>
-        <Text style={styles.subtitle}>Connect with your ministries</Text>
-      </View>
+      <Animated.View
+        style={[
+          styles.header,
+          {
+            paddingTop: insets.top + 8,
+            opacity: headerAnim,
+            transform: [
+              {
+                translateY: headerAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-20, 0],
+                }),
+              },
+            ],
+          },
+        ]}
+      >
+        <View style={styles.headerTop}>
+          <View>
+            <Text style={styles.title}>Ministries</Text>
+            <Text style={styles.subtitle}>
+              {ministries.length > 0
+                ? `${ministries.length} active ${ministries.length === 1 ? "ministry" : "ministries"}`
+                : "Connect and serve together"}
+            </Text>
+          </View>
+          <View style={styles.headerActions}>
+            {isAdmin && (
+              <TouchableOpacity
+                style={styles.headerButton}
+                onPress={() => router.push("/admin/ministries" as Href)}
+                activeOpacity={0.7}
+              >
+                <Settings size={20} color={Colors.text} />
+              </TouchableOpacity>
+            )}
+            {currentOrganization && isAdmin && (
+              <TouchableOpacity
+                style={styles.createButtonHeader}
+                onPress={() => setShowCreateModal(true)}
+                activeOpacity={0.7}
+              >
+                <Plus size={18} color="#fff" />
+              </TouchableOpacity>
+            )}
+          </View>
+        </View>
+
+        <View style={styles.searchContainer}>
+          <Search size={18} color={Colors.textTertiary} />
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search ministries..."
+            placeholderTextColor={Colors.textTertiary}
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity onPress={() => setSearchQuery("")}>
+              <X size={18} color={Colors.textTertiary} />
+            </TouchableOpacity>
+          )}
+        </View>
+      </Animated.View>
 
       <ScrollView
         style={styles.content}
@@ -264,71 +566,139 @@ export default function GroupsScreen() {
           />
         }
       >
-        <Text style={styles.sectionTitle}>Church Ministries</Text>
-        <Text style={styles.sectionSubtitle}>
-          Join a ministry to connect, serve, and grow together
-        </Text>
-
-        <Animated.View style={[styles.ministrySections, { opacity: sectionsAnim, transform: [{ translateY: sectionsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
-          {MINISTRY_SECTIONS.map((section, index) => renderMinistrySectionCard(section, index))}
-        </Animated.View>
-
-        {isLoading && ministries.length === 0 && currentOrganization && (
+        {isLoading && ministries.length === 0 && (
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={Colors.primary} />
+            <Text style={styles.loadingText}>Loading ministries...</Text>
           </View>
         )}
 
-        {currentOrganization && (
-          <>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitleSmall}>My Ministries</Text>
-              <TouchableOpacity
-                style={styles.createButton}
-                onPress={() => setShowCreateModal(true)}
-              >
-                <Plus size={16} color={Colors.textInverse} />
-                <Text style={styles.createButtonText}>Create</Text>
-              </TouchableOpacity>
+        {hasNoMinistries && !isLoading && (
+          <View style={styles.emptyState}>
+            <View style={styles.emptyIconContainer}>
+              <Users size={48} color={Colors.primary} />
             </View>
-            {userMinistries.length === 0 && (
-              <View style={styles.emptySection}>
-                <MessageSquare size={24} color={Colors.textTertiary} />
-                <Text style={styles.emptyText}>You haven&apos;t joined any ministries yet</Text>
-                <Text style={styles.emptySubtext}>Tap on a ministry above to join</Text>
-              </View>
+            <Text style={styles.emptyTitle}>No Ministries Yet</Text>
+            <Text style={styles.emptySubtitle}>
+              {isAdmin
+                ? "Create your first ministry to start connecting your community"
+                : "Ministries will appear here once they are created"}
+            </Text>
+            {isAdmin && currentOrganization && (
+              <TouchableOpacity
+                style={styles.emptyCreateButton}
+                onPress={() => setShowCreateModal(true)}
+                activeOpacity={0.7}
+              >
+                <Plus size={18} color="#fff" />
+                <Text style={styles.emptyCreateButtonText}>Create Ministry</Text>
+              </TouchableOpacity>
             )}
-            {userMinistries.map((ministry) => (
-              <MinistryCard
-                key={ministry.id}
-                ministry={ministry}
-                onPress={() => router.push(`/group/${ministry.id}` as Href)}
-                isMember
-                isPending={false}
-                onAction={() => handleMinistryAction(ministry.id, true, false)}
-              />
-            ))}
-          </>
+          </View>
         )}
 
-        {currentOrganization && otherMinistries.length > 0 && (
-          <>
-            <Text style={[styles.sectionTitleSmall, userMinistries.length > 0 && { marginTop: 24 }]}>
-              Explore More
+        {hasNoResults && (
+          <View style={styles.noResultsContainer}>
+            <Search size={40} color={Colors.textTertiary} />
+            <Text style={styles.noResultsTitle}>No Results</Text>
+            <Text style={styles.noResultsSubtitle}>
+              Try a different search term
             </Text>
-            {otherMinistries.map((ministry) => {
-              const isPending = pendingMinistryIds.has(ministry.id);
-              return (
-                <MinistryCard
-                  key={ministry.id}
-                  ministry={ministry}
-                  onPress={() => router.push(`/group/${ministry.id}` as Href)}
-                  isMember={false}
-                  isPending={isPending}
-                  onAction={() => handleMinistryAction(ministry.id, false, isPending)}
-                />
-              );
-            })}
+          </View>
+        )}
+
+        {!hasNoMinistries && !hasNoResults && !isLoading && (
+          <>
+            {featuredMinistries.length > 0 && !searchQuery.trim() && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <TrendingUp size={18} color={Colors.primary} />
+                    <Text style={styles.sectionTitle}>Featured</Text>
+                  </View>
+                  <Text style={styles.sectionSubtitle}>
+                    Popular ministries in your church
+                  </Text>
+                </View>
+
+                {featuredMinistries.map((ministry, index) => (
+                  <MinistryCardAnimated
+                    key={ministry.id}
+                    ministry={ministry}
+                    index={index}
+                    isMember={isMinistryMember(ministry.id)}
+                    isPending={pendingMinistryIds.has(ministry.id)}
+                    onPress={() => router.push(`/group/${ministry.id}` as Href)}
+                    onAction={() =>
+                      handleMinistryAction(
+                        ministry.id,
+                        isMinistryMember(ministry.id),
+                        pendingMinistryIds.has(ministry.id)
+                      )
+                    }
+                  />
+                ))}
+              </View>
+            )}
+
+            {myMinistries.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <Star size={18} color={Colors.warning} />
+                    <Text style={styles.sectionTitle}>My Ministries</Text>
+                  </View>
+                  <Text style={styles.sectionSubtitle}>
+                    You are a member of {myMinistries.length}{" "}
+                    {myMinistries.length === 1 ? "ministry" : "ministries"}
+                  </Text>
+                </View>
+
+                {myMinistries.map((ministry, index) => (
+                  <CompactMinistryCard
+                    key={ministry.id}
+                    ministry={ministry}
+                    index={index}
+                    isMember={true}
+                    onPress={() => router.push(`/group/${ministry.id}` as Href)}
+                  />
+                ))}
+              </View>
+            )}
+
+            {otherMinistries.length > 0 && (
+              <View style={styles.section}>
+                <View style={styles.sectionHeader}>
+                  <View style={styles.sectionTitleRow}>
+                    <Users size={18} color={Colors.textSecondary} />
+                    <Text style={styles.sectionTitle}>
+                      {myMinistries.length > 0 ? "Explore More" : "All Ministries"}
+                    </Text>
+                  </View>
+                  <Text style={styles.sectionSubtitle}>
+                    Discover and join other ministries
+                  </Text>
+                </View>
+
+                {otherMinistries.map((ministry, index) => (
+                  <MinistryCardAnimated
+                    key={ministry.id}
+                    ministry={ministry}
+                    index={index}
+                    isMember={false}
+                    isPending={pendingMinistryIds.has(ministry.id)}
+                    onPress={() => router.push(`/group/${ministry.id}` as Href)}
+                    onAction={() =>
+                      handleMinistryAction(
+                        ministry.id,
+                        false,
+                        pendingMinistryIds.has(ministry.id)
+                      )
+                    }
+                  />
+                ))}
+              </View>
+            )}
           </>
         )}
 
@@ -345,7 +715,7 @@ export default function GroupsScreen() {
           behavior={Platform.OS === "ios" ? "padding" : "height"}
           style={styles.modalOverlay}
         >
-          <View style={styles.modalContent}>
+          <View style={[styles.modalContent, { paddingBottom: insets.bottom + 20 }]}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create Ministry</Text>
               <TouchableOpacity
@@ -369,7 +739,7 @@ export default function GroupsScreen() {
               <Text style={styles.inputLabel}>Description</Text>
               <TextInput
                 style={[styles.input, styles.textArea]}
-                placeholder="Describe the purpose of this ministry..."
+                placeholder="Describe the purpose of this ministry (min 10 characters)..."
                 placeholderTextColor={Colors.textTertiary}
                 value={newMinistryDescription}
                 onChangeText={setNewMinistryDescription}
@@ -388,7 +758,9 @@ export default function GroupsScreen() {
                       selectedColor === color && styles.colorOptionSelected,
                     ]}
                     onPress={() => setSelectedColor(color)}
-                  />
+                  >
+                    {selectedColor === color && <Check size={16} color="#fff" />}
+                  </TouchableOpacity>
                 ))}
               </View>
 
@@ -401,7 +773,10 @@ export default function GroupsScreen() {
                       key={item.name}
                       style={[
                         styles.iconOption,
-                        selectedIcon === item.name && { backgroundColor: selectedColor + "20", borderColor: selectedColor },
+                        selectedIcon === item.name && {
+                          backgroundColor: selectedColor + "20",
+                          borderColor: selectedColor,
+                        },
                       ]}
                       onPress={() => setSelectedIcon(item.name)}
                     >
@@ -418,15 +793,18 @@ export default function GroupsScreen() {
                 <Text style={styles.inputLabel}>Preview</Text>
                 <View style={[styles.previewCard, { borderLeftColor: selectedColor }]}>
                   <View style={[styles.previewIcon, { backgroundColor: selectedColor + "20" }]}>
-                    {MINISTRY_ICONS.find(i => i.name === selectedIcon)?.icon && (
+                    {MINISTRY_ICONS.find((i) => i.name === selectedIcon)?.icon &&
                       (() => {
-                        const IconComp = MINISTRY_ICONS.find(i => i.name === selectedIcon)!.icon;
+                        const IconComp = MINISTRY_ICONS.find(
+                          (i) => i.name === selectedIcon
+                        )!.icon;
                         return <IconComp size={20} color={selectedColor} />;
-                      })()
-                    )}
+                      })()}
                   </View>
                   <View style={styles.previewText}>
-                    <Text style={styles.previewName}>{newMinistryName || "Ministry Name"}</Text>
+                    <Text style={styles.previewName}>
+                      {newMinistryName || "Ministry Name"}
+                    </Text>
                     <Text style={styles.previewDesc} numberOfLines={1}>
                       {newMinistryDescription || "Ministry description..."}
                     </Text>
@@ -436,12 +814,16 @@ export default function GroupsScreen() {
             </ScrollView>
 
             <TouchableOpacity
-              style={[styles.submitButton, isCreating && styles.submitButtonDisabled]}
+              style={[
+                styles.submitButton,
+                { backgroundColor: selectedColor },
+                isCreating && styles.submitButtonDisabled,
+              ]}
               onPress={handleCreateMinistry}
               disabled={isCreating}
             >
               {isCreating ? (
-                <ActivityIndicator color={Colors.textInverse} />
+                <ActivityIndicator color="#fff" />
               ) : (
                 <Text style={styles.submitButtonText}>Create Ministry</Text>
               )}
@@ -465,6 +847,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    marginBottom: 16,
+  },
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
@@ -473,7 +861,42 @@ const styles = StyleSheet.create({
   subtitle: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginTop: 4,
+    marginTop: 2,
+  },
+  headerActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+  },
+  headerButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  createButtonHeader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  searchContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surfaceSecondary,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    gap: 10,
+  },
+  searchInput: {
+    flex: 1,
+    height: 44,
+    fontSize: 15,
+    color: Colors.text,
   },
   content: {
     flex: 1,
@@ -481,175 +904,250 @@ const styles = StyleSheet.create({
   contentContainer: {
     padding: 20,
   },
-  sectionTitle: {
-    fontSize: 20,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  sectionSubtitle: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 16,
-  },
-  ministrySections: {
-    marginBottom: 24,
-  },
-  sectionCard: {
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-    overflow: 'hidden',
-  },
-  sectionCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
-  sectionIconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 14,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginRight: 12,
-  },
-  sectionCardInfo: {
-    flex: 1,
-  },
-  sectionCardTitle: {
-    fontSize: 17,
-    fontWeight: '600' as const,
-    color: Colors.text,
-    marginBottom: 2,
-  },
-  sectionCardDescription: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  sectionCardStats: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 16,
-    marginBottom: 12,
-  },
-  statItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-  },
-  statText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  sectionCardMembers: {
-    flexDirection: 'row',
-    alignItems: 'center',
-  },
-  memberAvatar: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    borderWidth: 2,
-    borderColor: Colors.surface,
-  },
-  memberAvatarMore: {
-    backgroundColor: Colors.surfaceSecondary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  memberAvatarMoreText: {
-    fontSize: 11,
-    fontWeight: '600' as const,
-    color: Colors.textSecondary,
-  },
-  sectionCardAccent: {
-    position: 'absolute',
-    left: 0,
-    top: 0,
-    bottom: 0,
-    width: 4,
-  },
-  sectionHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 12,
-  },
-  sectionTitleSmall: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.textSecondary,
-    textTransform: "uppercase",
-    letterSpacing: 0.5,
-    marginBottom: 12,
-  },
-  createButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 16,
-    gap: 4,
-  },
-  createButtonText: {
-    color: Colors.textInverse,
-    fontSize: 13,
-    fontWeight: "600" as const,
-  },
-  emptySection: {
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 12,
-    padding: 24,
-    alignItems: "center",
-    marginBottom: 16,
-  },
-  emptyText: {
-    color: Colors.textSecondary,
-    fontSize: 14,
-    marginTop: 8,
-  },
-  emptySubtext: {
-    color: Colors.textTertiary,
-    fontSize: 12,
-    marginTop: 4,
-  },
-  setupBanner: {
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  setupBannerContent: {
-    flexDirection: "row",
+  loadingContainer: {
+    padding: 60,
     alignItems: "center",
     gap: 12,
   },
-  setupBannerText: {
+  loadingText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  emptyIconContainer: {
+    width: 100,
+    height: 100,
+    borderRadius: 50,
+    backgroundColor: Colors.primary + "15",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  emptyTitle: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  emptySubtitle: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    maxWidth: 280,
+    lineHeight: 22,
+  },
+  emptyCreateButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.primary,
+    paddingHorizontal: 24,
+    paddingVertical: 14,
+    borderRadius: 28,
+    gap: 8,
+    marginTop: 24,
+  },
+  emptyCreateButtonText: {
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: "#fff",
+  },
+  noResultsContainer: {
+    alignItems: "center",
+    paddingVertical: 60,
+  },
+  noResultsTitle: {
+    fontSize: 18,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginTop: 16,
+  },
+  noResultsSubtitle: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    marginTop: 4,
+  },
+  section: {
+    marginBottom: 28,
+  },
+  sectionHeader: {
+    marginBottom: 16,
+  },
+  sectionTitleRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 4,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  sectionSubtitle: {
+    fontSize: 13,
+    color: Colors.textSecondary,
+  },
+  cardWrapper: {
+    marginBottom: 16,
+  },
+  ministryCard: {
+    height: 200,
+    borderRadius: 20,
+    overflow: "hidden",
+    backgroundColor: Colors.surface,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 4,
+  },
+  cardImage: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardGradient: {
+    ...StyleSheet.absoluteFillObject,
+  },
+  cardContent: {
+    flex: 1,
+    padding: 18,
+    justifyContent: "space-between",
+  },
+  cardTopRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  cardIconBadge: {
+    width: 42,
+    height: 42,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  cardActionButton: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 20,
+    gap: 5,
+  },
+  cardActionJoin: {
+    backgroundColor: Colors.primary,
+  },
+  cardActionMember: {
+    backgroundColor: "#fff",
+  },
+  cardActionPending: {
+    backgroundColor: "rgba(245, 158, 11, 0.2)",
+    borderWidth: 1,
+    borderColor: Colors.warning,
+  },
+  actionTextJoin: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    color: "#fff",
+  },
+  actionTextMember: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    color: Colors.primary,
+  },
+  actionTextPending: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    color: Colors.warning,
+  },
+  cardInfo: {
+    gap: 6,
+  },
+  cardTitle: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: "#fff",
+  },
+  cardDescription: {
+    fontSize: 14,
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 20,
+  },
+  cardMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginTop: 8,
+  },
+  cardMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  cardMetaText: {
+    fontSize: 13,
+    color: "rgba(255,255,255,0.8)",
+    fontWeight: "500" as const,
+  },
+  colorDot: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+  },
+  cardAccent: {
+    position: "absolute",
+    left: 0,
+    top: 0,
+    bottom: 0,
+    width: 5,
+    borderTopLeftRadius: 20,
+    borderBottomLeftRadius: 20,
+  },
+  compactCardWrapper: {
+    marginBottom: 10,
+  },
+  compactCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: Colors.surface,
+    borderRadius: 14,
+    padding: 14,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.04,
+    shadowRadius: 4,
+    elevation: 1,
+  },
+  compactIconContainer: {
+    width: 48,
+    height: 48,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 14,
+  },
+  compactInfo: {
     flex: 1,
   },
-  setupBannerTitle: {
+  compactTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.text,
+    marginBottom: 2,
   },
-  setupBannerSubtitle: {
+  compactMeta: {
     fontSize: 13,
     color: Colors.textSecondary,
-    marginTop: 2,
   },
-  loadingContainer: {
-    padding: 40,
+  memberBadge: {
+    width: 24,
+    height: 24,
+    borderRadius: 12,
+    backgroundColor: Colors.success + "20",
     alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8,
   },
   modalOverlay: {
     flex: 1,
@@ -676,7 +1174,12 @@ const styles = StyleSheet.create({
     color: Colors.text,
   },
   closeButton: {
-    padding: 4,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   modalBody: {
     padding: 20,
@@ -707,15 +1210,20 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   colorOption: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 2,
-    borderColor: "transparent",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    alignItems: "center",
+    justifyContent: "center",
   },
   colorOptionSelected: {
-    borderColor: Colors.text,
     borderWidth: 3,
+    borderColor: "#fff",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
+    elevation: 4,
   },
   iconGrid: {
     flexDirection: "row",
@@ -723,9 +1231,9 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   iconOption: {
-    width: 48,
-    height: 48,
-    borderRadius: 12,
+    width: 52,
+    height: 52,
+    borderRadius: 14,
     backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
@@ -740,15 +1248,15 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 12,
-    padding: 12,
+    borderRadius: 14,
+    padding: 14,
     borderLeftWidth: 4,
     gap: 12,
   },
   previewIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
+    width: 44,
+    height: 44,
+    borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -756,7 +1264,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   previewName: {
-    fontSize: 15,
+    fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.text,
   },
@@ -766,17 +1274,16 @@ const styles = StyleSheet.create({
     marginTop: 2,
   },
   submitButton: {
-    backgroundColor: Colors.primary,
     margin: 20,
     padding: 16,
-    borderRadius: 12,
+    borderRadius: 14,
     alignItems: "center",
   },
   submitButtonDisabled: {
     opacity: 0.7,
   },
   submitButtonText: {
-    color: Colors.textInverse,
+    color: "#fff",
     fontSize: 16,
     fontWeight: "600" as const,
   },
