@@ -1,16 +1,88 @@
-import { useCallback, useState, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing } from "react-native";
+import { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Search, Heart, Calendar, Users } from "lucide-react-native";
+import { Bell, Calendar, Users, Heart, MessageCircle, Settings, ChevronRight, Megaphone, CreditCard, Sparkles } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
+import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EventCard from "@/components/EventCard";
-import SectionHeader from "@/components/SectionHeader";
 import { useScalePress } from "@/hooks/useAnimations";
+import React from "react";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
+
+function getTimeBasedGreeting(): string {
+  const hour = new Date().getHours();
+  if (hour >= 5 && hour < 12) return "Good Morning";
+  if (hour >= 12 && hour < 17) return "Good Afternoon";
+  if (hour >= 17 && hour < 21) return "Good Evening";
+  return "Good Night";
+}
+
+interface QuickActionProps {
+  icon: React.ReactNode;
+  title: string;
+  subtitle: string;
+  colors: string[];
+  onPress: () => void;
+  delay: number;
+}
+
+function QuickActionCard({ icon, title, subtitle, colors, onPress, delay }: QuickActionProps) {
+  const scaleAnim = useScalePress();
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(20)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+      Animated.timing(slideAnim, {
+        toValue: 0,
+        duration: 400,
+        delay,
+        useNativeDriver: true,
+        easing: Easing.out(Easing.cubic),
+      }),
+    ]).start();
+  }, [fadeAnim, slideAnim, delay]);
+
+  return (
+    <Animated.View style={[styles.quickActionWrapper, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
+      <TouchableOpacity
+        onPress={onPress}
+        onPressIn={scaleAnim.onPressIn}
+        onPressOut={scaleAnim.onPressOut}
+        activeOpacity={1}
+        style={styles.quickActionTouchable}
+      >
+        <Animated.View style={{ transform: [{ scale: scaleAnim.scale }] }}>
+          <LinearGradient
+            colors={colors as [string, string, ...string[]]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={styles.quickActionCard}
+          >
+            <View style={styles.quickActionIconContainer}>
+              {icon}
+            </View>
+            <Text style={styles.quickActionTitle}>{title}</Text>
+            <Text style={styles.quickActionSubtitle}>{subtitle}</Text>
+          </LinearGradient>
+        </Animated.View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+}
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -28,38 +100,37 @@ export default function HomeScreen() {
   const [localRefreshing, setLocalRefreshing] = useState(false);
 
   const headerAnim = useRef(new Animated.Value(0)).current;
-  const quickActionsAnim = useRef(new Animated.Value(0)).current;
+  const heroAnim = useRef(new Animated.Value(0)).current;
   const contentAnim = useRef(new Animated.Value(0)).current;
-  
-  const eventsCardAnim = useScalePress();
-  const givingCardAnim = useScalePress();
 
   useEffect(() => {
     Animated.stagger(100, [
       Animated.timing(headerAnim, {
         toValue: 1,
-        duration: 400,
+        duration: 500,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
-      Animated.timing(quickActionsAnim, {
+      Animated.timing(heroAnim, {
         toValue: 1,
-        duration: 400,
+        duration: 500,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
       Animated.timing(contentAnim, {
         toValue: 1,
-        duration: 400,
+        duration: 500,
         useNativeDriver: true,
         easing: Easing.out(Easing.cubic),
       }),
     ]).start();
-  }, [headerAnim, quickActionsAnim, contentAnim]);
+  }, [headerAnim, heroAnim, contentAnim]);
 
   const announcements = getGeneralAnnouncements(2);
   const upcomingEvents = getUpcomingEvents(3);
   const totalUnread = getTotalUnread();
+  const greeting = useMemo(() => getTimeBasedGreeting(), []);
+  const firstName = user?.name?.split(" ")[0] || "Friend";
 
   const onRefresh = useCallback(async () => {
     setLocalRefreshing(true);
@@ -72,137 +143,222 @@ export default function HomeScreen() {
     }
   }, [refresh]);
 
+  const notificationAnim = useScalePress();
+
   return (
     <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <View style={styles.headerContent}>
-          <View style={styles.greeting}>
-            <Text style={styles.greetingText}>Welcome back,</Text>
-            <Text style={styles.userName}>{user?.name.split(" ")[0] || "User"}</Text>
+      <LinearGradient
+        colors={[Colors.primary, Colors.primaryDark, '#C94444']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={[styles.headerGradient, { paddingTop: insets.top }]}
+      >
+        <Animated.View 
+          style={[
+            styles.header, 
+            { 
+              opacity: headerAnim, 
+              transform: [{ translateY: headerAnim.interpolate({ inputRange: [0, 1], outputRange: [-20, 0] }) }] 
+            }
+          ]}
+        >
+          <View style={styles.headerLeft}>
+            <Text style={styles.greetingSmall}>{greeting}</Text>
+            <Text style={styles.userName}>{firstName}</Text>
           </View>
-          <View style={styles.headerActions}>
-            <TouchableOpacity style={styles.iconButton}>
-              <Search size={22} color={Colors.text} />
+          <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.notificationButton}
+              onPress={() => router.push("/(tabs)/notifications" as Href)}
+              onPressIn={notificationAnim.onPressIn}
+              onPressOut={notificationAnim.onPressOut}
+              activeOpacity={1}
+            >
+              <Animated.View style={{ transform: [{ scale: notificationAnim.scale }] }}>
+                <Bell size={22} color={Colors.textInverse} />
+                {totalUnread > 0 && (
+                  <View style={styles.notificationBadge}>
+                    <Text style={styles.notificationCount}>
+                      {totalUnread > 9 ? "9+" : totalUnread}
+                    </Text>
+                  </View>
+                )}
+              </Animated.View>
             </TouchableOpacity>
             <TouchableOpacity 
-              style={styles.iconButton}
-              onPress={() => router.push("/(tabs)/notifications" as Href)}
+              onPress={() => router.push("/(tabs)/profile" as Href)}
+              style={styles.avatarContainer}
             >
-              <Bell size={22} color={Colors.text} />
-              {totalUnread > 0 && (
-                <View style={styles.notificationBadge}>
-                  <Text style={styles.notificationCount}>
-                    {totalUnread > 9 ? "9+" : totalUnread}
-                  </Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/profile" as Href)}>
               <Image
-                source={{ uri: user?.avatar || "https://ui-avatars.com/api/?name=User" }}
+                source={{ uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=fff&color=FF6B6B` }}
                 style={styles.avatar}
                 contentFit="cover"
               />
             </TouchableOpacity>
           </View>
-        </View>
-      </View>
+        </Animated.View>
+
+        <Animated.View 
+          style={[
+            styles.heroSection,
+            {
+              opacity: heroAnim,
+              transform: [{ translateY: heroAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+            }
+          ]}
+        >
+          <View style={styles.heroContent}>
+            <View style={styles.heroIconContainer}>
+              <Sparkles size={20} color={Colors.accent} />
+            </View>
+            <Text style={styles.heroTitle}>Stay Connected</Text>
+            <Text style={styles.heroSubtitle}>
+              {upcomingEvents.length > 0 
+                ? `${upcomingEvents.length} upcoming event${upcomingEvents.length > 1 ? 's' : ''} this week`
+                : "Check out what's happening in your community"
+              }
+            </Text>
+          </View>
+        </Animated.View>
+      </LinearGradient>
 
       <ScrollView
         style={styles.content}
+        contentContainerStyle={styles.contentContainer}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={localRefreshing || isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+          <RefreshControl 
+            refreshing={localRefreshing || isRefreshing} 
+            onRefresh={onRefresh} 
+            tintColor={Colors.primary}
+            progressViewOffset={20}
+          />
         }
       >
-        <Animated.View style={[styles.quickActions, { opacity: quickActionsAnim, transform: [{ translateY: quickActionsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
-          <TouchableOpacity
-            style={[styles.quickAction, { backgroundColor: Colors.primary }]}
+        <View style={styles.quickActionsGrid}>
+          <QuickActionCard
+            icon={<Megaphone size={22} color={Colors.textInverse} />}
+            title="Announcements"
+            subtitle={announcements.length > 0 ? `${announcements.length} new` : "Stay updated"}
+            colors={[Colors.primary, Colors.primaryDark]}
+            onPress={() => router.push("/announcements" as Href)}
+            delay={0}
+          />
+          <QuickActionCard
+            icon={<Calendar size={22} color={Colors.textInverse} />}
+            title="Events"
+            subtitle={`${upcomingEvents.length} upcoming`}
+            colors={[Colors.secondary, Colors.secondaryDark]}
             onPress={() => router.push("/(tabs)/calendar" as Href)}
-            onPressIn={eventsCardAnim.onPressIn}
-            onPressOut={eventsCardAnim.onPressOut}
-            activeOpacity={1}
-          >
-            <Animated.View style={{ transform: [{ scale: eventsCardAnim.scale }] }}>
-              <Text style={styles.quickActionTitle}>Upcoming Events</Text>
-              <Text style={styles.quickActionSubtitle}>{upcomingEvents.length} this week</Text>
-            </Animated.View>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.quickAction, styles.givingAction]}
+            delay={50}
+          />
+          <QuickActionCard
+            icon={<MessageCircle size={22} color={Colors.textInverse} />}
+            title="Messages"
+            subtitle={totalUnread > 0 ? `${totalUnread} unread` : "Chat"}
+            colors={[Colors.tertiary, '#5B4ED1']}
+            onPress={() => router.push("/(tabs)/messages" as Href)}
+            delay={100}
+          />
+          <QuickActionCard
+            icon={<Heart size={22} color={Colors.textInverse} />}
+            title="Giving"
+            subtitle="Tithes & Offerings"
+            colors={['#FF8E53', '#FF6B6B']}
             onPress={() => router.push("/giving" as Href)}
-            onPressIn={givingCardAnim.onPressIn}
-            onPressOut={givingCardAnim.onPressOut}
-            activeOpacity={1}
+            delay={150}
+          />
+        </View>
+
+        <Animated.View 
+          style={[
+            styles.statsContainer,
+            {
+              opacity: contentAnim,
+              transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+            }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => router.push("/(tabs)/calendar" as Href)}
+            activeOpacity={0.7}
           >
-            <Animated.View style={{ transform: [{ scale: givingCardAnim.scale }] }}>
-              <View style={styles.givingIconContainer}>
-                <Heart size={18} color="#FFFFFF" />
-              </View>
-              <Text style={styles.quickActionTitle}>Giving</Text>
-              <Text style={styles.quickActionSubtitle}>Tithes & Offerings</Text>
-            </Animated.View>
+            <View style={[styles.statIconContainer, { backgroundColor: Colors.primary + '15' }]}>
+              <Calendar size={20} color={Colors.primary} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{upcomingEvents.length}</Text>
+              <Text style={styles.statLabel}>Events This Week</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textTertiary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => router.push("/(tabs)/groups" as Href)}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
+              <Users size={20} color={Colors.secondary} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{userMinistries.length}</Text>
+              <Text style={styles.statLabel}>Your Ministries</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textTertiary} />
           </TouchableOpacity>
         </Animated.View>
 
-        <SectionHeader
-          title="Announcements"
-          actionText="View all"
-          onActionPress={() => router.push("/announcements" as Href)}
-        />
-        <View style={styles.announcementsContainer}>
-          {isLoading && announcements.length === 0 ? (
-            <View style={styles.loadingContainer}>
-              <ActivityIndicator size="small" color={Colors.primary} />
+        {announcements.length > 0 && (
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: contentAnim,
+                transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+              }
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Latest Announcements</Text>
+              <TouchableOpacity onPress={() => router.push("/announcements" as Href)}>
+                <Text style={styles.sectionAction}>View all</Text>
+              </TouchableOpacity>
             </View>
-          ) : announcements.length === 0 ? (
-            <View style={styles.emptyContainer}>
-              <Text style={styles.emptyText}>No announcements yet</Text>
+            <View style={styles.announcementsContainer}>
+              {isLoading && announcements.length === 0 ? (
+                <View style={styles.loadingContainer}>
+                  <ActivityIndicator size="small" color={Colors.primary} />
+                </View>
+              ) : (
+                announcements.map((announcement) => (
+                  <AnnouncementCard
+                    key={announcement.id}
+                    announcement={announcement}
+                    onPress={() => {}}
+                  />
+                ))
+              )}
             </View>
-          ) : (
-            announcements.map((announcement) => (
-              <AnnouncementCard
-                key={announcement.id}
-                announcement={announcement}
-                onPress={() => {}}
-              />
-            ))
-          )}
-        </View>
-
-        <SectionHeader
-          title="Weekly Highlights"
-          actionText="View all"
-          onActionPress={() => router.push("/(tabs)/calendar" as Href)}
-        />
-        <View style={styles.highlightsContainer}>
-          <View style={styles.highlightCard}>
-            <View style={[styles.highlightIconContainer, { backgroundColor: Colors.primary + '15' }]}>
-              <Calendar size={20} color={Colors.primary} />
-            </View>
-            <View style={styles.highlightContent}>
-              <Text style={styles.highlightValue}>{upcomingEvents.length}</Text>
-              <Text style={styles.highlightLabel}>Events This Week</Text>
-            </View>
-          </View>
-          <View style={styles.highlightCard}>
-            <View style={[styles.highlightIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
-              <Users size={20} color={Colors.secondary} />
-            </View>
-            <View style={styles.highlightContent}>
-              <Text style={styles.highlightValue}>{userMinistries.length}</Text>
-              <Text style={styles.highlightLabel}>Your Ministries</Text>
-            </View>
-          </View>
-        </View>
+          </Animated.View>
+        )}
 
         {upcomingEvents.length > 0 && (
-          <>
-            <SectionHeader
-              title="Upcoming Events"
-              actionText="See all"
-              onActionPress={() => router.push("/(tabs)/calendar" as Href)}
-            />
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: contentAnim,
+                transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+              }
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Upcoming Events</Text>
+              <TouchableOpacity onPress={() => router.push("/(tabs)/calendar" as Href)}>
+                <Text style={styles.sectionAction}>See all</Text>
+              </TouchableOpacity>
+            </View>
             <View style={styles.eventsContainer}>
               {upcomingEvents.slice(0, 2).map((event) => (
                 <EventCard
@@ -213,37 +369,56 @@ export default function HomeScreen() {
                 />
               ))}
             </View>
-          </>
+          </Animated.View>
         )}
 
-        <SectionHeader
-          title="Your Ministries"
-          actionText="View all"
-          onActionPress={() => router.push("/(tabs)/groups" as Href)}
-        />
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.ministriesHorizontal}
-        >
-          {userMinistries.slice(0, 4).map((ministry) => (
-            <TouchableOpacity
-              key={ministry.id}
-              style={styles.ministryChip}
-              onPress={() => router.push(`/group/${ministry.id}` as Href)}
+        {userMinistries.length > 0 && (
+          <Animated.View 
+            style={[
+              styles.section,
+              {
+                opacity: contentAnim,
+                transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+              }
+            ]}
+          >
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>Your Ministries</Text>
+              <TouchableOpacity onPress={() => router.push("/(tabs)/groups" as Href)}>
+                <Text style={styles.sectionAction}>View all</Text>
+              </TouchableOpacity>
+            </View>
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.ministriesHorizontal}
             >
-              <Image
-                source={{ uri: ministry.image }}
-                style={styles.ministryChipImage}
-                contentFit="cover"
-              />
-              <View style={styles.ministryChipOverlay} />
-              <Text style={styles.ministryChipText}>{ministry.name}</Text>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+              {userMinistries.slice(0, 5).map((ministry) => (
+                <TouchableOpacity
+                  key={ministry.id}
+                  style={styles.ministryCard}
+                  onPress={() => router.push(`/group/${ministry.id}` as Href)}
+                  activeOpacity={0.8}
+                >
+                  <Image
+                    source={{ uri: ministry.image }}
+                    style={styles.ministryImage}
+                    contentFit="cover"
+                  />
+                  <LinearGradient
+                    colors={['transparent', 'rgba(0,0,0,0.7)']}
+                    style={styles.ministryGradient}
+                  />
+                  <View style={styles.ministryInfo}>
+                    <Text style={styles.ministryName} numberOfLines={2}>{ministry.name}</Text>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </Animated.View>
+        )}
 
-        <View style={{ height: 100 }} />
+        <View style={styles.bottomSpacer} />
       </ScrollView>
     </View>
   );
@@ -254,102 +429,218 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: Colors.background,
   },
-  header: {
-    backgroundColor: Colors.surface,
-    paddingHorizontal: 20,
-    paddingBottom: 16,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+  headerGradient: {
+    paddingBottom: 24,
   },
-  headerContent: {
+  header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 12,
+    paddingBottom: 16,
   },
-  greeting: {
+  headerLeft: {
     flex: 1,
   },
-  greetingText: {
+  greetingSmall: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: Colors.textInverse,
+    opacity: 0.85,
+    fontWeight: "500" as const,
   },
   userName: {
-    fontSize: 24,
+    fontSize: 26,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: Colors.textInverse,
     marginTop: 2,
+    letterSpacing: -0.3,
   },
-  headerActions: {
+  headerRight: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 12,
   },
-  iconButton: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+  notificationButton: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     alignItems: "center",
     justifyContent: "center",
   },
   notificationBadge: {
     position: "absolute",
-    top: 6,
-    right: 6,
-    backgroundColor: Colors.error,
-    minWidth: 16,
-    height: 16,
-    borderRadius: 8,
+    top: -2,
+    right: -2,
+    backgroundColor: Colors.accent,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 2,
+    borderColor: Colors.primary,
   },
   notificationCount: {
     fontSize: 10,
     fontWeight: "700" as const,
-    color: Colors.textInverse,
+    color: Colors.text,
+  },
+  avatarContainer: {
+    borderWidth: 2,
+    borderColor: "rgba(255, 255, 255, 0.4)",
+    borderRadius: 24,
+    padding: 2,
   },
   avatar: {
-    width: 40,
-    height: 40,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+  },
+  heroSection: {
+    paddingHorizontal: 20,
+  },
+  heroContent: {
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     borderRadius: 20,
-    marginLeft: 4,
+    padding: 20,
+  },
+  heroIconContainer: {
+    width: 36,
+    height: 36,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 12,
+  },
+  heroTitle: {
+    fontSize: 20,
+    fontWeight: "700" as const,
+    color: Colors.textInverse,
+    marginBottom: 6,
+  },
+  heroSubtitle: {
+    fontSize: 14,
+    color: Colors.textInverse,
+    opacity: 0.9,
+    lineHeight: 20,
   },
   content: {
     flex: 1,
+    marginTop: -12,
   },
-  quickActions: {
+  contentContainer: {
+    paddingTop: 0,
+  },
+  quickActionsGrid: {
     flexDirection: "row",
-    paddingHorizontal: 20,
-    paddingTop: 20,
+    flexWrap: "wrap",
+    paddingHorizontal: 16,
+    paddingTop: 24,
     gap: 12,
   },
-  quickAction: {
+  quickActionWrapper: {
+    width: (SCREEN_WIDTH - 44) / 2,
+  },
+  quickActionTouchable: {
     flex: 1,
-    padding: 16,
-    borderRadius: 16,
   },
-  givingAction: {
-    backgroundColor: Colors.secondary,
+  quickActionCard: {
+    borderRadius: 20,
+    padding: 18,
+    minHeight: 110,
   },
-  givingIconContainer: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
-    backgroundColor: "rgba(255, 255, 255, 0.25)",
+  quickActionIconContainer: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 4,
+    marginBottom: 12,
   },
   quickActionTitle: {
-    fontSize: 16,
+    fontSize: 15,
     fontWeight: "700" as const,
     color: Colors.textInverse,
     marginBottom: 4,
   },
   quickActionSubtitle: {
-    fontSize: 13,
+    fontSize: 12,
     color: Colors.textInverse,
     opacity: 0.85,
+  },
+  statsContainer: {
+    flexDirection: "row",
+    paddingHorizontal: 20,
+    paddingTop: 16,
+    gap: 12,
+  },
+  statCard: {
+    flex: 1,
+    backgroundColor: Colors.surface,
+    borderRadius: 16,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      },
+    }),
+  },
+  statIconContainer: {
+    width: 44,
+    height: 44,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  statContent: {
+    flex: 1,
+  },
+  statValue: {
+    fontSize: 22,
+    fontWeight: "700" as const,
+    color: Colors.text,
+  },
+  statLabel: {
+    fontSize: 11,
+    color: Colors.textSecondary,
+    marginTop: 2,
+  },
+  section: {
+    paddingTop: 24,
+  },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    marginBottom: 14,
+  },
+  sectionTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    letterSpacing: -0.2,
+  },
+  sectionAction: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.primary,
   },
   announcementsContainer: {
     paddingHorizontal: 20,
@@ -357,119 +648,40 @@ const styles = StyleSheet.create({
   eventsContainer: {
     paddingHorizontal: 20,
   },
+  loadingContainer: {
+    padding: 24,
+    alignItems: "center",
+  },
   ministriesHorizontal: {
     paddingHorizontal: 20,
-    gap: 12,
+    gap: 14,
   },
-  ministryChip: {
-    width: 140,
-    height: 80,
-    borderRadius: 12,
+  ministryCard: {
+    width: 150,
+    height: 100,
+    borderRadius: 16,
     overflow: "hidden",
-    justifyContent: "flex-end",
   },
-  ministryChipImage: {
+  ministryImage: {
     ...StyleSheet.absoluteFillObject,
   },
-  ministryChipOverlay: {
+  ministryGradient: {
     ...StyleSheet.absoluteFillObject,
-    backgroundColor: "rgba(0, 0, 0, 0.4)",
   },
-  ministryChipText: {
+  ministryInfo: {
+    position: "absolute",
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+  },
+  ministryName: {
     fontSize: 13,
     fontWeight: "600" as const,
     color: Colors.textInverse,
-    padding: 10,
+    lineHeight: 17,
   },
-  setupBanner: {
-    marginHorizontal: 20,
-    marginTop: 20,
-    backgroundColor: Colors.primaryLight,
-    borderRadius: 12,
-    padding: 16,
-    borderWidth: 1,
-    borderColor: Colors.primary,
-  },
-  setupBannerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  setupBannerText: {
-    flex: 1,
-  },
-  setupBannerTitle: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  setupBannerSubtitle: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  loadingContainer: {
-    padding: 20,
-    alignItems: "center",
-  },
-  emptyContainer: {
-    padding: 20,
-    alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 12,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  highlightsContainer: {
-    flexDirection: "row" as const,
-    paddingHorizontal: 20,
-    gap: 12,
-    marginBottom: 8,
-  },
-  highlightCard: {
-    flex: 1,
-    backgroundColor: Colors.surface,
-    borderRadius: 16,
-    padding: 16,
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 12,
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 4,
-      },
-      android: {
-        elevation: 2,
-      },
-      web: {
-        boxShadow: '0 2px 4px rgba(0, 0, 0, 0.05)',
-      },
-    }),
-  },
-  highlightIconContainer: {
-    width: 44,
-    height: 44,
-    borderRadius: 12,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-  },
-  highlightContent: {
-    flex: 1,
-  },
-  highlightValue: {
-    fontSize: 22,
-    fontWeight: "700" as const,
-    color: Colors.text,
-  },
-  highlightLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 2,
+  bottomSpacer: {
+    height: 100,
   },
 });

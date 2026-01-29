@@ -13,15 +13,18 @@ import {
   Modal,
   Animated,
   Easing,
+  Dimensions,
 } from "react-native";
 import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Mail, Lock, Eye, EyeOff, ArrowRight, Building2, X, Send, RefreshCw } from "lucide-react-native";
+import { Mail, Lock, Eye, EyeOff, ArrowRight, Building2, X, Send, RefreshCw, Sparkles } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { resendVerificationEmail } from "@/lib/supabase-auth";
 import { useButtonPress } from "@/hooks/useAnimations";
+
+const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -33,49 +36,70 @@ export default function LoginScreen() {
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [emailFocused, setEmailFocused] = useState(false);
+  const [passwordFocused, setPasswordFocused] = useState(false);
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(30)).current;
-  const headerSlide = useRef(new Animated.Value(-20)).current;
-  const headerOpacity = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(40)).current;
+  const logoScale = useRef(new Animated.Value(0.8)).current;
+  const logoOpacity = useRef(new Animated.Value(0)).current;
+  const cardScale = useRef(new Animated.Value(0.95)).current;
+  const shimmerAnim = useRef(new Animated.Value(0)).current;
   
   const loginButtonAnim = useButtonPress();
   const registerButtonAnim = useButtonPress();
   const createOrgButtonAnim = useButtonPress();
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(headerOpacity, {
-        toValue: 1,
-        duration: 600,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
-      }),
-      Animated.timing(headerSlide, {
-        toValue: 0,
-        duration: 600,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
-      }),
+    Animated.sequence([
+      Animated.parallel([
+        Animated.spring(logoScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 7,
+        }),
+        Animated.timing(logoOpacity, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }),
+      ]),
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 500,
+          useNativeDriver: true,
+          easing: Easing.out(Easing.cubic),
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }),
+        Animated.spring(cardScale, {
+          toValue: 1,
+          useNativeDriver: true,
+          tension: 50,
+          friction: 8,
+        }),
+      ]),
     ]).start();
 
-    Animated.parallel([
-      Animated.timing(fadeAnim, {
+    const shimmer = Animated.loop(
+      Animated.timing(shimmerAnim, {
         toValue: 1,
-        duration: 500,
-        delay: 200,
+        duration: 2500,
         useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
-      }),
-      Animated.timing(slideAnim, {
-        toValue: 0,
-        duration: 500,
-        delay: 200,
-        useNativeDriver: true,
-        easing: Easing.out(Easing.cubic),
-      }),
-    ]).start();
-  }, [fadeAnim, slideAnim, headerOpacity, headerSlide]);
+        easing: Easing.linear,
+      })
+    );
+    shimmer.start();
+
+    return () => shimmer.stop();
+  }, [fadeAnim, slideAnim, logoScale, logoOpacity, cardScale, shimmerAnim]);
 
   const [showResetModal, setShowResetModal] = useState(false);
   const [resetEmail, setResetEmail] = useState("");
@@ -98,14 +122,11 @@ export default function LoginScreen() {
     setIsLoading(true);
     setError("");
 
-    
     const result = await login(email.trim(), password);
 
     if (result.success) {
-      
       router.replace("/(tabs)");
     } else {
-      
       const errorMsg = result.error || "Login failed";
       
       if (errorMsg.toLowerCase().includes("verify") || errorMsg.toLowerCase().includes("email not confirmed")) {
@@ -140,14 +161,11 @@ export default function LoginScreen() {
     setIsResetting(true);
     setResetError("");
 
-    
     const result = await sendPasswordResetEmail(resetEmail.trim());
 
     if (result.success) {
-      
       setResetSuccess(true);
     } else {
-      
       setResetError(result.error || "Failed to send reset email");
     }
 
@@ -171,12 +189,9 @@ export default function LoginScreen() {
     setVerifyError("");
 
     try {
-      
       await resendVerificationEmail(verifyEmail.trim().toLowerCase());
-      
       setVerificationSent(true);
     } catch (err) {
-      
       setVerifyError(err instanceof Error ? err.message : "Failed to resend verification email");
     }
 
@@ -190,40 +205,64 @@ export default function LoginScreen() {
     setVerificationSent(false);
   };
 
+  const shimmerTranslate = shimmerAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [-SCREEN_WIDTH, SCREEN_WIDTH],
+  });
+
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, "#0D5C56"]}
-        style={styles.headerGradient}
-      >
-        <Animated.View style={[styles.headerContent, { paddingTop: insets.top + 40, opacity: headerOpacity, transform: [{ translateY: headerSlide }] }]}>
-          <Text style={styles.logo}>Church Connect</Text>
-          <Text style={styles.tagline}>Stay connected with your community</Text>
-        </Animated.View>
-      </LinearGradient>
+        colors={['#FF6B6B', '#FF8E53', '#FEC89A']}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={StyleSheet.absoluteFillObject}
+      />
+      
+      <View style={styles.decorativeCircle1} />
+      <View style={styles.decorativeCircle2} />
+      <View style={styles.decorativeCircle3} />
 
       <KeyboardAvoidingView
-        style={styles.formContainer}
+        style={styles.keyboardView}
         behavior={Platform.OS === "ios" ? "padding" : "height"}
       >
         <ScrollView
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingTop: insets.top + 40, paddingBottom: insets.bottom + 20 }]}
           showsVerticalScrollIndicator={false}
           keyboardShouldPersistTaps="handled"
         >
-          <Animated.View style={[styles.formCard, { opacity: fadeAnim, transform: [{ translateY: slideAnim }] }]}>
-            <Text style={styles.welcomeText}>Welcome Back</Text>
-            <Text style={styles.subtitle}>Sign in to continue</Text>
+          <Animated.View style={[styles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
+            <View style={styles.logoIconContainer}>
+              <Sparkles size={32} color={Colors.textInverse} />
+            </View>
+            <Text style={styles.logo}>Church Connect</Text>
+            <Text style={styles.tagline}>Building community, together</Text>
+          </Animated.View>
+
+          <Animated.View 
+            style={[
+              styles.formCard, 
+              { 
+                opacity: fadeAnim, 
+                transform: [{ translateY: slideAnim }, { scale: cardScale }] 
+              }
+            ]}
+          >
+            <View style={styles.cardHeader}>
+              <Text style={styles.welcomeText}>Let's Get You Connected</Text>
+              <Text style={styles.subtitle}>Sign in to stay connected with your church family and never miss a moment</Text>
+            </View>
 
             {error ? (
-              <View style={styles.errorContainer}>
+              <Animated.View style={styles.errorContainer}>
                 <Text style={styles.errorText}>{error}</Text>
-              </View>
+              </Animated.View>
             ) : null}
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Mail size={20} color={Colors.textSecondary} />
+            <View style={[styles.inputContainer, emailFocused && styles.inputContainerFocused]}>
+              <View style={[styles.inputIcon, emailFocused && styles.inputIconFocused]}>
+                <Mail size={20} color={emailFocused ? Colors.primary : Colors.textSecondary} />
               </View>
               <TextInput
                 style={styles.input}
@@ -231,6 +270,8 @@ export default function LoginScreen() {
                 placeholderTextColor={Colors.textTertiary}
                 value={email}
                 onChangeText={setEmail}
+                onFocus={() => setEmailFocused(true)}
+                onBlur={() => setEmailFocused(false)}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 autoCorrect={false}
@@ -239,9 +280,9 @@ export default function LoginScreen() {
               />
             </View>
 
-            <View style={styles.inputContainer}>
-              <View style={styles.inputIcon}>
-                <Lock size={20} color={Colors.textSecondary} />
+            <View style={[styles.inputContainer, passwordFocused && styles.inputContainerFocused]}>
+              <View style={[styles.inputIcon, passwordFocused && styles.inputIconFocused]}>
+                <Lock size={20} color={passwordFocused ? Colors.primary : Colors.textSecondary} />
               </View>
               <TextInput
                 style={styles.input}
@@ -249,6 +290,8 @@ export default function LoginScreen() {
                 placeholderTextColor={Colors.textTertiary}
                 value={password}
                 onChangeText={setPassword}
+                onFocus={() => setPasswordFocused(true)}
+                onBlur={() => setPasswordFocused(false)}
                 secureTextEntry={!showPassword}
                 editable={!isLoading}
                 testID="password-input"
@@ -282,15 +325,30 @@ export default function LoginScreen() {
               activeOpacity={1}
               testID="login-button"
             >
-              <Animated.View style={[styles.buttonInner, { transform: [{ scale: loginButtonAnim.scale }], opacity: loginButtonAnim.opacity }]}>
-                {isLoading ? (
-                  <ActivityIndicator color={Colors.textInverse} />
-                ) : (
-                  <>
-                    <Text style={styles.loginButtonText}>Sign In</Text>
-                    <ArrowRight size={20} color={Colors.textInverse} />
-                  </>
-                )}
+              <Animated.View style={[styles.loginButtonInner, { transform: [{ scale: loginButtonAnim.scale }] }]}>
+                <LinearGradient
+                  colors={[Colors.primary, Colors.primaryDark]}
+                  start={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
+                  style={styles.buttonGradient}
+                >
+                  {isLoading ? (
+                    <ActivityIndicator color={Colors.textInverse} />
+                  ) : (
+                    <>
+                      <Text style={styles.loginButtonText}>Sign In</Text>
+                      <View style={styles.arrowContainer}>
+                        <ArrowRight size={18} color={Colors.textInverse} />
+                      </View>
+                    </>
+                  )}
+                </LinearGradient>
+                <Animated.View 
+                  style={[
+                    styles.shimmerOverlay, 
+                    { transform: [{ translateX: shimmerTranslate }] }
+                  ]} 
+                />
               </Animated.View>
             </TouchableOpacity>
 
@@ -308,7 +366,7 @@ export default function LoginScreen() {
               disabled={isLoading}
               activeOpacity={1}
             >
-              <Animated.View style={[styles.buttonInner, { transform: [{ scale: registerButtonAnim.scale }] }]}>
+              <Animated.View style={[styles.registerButtonInner, { transform: [{ scale: registerButtonAnim.scale }] }]}>
                 <Text style={styles.registerButtonText}>Create an Account</Text>
               </Animated.View>
             </TouchableOpacity>
@@ -323,8 +381,8 @@ export default function LoginScreen() {
                 disabled={isLoading}
                 activeOpacity={1}
               >
-                <Animated.View style={[styles.buttonInnerRow, { transform: [{ scale: createOrgButtonAnim.scale }] }]}>
-                  <Building2 size={20} color={Colors.primary} />
+                <Animated.View style={[styles.createOrgButtonInner, { transform: [{ scale: createOrgButtonAnim.scale }] }]}>
+                  <Building2 size={18} color={Colors.secondary} />
                   <Text style={styles.createOrgButtonText}>Create a New Church</Text>
                 </Animated.View>
               </TouchableOpacity>
@@ -341,6 +399,7 @@ export default function LoginScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Reset Password</Text>
               <TouchableOpacity onPress={closeResetModal} style={styles.closeButton}>
@@ -431,6 +490,7 @@ export default function LoginScreen() {
       >
         <View style={styles.modalOverlay}>
           <View style={[styles.modalContent, { paddingBottom: insets.bottom + 24 }]}>
+            <View style={styles.modalHandle} />
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Verify Email</Text>
               <TouchableOpacity onPress={closeVerifyModal} style={styles.closeButton}>
@@ -513,122 +573,184 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
   },
-  headerGradient: {
-    paddingBottom: 60,
+  decorativeCircle1: {
+    position: "absolute",
+    top: -100,
+    right: -100,
+    width: 300,
+    height: 300,
+    borderRadius: 150,
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
   },
-  headerContent: {
-    alignItems: "center",
-    paddingHorizontal: 20,
+  decorativeCircle2: {
+    position: "absolute",
+    top: 200,
+    left: -80,
+    width: 200,
+    height: 200,
+    borderRadius: 100,
+    backgroundColor: "rgba(255, 255, 255, 0.08)",
   },
-  logo: {
-    fontSize: 32,
-    fontWeight: "800" as const,
-    color: Colors.textInverse,
-    marginBottom: 8,
+  decorativeCircle3: {
+    position: "absolute",
+    bottom: 100,
+    right: -50,
+    width: 150,
+    height: 150,
+    borderRadius: 75,
+    backgroundColor: "rgba(255, 255, 255, 0.06)",
   },
-  tagline: {
-    fontSize: 16,
-    color: Colors.textInverse,
-    opacity: 0.9,
-  },
-  formContainer: {
+  keyboardView: {
     flex: 1,
-    marginTop: -40,
   },
   scrollContent: {
     flexGrow: 1,
-    paddingHorizontal: 20,
+    paddingHorizontal: 24,
+    justifyContent: "center",
+  },
+  logoContainer: {
+    alignItems: "center",
+    marginBottom: 32,
+  },
+  logoIconContainer: {
+    width: 64,
+    height: 64,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  logo: {
+    fontSize: 30,
+    fontWeight: "800" as const,
+    color: Colors.textInverse,
+    marginBottom: 6,
+    letterSpacing: -0.5,
+  },
+  tagline: {
+    fontSize: 15,
+    color: Colors.textInverse,
+    opacity: 0.9,
+    fontWeight: "500" as const,
   },
   formCard: {
     backgroundColor: Colors.surface,
-    borderRadius: 24,
-    padding: 24,
+    borderRadius: 28,
+    padding: 28,
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.1,
-    shadowRadius: 12,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 16 },
+    shadowOpacity: 0.15,
+    shadowRadius: 32,
+    elevation: 12,
   },
-  welcomeText: {
-    fontSize: 28,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginBottom: 4,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: Colors.textSecondary,
+  cardHeader: {
     marginBottom: 24,
   },
+  welcomeText: {
+    fontSize: 26,
+    fontWeight: "700" as const,
+    color: Colors.text,
+    marginBottom: 8,
+    letterSpacing: -0.3,
+  },
+  subtitle: {
+    fontSize: 15,
+    color: Colors.textSecondary,
+    lineHeight: 22,
+  },
   errorContainer: {
-    backgroundColor: Colors.error + "15",
-    padding: 12,
-    borderRadius: 12,
+    backgroundColor: Colors.error + "12",
+    padding: 14,
+    borderRadius: 14,
     marginBottom: 16,
+    borderWidth: 1,
+    borderColor: Colors.error + "30",
   },
   errorText: {
     color: Colors.error,
     fontSize: 14,
     textAlign: "center",
+    fontWeight: "500" as const,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: Colors.surfaceSecondary,
     borderRadius: 16,
-    marginBottom: 16,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
+    marginBottom: 14,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  inputContainerFocused: {
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primary + "08",
   },
   inputIcon: {
     paddingLeft: 16,
+    paddingRight: 4,
+  },
+  inputIconFocused: {
+    opacity: 1,
   },
   input: {
     flex: 1,
     paddingVertical: 16,
-    paddingHorizontal: 12,
+    paddingHorizontal: 8,
     fontSize: 16,
     color: Colors.text,
   },
   eyeIcon: {
     paddingRight: 16,
+    paddingLeft: 8,
   },
   forgotPassword: {
     alignSelf: "flex-end",
-    marginBottom: 16,
-    marginTop: -8,
+    marginBottom: 20,
+    marginTop: -4,
   },
   forgotPasswordText: {
     fontSize: 14,
     color: Colors.primary,
-    fontWeight: "500" as const,
+    fontWeight: "600" as const,
   },
   loginButton: {
-    backgroundColor: Colors.primary,
     borderRadius: 16,
     overflow: "hidden",
   },
-  buttonInner: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    justifyContent: "center" as const,
-    paddingVertical: 16,
-    gap: 8,
+  loginButtonInner: {
+    overflow: "hidden",
+    borderRadius: 16,
   },
-  buttonInnerRow: {
-    flexDirection: "row" as const,
-    alignItems: "center" as const,
-    gap: 8,
+  buttonGradient: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 16,
+    gap: 10,
+  },
+  shimmerOverlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 60,
+  },
+  arrowContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   loginButtonDisabled: {
     opacity: 0.7,
   },
   loginButtonText: {
     fontSize: 17,
-    fontWeight: "600" as const,
+    fontWeight: "700" as const,
     color: Colors.textInverse,
+    letterSpacing: 0.2,
   },
   divider: {
     flexDirection: "row",
@@ -643,43 +765,53 @@ const styles = StyleSheet.create({
   dividerText: {
     marginHorizontal: 16,
     color: Colors.textTertiary,
-    fontSize: 14,
+    fontSize: 13,
+    fontWeight: "500" as const,
   },
   registerButton: {
     borderWidth: 2,
     borderColor: Colors.primary,
     borderRadius: 16,
-    paddingVertical: 14,
+    overflow: "hidden",
+  },
+  registerButtonInner: {
+    paddingVertical: 15,
     alignItems: "center",
   },
   registerButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.primary,
   },
   createOrgSection: {
     marginTop: 24,
     alignItems: "center",
-    paddingTop: 20,
+    paddingTop: 24,
     borderTopWidth: 1,
     borderTopColor: Colors.borderLight,
   },
   createOrgText: {
     fontSize: 14,
     color: Colors.textSecondary,
-    marginBottom: 12,
+    marginBottom: 14,
   },
   createOrgButton: {
+    borderWidth: 2,
+    borderColor: Colors.secondary,
+    borderRadius: 16,
+    overflow: "hidden",
+  },
+  createOrgButtonInner: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 10,
     paddingVertical: 14,
     paddingHorizontal: 20,
-    borderWidth: 2,
-    borderColor: Colors.primary,
-    borderRadius: 16,
   },
   createOrgButtonText: {
-    fontSize: 17,
+    fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: Colors.secondary,
   },
   modalOverlay: {
     flex: 1,
@@ -688,9 +820,17 @@ const styles = StyleSheet.create({
   },
   modalContent: {
     backgroundColor: Colors.surface,
-    borderTopLeftRadius: 24,
-    borderTopRightRadius: 24,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     padding: 24,
+  },
+  modalHandle: {
+    width: 40,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: Colors.borderLight,
+    alignSelf: "center",
+    marginBottom: 16,
   },
   modalHeader: {
     flexDirection: "row",
@@ -699,7 +839,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   modalTitle: {
-    fontSize: 24,
+    fontSize: 22,
     fontWeight: "700" as const,
     color: Colors.text,
   },
@@ -723,7 +863,7 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   resetButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.textInverse,
   },
@@ -733,7 +873,7 @@ const styles = StyleSheet.create({
     marginTop: 8,
   },
   cancelButtonText: {
-    fontSize: 16,
+    fontSize: 15,
     color: Colors.textSecondary,
     fontWeight: "500" as const,
   },
@@ -742,9 +882,9 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
   },
   successIcon: {
-    width: 72,
-    height: 72,
-    borderRadius: 36,
+    width: 80,
+    height: 80,
+    borderRadius: 40,
     backgroundColor: Colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
@@ -781,7 +921,7 @@ const styles = StyleSheet.create({
     marginTop: 24,
   },
   doneButtonText: {
-    fontSize: 17,
+    fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.textInverse,
   },
@@ -800,7 +940,7 @@ const styles = StyleSheet.create({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
     marginBottom: 16,
