@@ -15,13 +15,8 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Search, Building2, Send } from 'lucide-react-native';
 import Colors from '@/constants/colors';
-import { 
-  listOrganizations, 
-  getUserOrganizations, 
-  requestJoinOrganization 
-} from '@/lib/supabase-organizations';
+import { trpc } from '@/lib/trpc';
 import { Organization } from '@/types';
-import { useQuery, useMutation } from '@tanstack/react-query';
 
 export default function JoinOrganizationScreen() {
   const router = useRouter();
@@ -30,27 +25,15 @@ export default function JoinOrganizationScreen() {
   const [message, setMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: organizations, isLoading, refetch } = useQuery({
-    queryKey: ['organizations', 'list'],
-    queryFn: async () => {
-      console.log('Fetching organizations list from Supabase...');
-      return await listOrganizations();
-    },
-  });
+  const organizationsQuery = trpc.organizations.list.useQuery();
+  const userOrgsQuery = trpc.organizations.getUserOrganizations.useQuery();
 
-  const { data: userOrgs } = useQuery({
-    queryKey: ['organizations', 'user'],
-    queryFn: async () => {
-      console.log('Fetching user organizations from Supabase...');
-      return await getUserOrganizations();
-    },
-  });
+  const organizations = organizationsQuery.data;
+  const userOrgs = userOrgsQuery.data;
+  const isLoading = organizationsQuery.isLoading;
+  const refetch = organizationsQuery.refetch;
 
-  const requestMutation = useMutation({
-    mutationFn: async (input: { organizationId: string; message?: string }) => {
-      console.log('Sending join request via Supabase:', input.organizationId);
-      return await requestJoinOrganization(input);
-    },
+  const requestMutation = trpc.organizations.requestJoin.useMutation({
     onSuccess: () => {
       Alert.alert(
         'Request Sent',
@@ -58,7 +41,7 @@ export default function JoinOrganizationScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Join request error:', error);
       Alert.alert('Error', error.message || 'Failed to send join request');
     },

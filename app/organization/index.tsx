@@ -14,9 +14,8 @@ import { useRouter } from 'expo-router';
 import { Building2, Plus, ChevronRight, Users, CheckCircle, ArrowLeft, Shield } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { getUserOrganizations, getUserMembership } from '@/lib/supabase-organizations';
+import { trpc } from '@/lib/trpc';
 import { Organization, OrganizationRole } from '@/types';
-import { useQuery } from '@tanstack/react-query';
 
 type OrgWithRole = Organization & { role: OrganizationRole; joinedAt: string };
 
@@ -26,27 +25,32 @@ export default function OrganizationSelectScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [orgsWithRoles, setOrgsWithRoles] = useState<OrgWithRole[]>([]);
 
-  const { data: organizations, isLoading, refetch } = useQuery({
-    queryKey: ['user-organizations'],
-    queryFn: async () => {
-      console.log('Fetching user organizations via Supabase...');
-      const orgs = await getUserOrganizations();
-      
-      const orgsWithRolesData: OrgWithRole[] = await Promise.all(
-        orgs.map(async (org) => {
-          const membership = await getUserMembership(org.id);
-          return {
-            ...org,
-            role: (membership?.role || 'member') as OrganizationRole,
-            joinedAt: membership?.joined_at || org.createdAt,
-          };
-        })
-      );
-      
-      return orgsWithRolesData;
-    },
+  const userOrgsQuery = trpc.organizations.getUserOrganizations.useQuery(undefined, {
     enabled: isAuthenticated,
   });
+
+  const organizations = React.useMemo(() => {
+    if (!userOrgsQuery.data) return [];
+    return userOrgsQuery.data
+      .filter((org): org is NonNullable<typeof org> => org !== null && org.id !== undefined)
+      .map((org): OrgWithRole => ({
+        id: org.id!,
+        name: org.name || '',
+        description: org.description || '',
+        logo: org.logo,
+        address: org.address,
+        phone: org.phone,
+        email: org.email,
+        website: org.website,
+        createdAt: org.createdAt || new Date().toISOString(),
+        updatedAt: org.updatedAt || new Date().toISOString(),
+        role: ((org as any).role || 'member') as OrganizationRole,
+        joinedAt: (org as any).joinedAt || org.createdAt || new Date().toISOString(),
+      }));
+  }, [userOrgsQuery.data]);
+
+  const isLoading = userOrgsQuery.isLoading;
+  const refetch = userOrgsQuery.refetch;
 
   useEffect(() => {
     if (organizations) {

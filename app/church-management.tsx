@@ -44,21 +44,26 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import {
-  getOrganizationMembers,
-  getPendingRequests,
-  updateMemberRole,
-  approveMemberRequest,
-  rejectMemberRequest,
-  removeMember,
-  updateOrganization,
-  OrganizationMember,
-  OrganizationMembership,
-} from '@/lib/supabase-organizations';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { trpc } from '@/lib/trpc';
-import { Ministry } from '@/types';
+import { useQueryClient } from '@tanstack/react-query';
+import { Ministry, OrganizationRole } from '@/types';
 import { getMinistryColor } from '@/constants/ministryColors';
+
+interface OrganizationMember {
+  id: string;
+  oderId?: string;
+  userId?: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: OrganizationRole;
+  joinedAt: string;
+  isActive: boolean;
+}
+
+interface OrganizationMembership {
+  role: 'member' | 'leader' | 'organization_admin' | 'super_admin';
+}
 
 type TabType = 'members' | 'ministries' | 'settings' | 'edit';
 type RoleType = OrganizationMembership['role'];
@@ -121,100 +126,84 @@ export default function ChurchManagementScreen() {
   const orgId = currentOrganization?.id || '';
   const canManage = isSuperAdmin || isOrganizationSuperAdmin;
 
-  const membersQuery = useQuery({
-    queryKey: ['organization-members', orgId],
-    queryFn: () => getOrganizationMembers(orgId),
-    enabled: !!orgId && canManage,
-  });
+  const membersQuery = trpc.organizations.getMembers.useQuery(
+    { organizationId: orgId },
+    { enabled: !!orgId && canManage }
+  );
 
-  const pendingQuery = useQuery({
-    queryKey: ['pending-requests', orgId],
-    queryFn: () => getPendingRequests(orgId),
-    enabled: !!orgId && canManage,
-  });
+  const pendingQuery = trpc.organizations.getJoinRequests.useQuery(
+    { organizationId: orgId, status: 'pending' },
+    { enabled: !!orgId && canManage }
+  );
 
   const ministriesQuery = trpc.ministries.list.useQuery({
     organizationId: orgId,
   });
 
-  const approveMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      approveMemberRequest(orgId, membershipId),
+  const approveMutation = trpc.organizations.approveJoinRequest.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      pendingQuery.refetch();
+      membersQuery.refetch();
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member request approved');
       }
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      rejectMemberRequest(orgId, membershipId),
+  const rejectMutation = trpc.organizations.rejectJoinRequest.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
+      queryClient.invalidateQueries();
+      pendingQuery.refetch();
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member request rejected');
       }
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateRoleMutation = useMutation({
-    mutationFn: ({ membershipId, newRole }: { membershipId: string; newRole: RoleType }) =>
-      updateMemberRole(orgId, membershipId, newRole),
+  const updateRoleMutation = trpc.organizations.updateMemberRole.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      membersQuery.refetch();
       setShowRoleModal(false);
       setSelectedMember(null);
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member role updated');
       }
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const removeMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      removeMember(orgId, membershipId),
+  const removeMutation = trpc.organizations.removeMember.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      membersQuery.refetch();
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member removed');
       }
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateChurchMutation = useMutation({
-    mutationFn: async () => {
-      if (!currentOrganization) throw new Error('No organization selected');
-      return await updateOrganization(currentOrganization.id, {
-        name: churchName.trim(),
-        description: churchDescription.trim(),
-        address: churchAddress.trim() || undefined,
-        phone: churchPhone.trim() || undefined,
-        email: churchEmail.trim() || undefined,
-        website: churchWebsite.trim() || undefined,
-        logo: churchLogo || undefined,
-      });
-    },
+  const updateChurchMutation = trpc.organizations.update.useMutation({
     onSuccess: async (updatedOrg) => {
-      console.log('Organization updated successfully:', updatedOrg.name);
-      await setCurrentOrganization(updatedOrg, currentMembership);
+      console.log('Organization updated successfully:', updatedOrg?.name);
+      if (updatedOrg) {
+        await setCurrentOrganization(updatedOrg, currentMembership);
+      }
       Alert.alert('Success', 'Church profile updated!');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Update organization error:', error.message);
       Alert.alert('Error', error.message || 'Failed to update church profile');
     },
@@ -229,7 +218,20 @@ export default function ChurchManagementScreen() {
       Alert.alert('Error', 'Please enter a description (at least 10 characters)');
       return;
     }
-    updateChurchMutation.mutate();
+    if (!currentOrganization) {
+      Alert.alert('Error', 'No organization selected');
+      return;
+    }
+    updateChurchMutation.mutate({
+      id: currentOrganization.id,
+      name: churchName.trim(),
+      description: churchDescription.trim(),
+      address: churchAddress.trim() || undefined,
+      phone: churchPhone.trim() || undefined,
+      email: churchEmail.trim() || undefined,
+      website: churchWebsite.trim() || undefined,
+      logo: churchLogo || undefined,
+    });
   };
 
   const selectLogo = (url: string) => {
@@ -251,24 +253,24 @@ export default function ChurchManagementScreen() {
     setRefreshing(false);
   }, [refetchMembers, refetchPending, refetchMinistries]);
 
-  const handleApprove = (membershipId: string) => {
+  const handleApprove = (requestId: string) => {
     if (Platform.OS === 'web') {
-      approveMutation.mutate({ membershipId });
+      approveMutation.mutate({ requestId });
     } else {
       Alert.alert('Approve Request', 'Are you sure you want to approve this member?', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Approve', onPress: () => approveMutation.mutate({ membershipId }) },
+        { text: 'Approve', onPress: () => approveMutation.mutate({ requestId }) },
       ]);
     }
   };
 
-  const handleReject = (membershipId: string) => {
+  const handleReject = (requestId: string) => {
     if (Platform.OS === 'web') {
-      rejectMutation.mutate({ membershipId });
+      rejectMutation.mutate({ requestId });
     } else {
       Alert.alert('Reject Request', 'Are you sure you want to reject this request?', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Reject', style: 'destructive', onPress: () => rejectMutation.mutate({ membershipId }) },
+        { text: 'Reject', style: 'destructive', onPress: () => rejectMutation.mutate({ requestId }) },
       ]);
     }
   };
@@ -301,7 +303,8 @@ export default function ChurchManagementScreen() {
 
   const selectRole = (role: RoleType) => {
     if (!selectedMember) return;
-    updateRoleMutation.mutate({ membershipId: selectedMember.id, newRole: role });
+    const validRole = role === 'leader' ? 'member' : role;
+    updateRoleMutation.mutate({ membershipId: selectedMember.id, role: validRole as 'member' | 'organization_admin' | 'super_admin' });
   };
 
   const members = membersQuery.data || [];
@@ -387,13 +390,13 @@ export default function ChurchManagementScreen() {
             {pendingRequests.map((request) => (
               <View key={request.id} style={styles.memberCard}>
                 <Image
-                  source={{ uri: request.avatar }}
+                  source={{ uri: request.requesterAvatar }}
                   style={styles.memberAvatar}
                   contentFit="cover"
                 />
                 <View style={styles.memberInfo}>
-                  <Text style={styles.memberName}>{request.name}</Text>
-                  <Text style={styles.memberEmail}>{request.email}</Text>
+                  <Text style={styles.memberName}>{request.requesterName}</Text>
+                  <Text style={styles.memberEmail}>{request.requesterEmail}</Text>
                 </View>
                 <View style={styles.pendingActions}>
                   <TouchableOpacity
@@ -452,7 +455,7 @@ export default function ChurchManagementScreen() {
                     </Text>
                   </View>
                 </View>
-                {member.userId !== user?.id && (
+                {member.oderId !== user?.id && (
                   <View style={styles.memberActions}>
                     <TouchableOpacity
                       style={styles.memberActionButton}

@@ -29,18 +29,25 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import {
-  getOrganizationMembers,
-  getPendingRequests,
-  updateMemberRole,
-  approveMemberRequest,
-  rejectMemberRequest,
-  removeMember,
-  getUserMembership,
-  OrganizationMember,
-  OrganizationMembership,
-} from '@/lib/supabase-organizations';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
+import { useQueryClient } from '@tanstack/react-query';
+import { OrganizationRole } from '@/types';
+
+interface OrganizationMember {
+  id: string;
+  oderId?: string;
+  userId?: string;
+  name: string;
+  email: string;
+  avatar?: string;
+  role: OrganizationRole;
+  joinedAt: string;
+  isActive: boolean;
+}
+
+interface OrganizationMembership {
+  role: 'member' | 'leader' | 'organization_admin' | 'super_admin';
+}
 
 type RoleType = OrganizationMembership['role'];
 
@@ -72,88 +79,80 @@ export default function OrganizationAdminScreen() {
 
   const orgId = currentOrganization?.id || '';
 
+  const membershipQuery = trpc.organizations.getMembership.useQuery(
+    { organizationId: orgId },
+    { enabled: !!orgId }
+  );
+
   useEffect(() => {
-    const checkPermission = async () => {
-      if (!orgId) {
-        setCheckingPermission(false);
-        return;
-      }
-
-      try {
-        const membership = await getUserMembership(orgId);
-        const hasPermission = membership && 
-          (membership.role === 'super_admin' || membership.role === 'organization_admin');
-        setCanManage(hasPermission ?? false);
-        setIsSuperAdmin(membership?.role === 'super_admin');
-      } catch (error) {
-        console.error('Error checking permission:', error);
-        setCanManage(false);
-      }
+    if (!orgId) {
       setCheckingPermission(false);
-    };
+      return;
+    }
 
-    checkPermission();
-  }, [orgId]);
+    if (membershipQuery.isLoading) return;
 
-  const membersQuery = useQuery({
-    queryKey: ['organization-members', orgId],
-    queryFn: () => getOrganizationMembers(orgId),
-    enabled: !!orgId && canManage,
-  });
+    const membership = membershipQuery.data;
+    const hasPermission = membership && 
+      (membership.role === 'super_admin' || membership.role === 'organization_admin');
+    setCanManage(hasPermission ?? false);
+    setIsSuperAdmin(membership?.role === 'super_admin');
+    setCheckingPermission(false);
+  }, [orgId, membershipQuery.data, membershipQuery.isLoading]);
 
-  const pendingQuery = useQuery({
-    queryKey: ['pending-requests', orgId],
-    queryFn: () => getPendingRequests(orgId),
-    enabled: !!orgId && canManage,
-  });
+  const membersQuery = trpc.organizations.getMembers.useQuery(
+    { organizationId: orgId },
+    { enabled: !!orgId && canManage }
+  );
 
-  const approveMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      approveMemberRequest(orgId, membershipId),
+  const pendingQuery = trpc.organizations.getJoinRequests.useQuery(
+    { organizationId: orgId, status: 'pending' },
+    { enabled: !!orgId && canManage }
+  );
+
+  const approveMutation = trpc.organizations.approveJoinRequest.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      pendingQuery.refetch();
+      membersQuery.refetch();
       Alert.alert('Success', 'Member request approved');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const rejectMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      rejectMemberRequest(orgId, membershipId),
+  const rejectMutation = trpc.organizations.rejectJoinRequest.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['pending-requests', orgId] });
+      queryClient.invalidateQueries();
+      pendingQuery.refetch();
       Alert.alert('Success', 'Member request rejected');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateRoleMutation = useMutation({
-    mutationFn: ({ membershipId, newRole }: { membershipId: string; newRole: RoleType }) =>
-      updateMemberRole(orgId, membershipId, newRole),
+  const updateRoleMutation = trpc.organizations.updateMemberRole.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      membersQuery.refetch();
       setShowRoleModal(false);
       setSelectedMember(null);
       Alert.alert('Success', 'Member role updated');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const removeMutation = useMutation({
-    mutationFn: ({ membershipId }: { membershipId: string }) =>
-      removeMember(orgId, membershipId),
+  const removeMutation = trpc.organizations.removeMember.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
+      queryClient.invalidateQueries();
+      membersQuery.refetch();
       Alert.alert('Success', 'Member removed');
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       Alert.alert('Error', error.message);
     },
   });
@@ -173,14 +172,14 @@ export default function OrganizationAdminScreen() {
   const handleApprove = (membershipId: string) => {
     Alert.alert('Approve Request', 'Are you sure you want to approve this member?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Approve', onPress: () => approveMutation.mutate({ membershipId }) },
+      { text: 'Approve', onPress: () => approveMutation.mutate({ requestId: membershipId }) },
     ]);
   };
 
   const handleReject = (membershipId: string) => {
     Alert.alert('Reject Request', 'Are you sure you want to reject this request?', [
       { text: 'Cancel', style: 'cancel' },
-      { text: 'Reject', style: 'destructive', onPress: () => rejectMutation.mutate({ membershipId }) },
+      { text: 'Reject', style: 'destructive', onPress: () => rejectMutation.mutate({ requestId: membershipId }) },
     ]);
   };
 
@@ -206,7 +205,8 @@ export default function OrganizationAdminScreen() {
 
   const selectRole = (role: RoleType) => {
     if (!selectedMember) return;
-    updateRoleMutation.mutate({ membershipId: selectedMember.id, newRole: role });
+    const validRole = role === 'leader' ? 'member' : role;
+    updateRoleMutation.mutate({ membershipId: selectedMember.id, role: validRole as 'member' | 'organization_admin' | 'super_admin' });
   };
 
   const members = membersQuery.data || [];
@@ -342,13 +342,13 @@ export default function OrganizationAdminScreen() {
               {pendingRequests.map((request) => (
                 <View key={request.id} style={styles.memberCard}>
                   <Image
-                    source={{ uri: request.avatar }}
+                    source={{ uri: request.requesterAvatar }}
                     style={styles.memberAvatar}
                     contentFit="cover"
                   />
                   <View style={styles.memberInfo}>
-                    <Text style={styles.memberName}>{request.name}</Text>
-                    <Text style={styles.memberEmail}>{request.email}</Text>
+                    <Text style={styles.memberName}>{request.requesterName}</Text>
+                    <Text style={styles.memberEmail}>{request.requesterEmail}</Text>
                   </View>
                   <View style={styles.pendingActions}>
                     <TouchableOpacity
@@ -401,7 +401,7 @@ export default function OrganizationAdminScreen() {
                     </View>
                   </View>
                 </View>
-                {member.userId !== user?.id && isSuperAdmin && (
+                {member.oderId !== user?.id && isSuperAdmin && (
                   <View style={styles.memberActions}>
                     <TouchableOpacity
                       style={styles.memberActionButton}

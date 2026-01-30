@@ -32,8 +32,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { createChurch, CreateChurchInput } from '@/lib/supabase-churches';
-import { useMutation } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -108,15 +107,7 @@ export default function AdminCreateChurchScreen() {
     }
   }, [isAdmin, router]);
 
-  const { user } = useAuth();
-
-  const { mutate: createChurchMutate, isPending: isCreating } = useMutation({
-    mutationFn: async (input: CreateChurchInput) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-      return createChurch(input, user.id);
-    },
+  const createChurchMutation = trpc.churches.create.useMutation({
     onSuccess: (data) => {
       console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
@@ -134,7 +125,7 @@ export default function AdminCreateChurchScreen() {
     onError: (error) => {
       console.error('=== Church Creation Error ===');
       console.error('Raw error:', error);
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create church';
+      const errorMessage = error.message || 'Failed to create church';
       console.error('Error message:', errorMessage);
       console.error('==============================');
       
@@ -145,6 +136,8 @@ export default function AdminCreateChurchScreen() {
       }
     },
   });
+
+  const isCreating = createChurchMutation.isPending;
 
   const validateForm = useCallback(() => {
     if (!name.trim()) {
@@ -224,7 +217,7 @@ export default function AdminCreateChurchScreen() {
     });
     console.log('========================');
 
-    const churchInput: CreateChurchInput = {
+    createChurchMutation.mutate({
       name: name.trim(),
       denomination: denomination || undefined,
       description: description.trim(),
@@ -239,11 +232,9 @@ export default function AdminCreateChurchScreen() {
       logo: logo.trim() || undefined,
       bannerImage: bannerImage.trim() || undefined,
       socialLinks: Object.keys(socialLinks).length > 0 ? socialLinks : undefined,
-    };
-
-    createChurchMutate(churchInput);
+    });
   }, [
-    isAuthenticated, isAdmin, validateForm, createChurchMutate, name, denomination, description,
+    isAuthenticated, isAdmin, validateForm, createChurchMutation, name, denomination, description,
     address, city, state, zip, country, email, phone, website, logo, bannerImage,
     facebook, instagram, twitter, youtube, router
   ]);

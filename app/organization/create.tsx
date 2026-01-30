@@ -18,8 +18,7 @@ import { ArrowLeft, Building2, Check, Mail, Lock, Eye, EyeOff, User, Phone, LogI
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { getSupabaseClient } from '@/lib/supabase-auth';
-import { createOrganization as supabaseCreateOrganization } from '@/lib/supabase-organizations';
-import { useMutation } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
 
 export default function CreateOrganizationScreen() {
   const router = useRouter();
@@ -52,18 +51,7 @@ export default function CreateOrganizationScreen() {
   const [resendError, setResendError] = useState('');
   const [isCreatingAfterAuth, setIsCreatingAfterAuth] = useState(false);
 
-  const createMutation = useMutation({
-    mutationFn: async (input: {
-      name: string;
-      description: string;
-      address?: string;
-      phone?: string;
-      email?: string;
-      website?: string;
-    }) => {
-      console.log('Creating organization via Supabase:', input.name);
-      return await supabaseCreateOrganization(input);
-    },
+  const createMutation = trpc.organizations.create.useMutation({
     onSuccess: async (data) => {
       console.log('Organization created successfully:', data.organization.name);
       setIsCreatingAfterAuth(false);
@@ -71,13 +59,13 @@ export default function CreateOrganizationScreen() {
         id: data.membership.id,
         organizationId: data.organization.id,
         role: 'super_admin',
-        joinedAt: data.membership.joined_at,
+        joinedAt: data.membership.joinedAt,
       });
       Alert.alert('Success', 'Your church has been created!', [
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Create organization error:', error.message);
       setIsCreatingAfterAuth(false);
       
@@ -92,7 +80,8 @@ export default function CreateOrganizationScreen() {
     },
   });
 
-  const { mutate: createOrg, isPending: isCreating } = createMutation;
+  const createOrg = createMutation.mutate;
+  const isCreating = createMutation.isPending;
 
   const executeCreate = useCallback(() => {
     if (!name.trim()) {

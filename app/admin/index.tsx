@@ -37,9 +37,8 @@ import {
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { trpc } from "@/lib/trpc";
-import { useQueryClient, useQuery } from "@tanstack/react-query";
-import { getUserChurches, getChurchMembership } from "@/lib/supabase-churches";
-import { Church as ChurchType, ChurchMembership } from "@/types";
+import { useQueryClient } from "@tanstack/react-query";
+import { ChurchMembership, ChurchRole } from "@/types";
 
 interface StatCardProps {
   icon: React.ReactNode;
@@ -129,9 +128,7 @@ function ActivityItem({ action, details, userName, createdAt }: ActivityItemProp
   );
 }
 
-interface ChurchWithRole extends ChurchType {
-  membership?: ChurchMembership;
-}
+
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -157,23 +154,24 @@ export default function AdminDashboard() {
     { enabled: isAdmin }
   );
 
-  const userChurchesQuery = useQuery({
-    queryKey: ['userChurches', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      const churches = await getUserChurches(user.id);
-      const churchesWithRoles: ChurchWithRole[] = [];
-      
-      for (const church of churches) {
-        const membership = await getChurchMembership(church.id, user.id);
-        if (membership && (membership.role === 'super_admin' || membership.role === 'admin')) {
-          churchesWithRoles.push({ ...church, membership });
-        }
-      }
-      
-      return churchesWithRoles;
-    },
+  const userChurchesQuery = trpc.churches.getUserChurches.useQuery(undefined, {
     enabled: !!user?.id && isAdmin,
+    select: (data) => {
+      if (!data) return [];
+      return data.filter((church): church is NonNullable<typeof church> => 
+        church !== null && (church.role === 'super_admin' || church.role === 'admin')
+      ).map(church => ({
+        ...church,
+        membership: {
+          id: '',
+          churchId: church.id,
+          userId: user?.id || '',
+          role: church.role as ChurchRole,
+          joinedAt: church.joinedAt || new Date().toISOString(),
+          isActive: true,
+        } as ChurchMembership,
+      }));
+    },
   });
 
   const adminChurches = userChurchesQuery.data || [];

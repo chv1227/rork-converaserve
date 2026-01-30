@@ -28,14 +28,9 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { 
-  getUserChurches, 
-  getChurchMembership,
-  deleteChurch,
-  listChurches,
-} from '@/lib/supabase-churches';
-import { Church as ChurchType, ChurchMembership } from '@/types';
+import { trpc } from '@/lib/trpc';
+import { useQueryClient } from '@tanstack/react-query';
+import { Church as ChurchType, ChurchMembership, ChurchRole } from '@/types';
 
 interface ChurchWithMembership extends ChurchType {
   membership?: ChurchMembership;
@@ -47,53 +42,78 @@ export default function ChurchesManagementScreen() {
   const { user, isSuperAdmin } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const { data: churches, isLoading, refetch } = useQuery({
-    queryKey: ['user-churches', user?.id, isSuperAdmin],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      
-      if (isSuperAdmin) {
-        const allChurches = await listChurches();
-        const myChurches = await getUserChurches(user.id);
-        
-        const uniqueChurches = [...myChurches];
-        allChurches.forEach(church => {
-          if (!uniqueChurches.find(c => c.id === church.id)) {
-            if (church.createdBy === user.id) {
-              uniqueChurches.push(church);
-            }
-          }
-        });
-        
-        const churchesWithMembership: ChurchWithMembership[] = await Promise.all(
-          uniqueChurches.map(async (church) => {
-            const membership = await getChurchMembership(church.id, user.id);
-            return { ...church, membership: membership || undefined };
-          })
-        );
-        
-        return churchesWithMembership;
-      }
-      
-      const userChurches = await getUserChurches(user.id);
-      const churchesWithMembership: ChurchWithMembership[] = await Promise.all(
-        userChurches.map(async (church) => {
-          const membership = await getChurchMembership(church.id, user.id);
-          return { ...church, membership: membership || undefined };
-        })
-      );
-      
-      return churchesWithMembership;
-    },
+  const userChurchesQuery = trpc.churches.getUserChurches.useQuery(undefined, {
     enabled: !!user?.id,
   });
 
-  const { mutate: deleteChurchMutate, isPending: isDeleting } = useMutation({
-    mutationFn: async (churchId: string) => {
-      return deleteChurch(churchId);
-    },
+  const allChurchesQuery = trpc.churches.list.useQuery(undefined, {
+    enabled: !!user?.id && isSuperAdmin,
+  });
+
+  const churches: ChurchWithMembership[] = React.useMemo(() => {
+    if (!user?.id) return [];
+    
+    const userChurches = userChurchesQuery.data || [];
+    const allChurches = allChurchesQuery.data || [];
+    
+    if (isSuperAdmin) {
+      const churchMap = new Map<string, ChurchWithMembership>();
+      
+      userChurches.forEach(church => {
+        if (church) {
+          churchMap.set(church.id, {
+            ...church,
+            membership: {
+              id: '',
+              churchId: church.id,
+              userId: user.id,
+              role: (church as any).role as ChurchRole || 'member',
+              joinedAt: (church as any).joinedAt || new Date().toISOString(),
+              isActive: true,
+            },
+          });
+        }
+      });
+      
+      allChurches.forEach(church => {
+        if (!churchMap.has(church.id) && church.createdBy === user.id) {
+          churchMap.set(church.id, {
+            ...church,
+            membership: {
+              id: '',
+              churchId: church.id,
+              userId: user.id,
+              role: 'super_admin' as ChurchRole,
+              joinedAt: church.createdAt,
+              isActive: true,
+            },
+          });
+        }
+      });
+      
+      return Array.from(churchMap.values());
+    }
+    
+    return userChurches.filter((c): c is NonNullable<typeof c> => c !== null).map(church => ({
+      ...church,
+      membership: {
+        id: '',
+        churchId: church.id,
+        userId: user.id,
+        role: (church as any).role as ChurchRole || 'member',
+        joinedAt: (church as any).joinedAt || new Date().toISOString(),
+        isActive: true,
+      },
+    }));
+  }, [userChurchesQuery.data, allChurchesQuery.data, user?.id, isSuperAdmin]);
+
+  const isLoading = userChurchesQuery.isLoading || (isSuperAdmin && allChurchesQuery.isLoading);
+
+  const deleteChurchMutation = trpc.churches.delete.useMutation({
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['user-churches'] });
+      queryClient.invalidateQueries();
+      userChurchesQuery.refetch();
+      if (isSuperAdmin) allChurchesQuery.refetch();
       Alert.alert('Success', 'Church deleted successfully');
     },
     onError: (error) => {
@@ -101,6 +121,13 @@ export default function ChurchesManagementScreen() {
       Alert.alert('Error', 'Failed to delete church');
     },
   });
+
+  const isDeleting = deleteChurchMutation.isPending;
+
+  const refetch = useCallback(async () => {
+    await userChurchesQuery.refetch();
+    if (isSuperAdmin) await allChurchesQuery.refetch();
+  }, [userChurchesQuery, allChurchesQuery, isSuperAdmin]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);
@@ -111,7 +138,7 @@ export default function ChurchesManagementScreen() {
   const handleDeleteChurch = useCallback((church: ChurchType) => {
     if (Platform.OS === 'web') {
       if (confirm(`Are you sure you want to delete "${church.name}"? This action cannot be undone.`)) {
-        deleteChurchMutate(church.id);
+        deleteChurchMutation.mutate({ id: church.id });
       }
     } else {
       Alert.alert(
@@ -122,12 +149,12 @@ export default function ChurchesManagementScreen() {
           { 
             text: 'Delete', 
             style: 'destructive',
-            onPress: () => deleteChurchMutate(church.id),
+            onPress: () => deleteChurchMutation.mutate({ id: church.id }),
           },
         ]
       );
     }
-  }, [deleteChurchMutate]);
+  }, [deleteChurchMutation]);
 
   const getRoleBadge = (membership?: ChurchMembership) => {
     if (!membership) return null;

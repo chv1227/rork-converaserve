@@ -32,8 +32,7 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { useMutation } from '@tanstack/react-query';
-import { createChurch, CreateChurchInput } from '@/lib/supabase-churches';
+import { trpc } from '@/lib/trpc';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -94,15 +93,7 @@ export default function CreateChurchScreen() {
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [showSocialLinks, setShowSocialLinks] = useState(false);
 
-  const { user } = useAuth();
-
-  const { mutate: createChurchMutation, isPending } = useMutation({
-    mutationFn: async (input: CreateChurchInput) => {
-      if (!user?.id) {
-        throw new Error('User not authenticated');
-      }
-      return createChurch(input, user.id);
-    },
+  const createChurchMutation = trpc.churches.create.useMutation({
     onSuccess: (data) => {
       console.log('Church created successfully:', data.church.name);
       Alert.alert(
@@ -112,11 +103,13 @@ export default function CreateChurchScreen() {
       );
     },
     onError: (error) => {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to create church';
+      const errorMessage = error.message || 'Failed to create church';
       console.error('Create church error:', errorMessage);
       Alert.alert('Error', errorMessage);
     },
   });
+
+  const isPending = createChurchMutation.isPending;
 
   const validateForm = useCallback(() => {
     if (!name.trim()) {
@@ -180,7 +173,7 @@ export default function CreateChurchScreen() {
     if (twitter.trim()) socialLinks.twitter = twitter.trim();
     if (youtube.trim()) socialLinks.youtube = youtube.trim();
 
-    createChurchMutation({
+    createChurchMutation.mutate({
       name: name.trim(),
       denomination: denomination || undefined,
       description: description.trim(),

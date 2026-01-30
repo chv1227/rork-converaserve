@@ -17,8 +17,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Camera, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { updateOrganization, getUserMembership } from '@/lib/supabase-organizations';
-import { useMutation } from '@tanstack/react-query';
+import { trpc } from '@/lib/trpc';
 
 const LOGO_OPTIONS = [
   'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=200&h=200&fit=crop',
@@ -56,55 +55,47 @@ export default function EditOrganizationScreen() {
     }
   }, [currentOrganization]);
 
+  const membershipQuery = trpc.organizations.getMembership.useQuery(
+    { organizationId: currentOrganization?.id || '' },
+    { enabled: !!currentOrganization?.id }
+  );
+
   useEffect(() => {
-    const checkPermission = async () => {
-      if (!currentOrganization) {
-        setCheckingPermission(false);
-        return;
-      }
-
-      try {
-        const membership = await getUserMembership(currentOrganization.id);
-        const hasPermission = membership && 
-          (membership.role === 'super_admin' || membership.role === 'organization_admin');
-        setCanEdit(hasPermission ?? false);
-      } catch (error) {
-        console.error('Error checking permission:', error);
-        setCanEdit(false);
-      }
+    if (!currentOrganization) {
       setCheckingPermission(false);
-    };
+      return;
+    }
 
-    checkPermission();
-  }, [currentOrganization]);
+    if (membershipQuery.isLoading) return;
 
-  const updateMutation = useMutation({
-    mutationFn: async () => {
-      if (!currentOrganization) throw new Error('No organization selected');
-      return await updateOrganization(currentOrganization.id, {
-        name: name.trim(),
-        description: description.trim(),
-        address: address.trim() || undefined,
-        phone: phone.trim() || undefined,
-        email: email.trim() || undefined,
-        website: website.trim() || undefined,
-        logo: logo || undefined,
-      });
-    },
+    const membership = membershipQuery.data;
+    const hasPermission = membership && 
+      (membership.role === 'super_admin' || membership.role === 'organization_admin');
+    setCanEdit(hasPermission ?? false);
+    setCheckingPermission(false);
+  }, [currentOrganization, membershipQuery.data, membershipQuery.isLoading]);
+
+  const updateMutation = trpc.organizations.update.useMutation({
     onSuccess: async (updatedOrg) => {
-      console.log('Organization updated successfully:', updatedOrg.name);
-      await setCurrentOrganization(updatedOrg, currentMembership);
+      console.log('Organization updated successfully:', updatedOrg?.name);
+      if (updatedOrg) {
+        await setCurrentOrganization(updatedOrg, currentMembership);
+      }
       Alert.alert('Success', 'Church profile updated!', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     },
-    onError: (error: Error) => {
+    onError: (error) => {
       console.error('Update organization error:', error.message);
       Alert.alert('Error', error.message || 'Failed to update church profile');
     },
   });
 
   const handleSave = () => {
+    if (!currentOrganization) {
+      Alert.alert('Error', 'No organization selected');
+      return;
+    }
     if (!name.trim()) {
       Alert.alert('Error', 'Please enter a church name');
       return;
@@ -113,7 +104,16 @@ export default function EditOrganizationScreen() {
       Alert.alert('Error', 'Please enter a description (at least 10 characters)');
       return;
     }
-    updateMutation.mutate();
+    updateMutation.mutate({
+      id: currentOrganization.id,
+      name: name.trim(),
+      description: description.trim(),
+      address: address.trim() || undefined,
+      phone: phone.trim() || undefined,
+      email: email.trim() || undefined,
+      website: website.trim() || undefined,
+      logo: logo || undefined,
+    });
   };
 
   const selectLogo = (url: string) => {
