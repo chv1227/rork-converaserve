@@ -260,8 +260,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.toLowerCase().trim(),
-          password,
+          json: {
+            email: email.toLowerCase().trim(),
+            password,
+          }
         }),
       });
 
@@ -334,10 +336,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.toLowerCase().trim(),
-          password,
-          name: name.trim(),
-          phone: phone?.trim(),
+          json: {
+            email: email.toLowerCase().trim(),
+            password,
+            name: name.trim(),
+            phone: phone?.trim() || undefined,
+          }
         }),
       });
 
@@ -400,7 +404,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: email.toLowerCase().trim(),
+          json: {
+            email: email.toLowerCase().trim(),
+          }
         }),
       });
 
@@ -505,7 +511,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           'Authorization': `Bearer ${state.token}`,
         },
         body: JSON.stringify({
-          newPassword,
+          json: {
+            currentPassword: '',
+            newPassword,
+          }
         }),
       });
 

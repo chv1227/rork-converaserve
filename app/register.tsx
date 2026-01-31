@@ -98,7 +98,9 @@ export default function RegisterScreen() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          email: verificationEmail,
+          json: {
+            email: verificationEmail,
+          }
         }),
       });
       
