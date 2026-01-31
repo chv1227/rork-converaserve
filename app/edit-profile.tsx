@@ -27,7 +27,7 @@ import {
   showImagePickerOptions,
   PickedImage,
 } from "@/lib/image-picker";
-import { uploadProfileImage } from "@/lib/supabase-storage";
+
 
 const AVATAR_OPTIONS = [
   "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200&h=200&fit=crop",
@@ -167,38 +167,26 @@ export default function EditProfileScreen() {
   const handleConfirmImage = async () => {
     if (!pendingImage || !user) return;
 
-    console.log("Uploading profile image...");
+    console.log("Setting profile image...");
     setIsUploading(true);
 
     try {
-      const result = await uploadProfileImage(user.id, pendingImage);
+      setAvatar(pendingImage.uri);
+      setPendingImage(null);
+      setShowPreviewModal(false);
+      setShowAvatarPicker(false);
 
-      if (result.success && result.url) {
-        console.log("Image uploaded successfully:", result.url);
-        setAvatar(result.url);
-        setPendingImage(null);
-        setShowPreviewModal(false);
-        setShowAvatarPicker(false);
-
-        if (Platform.OS === "web") {
-          alert("Photo updated successfully!");
-        } else {
-          Alert.alert("Success", "Photo updated successfully!");
-        }
+      if (Platform.OS === "web") {
+        alert("Photo updated successfully!");
       } else {
-        console.error("Upload failed:", result.error);
-        if (Platform.OS === "web") {
-          alert(result.error || "Failed to upload image");
-        } else {
-          Alert.alert("Upload Failed", result.error || "Failed to upload image");
-        }
+        Alert.alert("Success", "Photo updated successfully!");
       }
     } catch (error) {
-      console.error("Upload error:", error);
+      console.error("Image error:", error);
       if (Platform.OS === "web") {
-        alert("Failed to upload image. Please try again.");
+        alert("Failed to set image. Please try again.");
       } else {
-        Alert.alert("Error", "Failed to upload image. Please try again.");
+        Alert.alert("Error", "Failed to set image. Please try again.");
       }
     } finally {
       setIsUploading(false);

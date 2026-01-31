@@ -21,7 +21,6 @@ import { Mail, Lock, Eye, EyeOff, ArrowRight, Building2, X, Send, RefreshCw, Spa
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { resendVerificationEmail } from "@/lib/supabase-auth";
 import { useButtonPress } from "@/hooks/useAnimations";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -189,8 +188,22 @@ export default function LoginScreen() {
     setVerifyError("");
 
     try {
-      await resendVerificationEmail(verifyEmail.trim().toLowerCase());
-      setVerificationSent(true);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.resendVerification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: verifyEmail.trim().toLowerCase(),
+        }),
+      });
+
+      if (response.ok) {
+        setVerificationSent(true);
+      } else {
+        const data = await response.json();
+        setVerifyError(data?.error?.message || "Failed to resend verification email");
+      }
     } catch (err) {
       setVerifyError(err instanceof Error ? err.message : "Failed to resend verification email");
     }

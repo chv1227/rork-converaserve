@@ -2,20 +2,8 @@ import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
-import {
-  signInWithEmail,
-  signUpWithEmail,
-  sendPasswordResetEmail as supabaseSendPasswordReset,
-  updateUserProfile,
-  changePassword as supabaseChangePassword,
-  getCurrentSession,
-  getCurrentUser,
-  signOut,
-  onAuthStateChange,
-} from "@/lib/supabase-auth";
 import { setAuthToken } from "@/lib/trpc";
 import { Organization, OrganizationRole } from "@/types";
-import { Session, User as SupabaseUser } from "@supabase/supabase-js";
 
 export type UserRole = "member" | "leader" | "admin" | "super_admin";
 
@@ -48,7 +36,7 @@ export interface Membership {
 
 interface AuthState {
   user: User | null;
-  session: Session | null;
+  token: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   currentOrganization: Organization | null;
@@ -57,8 +45,9 @@ interface AuthState {
   error: string | null;
 }
 
-const USER_KEY = "supabase_user_v1";
-const ORG_KEY = "current_organization_v1";
+const USER_KEY = "auth_user_v2";
+const TOKEN_KEY = "auth_token_v2";
+const ORG_KEY = "current_organization_v2";
 
 async function fetchUserChurch(userId: string, token: string): Promise<Organization | null> {
   try {
@@ -150,27 +139,27 @@ async function removeStoredValue(key: string): Promise<void> {
 async function clearAllAuthData(): Promise<void> {
   await Promise.all([
     removeStoredValue(USER_KEY),
+    removeStoredValue(TOKEN_KEY),
     removeStoredValue(ORG_KEY),
   ]);
 }
 
-function createUserFromSupabase(supabaseUser: SupabaseUser): User {
+function createUserFromData(data: { id: string; email: string; name: string; avatar?: string; role?: string; phone?: string; createdAt?: string }): User {
   const now = new Date().toISOString();
-  const metadata = supabaseUser.user_metadata || {};
-  const displayName = metadata.display_name || metadata.full_name || supabaseUser.email?.split("@")[0] || "User";
-  const userEmail = supabaseUser.email?.toLowerCase() || "";
+  const userEmail = data.email?.toLowerCase() || "";
   const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
   
   return {
-    id: supabaseUser.id,
-    email: supabaseUser.email || "",
-    name: displayName,
-    avatar: metadata.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`,
-    role: isSuperAdmin ? "super_admin" : "member",
+    id: data.id,
+    email: data.email || "",
+    name: data.name || data.email?.split("@")[0] || "User",
+    avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=1A7B74&color=fff`,
+    role: isSuperAdmin ? "super_admin" : (data.role as UserRole) || "member",
     ministries: [],
-    joinedDate: supabaseUser.created_at || now,
+    phone: data.phone,
+    joinedDate: data.createdAt || now,
     isActive: true,
-    createdAt: supabaseUser.created_at || now,
+    createdAt: data.createdAt || now,
     updatedAt: now,
   };
 }
@@ -178,7 +167,7 @@ function createUserFromSupabase(supabaseUser: SupabaseUser): User {
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [state, setState] = useState<AuthState>({
     user: null,
-    session: null,
+    token: null,
     isLoading: true,
     isAuthenticated: false,
     currentOrganization: null,
@@ -194,114 +183,41 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     initRef.current = true;
 
     const loadStoredAuth = async () => {
-      
       try {
-        const [storedUser, storedOrg] = await Promise.all([
+        const [storedUser, storedToken, storedOrg] = await Promise.all([
           getStoredValue(USER_KEY),
+          getStoredValue(TOKEN_KEY),
           getStoredValue(ORG_KEY),
         ]);
 
-        let session = null;
-        let supabaseUser = null;
-        
-        try {
-          session = await getCurrentSession();
-          
-          if (session) {
-            supabaseUser = await getCurrentUser();
-          }
-        } catch {
-          
-          
-          // If we have cached user data, use it even if network fails
-          if (storedUser) {
-            try {
-              const cachedUser = JSON.parse(storedUser) as User;
-              const cachedOrg = storedOrg ? JSON.parse(storedOrg) as Organization : null;
-              
-              
-              
-              setState({
-                user: cachedUser,
-                session: null,
-                isAuthenticated: true,
-                currentOrganization: cachedOrg,
-                currentMembership: null,
-                organizations: [],
-                isLoading: false,
-                error: "Network connection issue. Some features may be limited.",
-              });
-              return;
-            } catch {
-              
-            }
-          }
-          
-          setState(prev => ({ 
-            ...prev, 
-            isLoading: false,
-            error: "Unable to connect. Please check your internet connection.",
-          }));
-          return;
-        }
-        
-        // If no session, clear everything and return
-        if (!session) {
-          
-          await clearAllAuthData();
-          setState(prev => ({ ...prev, isLoading: false }));
-          return;
-        }
-        
-        if (!supabaseUser) {
-          
-          await clearAllAuthData();
+        if (!storedUser || !storedToken) {
+          console.log("AuthProvider: No stored auth found");
           setState(prev => ({ ...prev, isLoading: false }));
           return;
         }
 
-        let user: User;
-        let cachedOrg: Organization | null = null;
+        const user = JSON.parse(storedUser) as User;
+        const cachedOrg = storedOrg ? JSON.parse(storedOrg) as Organization : null;
 
-        try {
-          if (storedUser) {
-            user = JSON.parse(storedUser) as User;
-            user.id = supabaseUser.id;
-            user.email = supabaseUser.email || user.email;
-            // Re-check super admin status on every auth restore
-            const userEmail = (supabaseUser.email || "").toLowerCase();
-            const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-            if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
-              
-              user.role = "super_admin";
-            }
-          } else {
-            user = createUserFromSupabase(supabaseUser);
-          }
-          cachedOrg = storedOrg ? JSON.parse(storedOrg) as Organization : null;
-        } catch (parseError) {
-          console.error("AuthProvider: Failed to parse stored data", parseError);
-          user = createUserFromSupabase(supabaseUser);
+        const userEmail = (user.email || "").toLowerCase();
+        const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+        if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
+          user.role = "super_admin";
         }
 
-        await setStoredValue(USER_KEY, JSON.stringify(user));
+        setAuthToken(storedToken);
 
-        
-        
-        setAuthToken(session.access_token);
-        
-        
         let currentOrg = cachedOrg;
-        if (!currentOrg && session?.access_token) {
-          currentOrg = await fetchUserChurch(user.id, session.access_token);
+        if (!currentOrg && storedToken) {
+          currentOrg = await fetchUserChurch(user.id, storedToken);
           if (currentOrg) {
             await setStoredValue(ORG_KEY, JSON.stringify(currentOrg));
           }
         }
-        
+
         setState({
           user,
-          session,
+          token: storedToken,
           isAuthenticated: true,
           currentOrganization: currentOrg,
           currentMembership: null,
@@ -311,108 +227,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         });
       } catch (error) {
         console.error("AuthProvider: Error loading stored auth", error);
-        
-        // Don't clear auth data on network errors - keep cached state
-        const err = error instanceof Error ? error : new Error(String(error));
-        const isNetworkError = 
-          err.message.includes('Failed to fetch') ||
-          err.message.includes('Network') ||
-          err.name === 'AuthRetryableFetchError';
-        
-        if (!isNetworkError) {
-          await clearAllAuthData();
-        }
-        
-        setState(prev => ({ 
-          ...prev, 
-          isLoading: false,
-          error: isNetworkError ? "Unable to connect. Please check your internet connection." : null,
-        }));
+        await clearAllAuthData();
+        setState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
     loadStoredAuth();
-
-    const unsubscribe = onAuthStateChange(async (session) => {
-      
-      
-      if (!session) {
-        setAuthToken(null);
-        await clearAllAuthData();
-        setState({
-          user: null,
-          session: null,
-          isLoading: false,
-          isAuthenticated: false,
-          currentOrganization: null,
-          currentMembership: null,
-          organizations: [],
-          error: null,
-        });
-        return;
-      }
-
-      // Get user - this will auto-clear invalid sessions
-      const supabaseUser = await getCurrentUser();
-      
-      // If session exists but user doesn't, clear everything
-      if (!supabaseUser) {
-        
-        await clearAllAuthData();
-        setState({
-          user: null,
-          session: null,
-          isLoading: false,
-          isAuthenticated: false,
-          currentOrganization: null,
-          currentMembership: null,
-          organizations: [],
-          error: null,
-        });
-        return;
-      }
-      
-      if (supabaseUser) {
-        const storedUser = await getStoredValue(USER_KEY);
-        let user: User;
-
-        if (storedUser) {
-          try {
-            user = JSON.parse(storedUser) as User;
-            user.id = supabaseUser.id;
-            user.email = supabaseUser.email || user.email;
-            // Re-check super admin status on auth state change
-            const userEmail = (supabaseUser.email || "").toLowerCase();
-            const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-            if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
-              
-              user.role = "super_admin";
-            }
-          } catch {
-            user = createUserFromSupabase(supabaseUser);
-          }
-        } else {
-          user = createUserFromSupabase(supabaseUser);
-        }
-
-        
-        await setStoredValue(USER_KEY, JSON.stringify(user));
-        
-        setAuthToken(session.access_token);
-
-        setState(prev => ({
-          ...prev,
-          user,
-          session,
-          isAuthenticated: true,
-          isLoading: false,
-        }));
-      }
-    });
-
-    return () => {
-      unsubscribe();
-    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -432,25 +252,42 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
+      console.log("AuthProvider: Logging in...");
       
-      const result = await signInWithEmail(email.toLowerCase().trim(), password);
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+        }),
+      });
 
-      if (!result.user || !result.session) {
+      const data = await response.json();
+
+      if (!response.ok || data?.error) {
+        const errorMessage = data?.error?.message || "Invalid email or password";
+        return { success: false, error: errorMessage };
+      }
+
+      const result = data?.result?.data;
+      if (!result?.user || !result?.token) {
         return { success: false, error: "Login failed. Please try again." };
       }
 
-      const user = createUserFromSupabase(result.user);
-
-      
+      const user = createUserFromData(result.user);
+      const token = result.token;
 
       await setStoredValue(USER_KEY, JSON.stringify(user));
+      await setStoredValue(TOKEN_KEY, token);
       
-      setAuthToken(result.session.access_token);
-      
+      setAuthToken(token);
 
       setState({
         user,
-        session: result.session,
+        token,
         isLoading: false,
         isAuthenticated: true,
         currentOrganization: null,
@@ -489,40 +326,44 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
+      console.log("AuthProvider: Registering...");
       
-      const result = await signUpWithEmail(
-        email.toLowerCase().trim(),
-        password,
-        name.trim()
-      );
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.register`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+          password,
+          name: name.trim(),
+          phone: phone?.trim(),
+        }),
+      });
 
-      if (!result.user) {
+      const data = await response.json();
+
+      if (!response.ok || data?.error) {
+        const errorMessage = data?.error?.message || "Registration failed. Please try again.";
+        return { success: false, error: errorMessage };
+      }
+
+      const result = data?.result?.data;
+      if (!result?.user || !result?.token) {
         return { success: false, error: "Registration failed. Please try again." };
       }
 
-      if (!result.session) {
-        return { 
-          success: true, 
-          error: "Please check your email to verify your account before signing in." 
-        };
-      }
-
-      const user = createUserFromSupabase(result.user);
-      
-      if (phone) {
-        user.phone = phone.trim();
-      }
-
-      
+      const user = createUserFromData(result.user);
+      const token = result.token;
 
       await setStoredValue(USER_KEY, JSON.stringify(user));
+      await setStoredValue(TOKEN_KEY, token);
       
-      setAuthToken(result.session.access_token);
-      
+      setAuthToken(token);
 
       setState({
         user,
-        session: result.session,
+        token,
         isLoading: false,
         isAuthenticated: true,
         currentOrganization: null,
@@ -551,9 +392,25 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
+      console.log("AuthProvider: Sending password reset...");
       
-      await supabaseSendPasswordReset(email.toLowerCase().trim());
-      
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.requestPasswordReset`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: email.toLowerCase().trim(),
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data?.error) {
+        const errorMessage = data?.error?.message || "Failed to send reset email";
+        return { success: false, error: errorMessage };
+      }
+
       return { success: true };
     } catch (error: unknown) {
       console.error("AuthProvider: Password reset error:", error);
@@ -563,21 +420,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const logout = useCallback(async () => {
-    
-
-    try {
-      await signOut();
-    } catch (error) {
-      console.error("AuthProvider: Sign out error:", error);
-    }
+    console.log("AuthProvider: Logging out...");
 
     setAuthToken(null);
     await clearAllAuthData();
-    
 
     setState({
       user: null,
-      session: null,
+      token: null,
       isLoading: false,
       isAuthenticated: false,
       currentOrganization: null,
@@ -593,17 +443,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     const updatedUser = { ...state.user, ...updates };
     await setStoredValue(USER_KEY, JSON.stringify(updatedUser));
 
-    if (updates.name || updates.avatar) {
-      try {
-        await updateUserProfile({
-          displayName: updates.name,
-          avatarUrl: updates.avatar,
-        });
-      } catch (error) {
-        console.error("AuthProvider: Failed to update Supabase profile:", error);
-      }
-    }
-
     setState(prev => ({
       ...prev,
       user: updatedUser,
@@ -611,32 +450,44 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, [state.user]);
 
   const refreshUser = useCallback(async () => {
+    if (!state.token) return;
+
     try {
-      const supabaseUser = await getCurrentUser();
-      if (!supabaseUser) return;
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.me`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`,
+        },
+      });
 
-      const updatedUser = createUserFromSupabase(supabaseUser);
+      if (response.ok) {
+        const data = await response.json();
+        if (data?.result?.data) {
+          const updatedUser = createUserFromData(data.result.data);
+          
+          if (state.user) {
+            updatedUser.role = state.user.role;
+            updatedUser.ministries = state.user.ministries;
+            updatedUser.phone = state.user.phone;
+          }
 
-      if (state.user) {
-        updatedUser.role = state.user.role;
-        updatedUser.ministries = state.user.ministries;
-        updatedUser.phone = state.user.phone;
+          await setStoredValue(USER_KEY, JSON.stringify(updatedUser));
+
+          setState(prev => ({
+            ...prev,
+            user: updatedUser,
+            error: null,
+          }));
+        }
       }
-
-      await setStoredValue(USER_KEY, JSON.stringify(updatedUser));
-
-      setState(prev => ({
-        ...prev,
-        user: updatedUser,
-        error: null,
-      }));
     } catch (error) {
       console.error("AuthProvider: Failed to refresh user:", error);
     }
-  }, [state.user]);
+  }, [state.token, state.user]);
 
   const changePassword = useCallback(async (newPassword: string) => {
-    if (!state.session) {
+    if (!state.token) {
       return { success: false, error: "Not authenticated" };
     }
 
@@ -645,16 +496,33 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
+      console.log("AuthProvider: Changing password...");
       
-      await supabaseChangePassword(newPassword);
-      
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.changePassword`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${state.token}`,
+        },
+        body: JSON.stringify({
+          newPassword,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok || data?.error) {
+        const errorMessage = data?.error?.message || "Failed to change password";
+        return { success: false, error: errorMessage };
+      }
+
       return { success: true };
     } catch (error: unknown) {
       console.error("AuthProvider: Change password error:", error);
       const message = error instanceof Error ? error.message : "Failed to change password. Please try again.";
       return { success: false, error: message };
     }
-  }, [state.session]);
+  }, [state.token]);
 
   const setCurrentOrganization = useCallback(async (organization: Organization | null, membership?: Membership | null) => {
     if (organization) {
@@ -682,9 +550,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const getIdToken = useCallback(async (): Promise<string | null> => {
-    if (!state.session) return null;
-    return state.session.access_token;
-  }, [state.session]);
+    return state.token;
+  }, [state.token]);
 
   const isAdmin = useMemo(() => {
     return state.user?.role === "admin" || state.user?.role === "super_admin";
@@ -714,7 +581,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   return {
     user: state.user,
-    token: state.session?.access_token || null,
+    token: state.token,
     isLoading: state.isLoading,
     isAuthenticated: state.isAuthenticated,
     currentOrganization: state.currentOrganization,

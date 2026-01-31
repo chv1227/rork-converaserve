@@ -12,7 +12,6 @@ import {
   Alert,
   Modal,
 } from "react-native";
-import { getSupabaseClient } from "@/lib/supabase-auth";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowLeft, Send, X, RefreshCw } from "lucide-react-native";
@@ -93,18 +92,23 @@ export default function RegisterScreen() {
     setResendSuccess(false);
     
     try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: verificationEmail,
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.resendVerification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: verificationEmail,
+        }),
       });
       
-      if (error) {
-        console.error("Resend verification error:", error);
-        setResendError(error.message || "Failed to resend verification email");
-      } else {
+      if (response.ok) {
         console.log("Verification email resent");
         setResendSuccess(true);
+      } else {
+        const data = await response.json();
+        console.error("Resend verification error:", data);
+        setResendError(data?.error?.message || "Failed to resend verification email");
       }
     } catch (err) {
       console.error("Resend error:", err);

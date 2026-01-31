@@ -17,7 +17,6 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Mail, Lock, Eye, EyeOff, User, Phone, LogIn, UserPlus, X, Send, RefreshCw } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { getSupabaseClient } from '@/lib/supabase-auth';
 import { trpc } from '@/lib/trpc';
 
 export default function CreateOrganizationScreen() {
@@ -212,16 +211,21 @@ export default function CreateOrganizationScreen() {
     setResendSuccess(false);
     
     try {
-      const supabase = getSupabaseClient();
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: verificationEmail,
+      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.resendVerification`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: verificationEmail,
+        }),
       });
       
-      if (error) {
-        setResendError(error.message || 'Failed to resend verification email');
-      } else {
+      if (response.ok) {
         setResendSuccess(true);
+      } else {
+        const data = await response.json();
+        setResendError(data?.error?.message || 'Failed to resend verification email');
       }
     } catch {
       setResendError('Failed to resend verification email');
