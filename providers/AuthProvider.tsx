@@ -49,10 +49,24 @@ const USER_KEY = "auth_user_v2";
 const TOKEN_KEY = "auth_token_v2";
 const ORG_KEY = "current_organization_v2";
 
+function getApiBaseUrl(): string {
+  const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || '';
+  let cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
+  if (cleanBase.endsWith('/api/trpc')) {
+    cleanBase = cleanBase.slice(0, -9);
+  } else if (cleanBase.endsWith('/trpc')) {
+    cleanBase = cleanBase.slice(0, -5);
+  } else if (cleanBase.endsWith('/api')) {
+    cleanBase = cleanBase.slice(0, -4);
+  }
+  return `${cleanBase}/api/trpc`;
+}
+
 async function fetchUserChurch(userId: string, token: string): Promise<Organization | null> {
   try {
     console.log("AuthProvider: Fetching user's active church...");
-    const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/churches.getUserActiveChurch`, {
+    const apiUrl = getApiBaseUrl();
+    const response = await fetch(`${apiUrl}/churches.getUserActiveChurch`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -77,7 +91,7 @@ async function fetchUserChurch(userId: string, token: string): Promise<Organizat
     }
     
     console.log("AuthProvider: No active church found via API, trying organizations...");
-    const orgResponse = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/organizations.getUserOrganizations`, {
+    const orgResponse = await fetch(`${apiUrl}/organizations.getUserOrganizations`, {
       method: 'GET',
       headers: {
         'Content-Type': 'application/json',
@@ -254,7 +268,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log("AuthProvider: Logging in...");
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.login`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/auth.login`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -330,7 +345,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log("AuthProvider: Registering...");
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.register`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/auth.register`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -398,7 +414,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log("AuthProvider: Sending password reset...");
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.requestPasswordReset`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/auth.requestPasswordReset`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -459,7 +476,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     if (!state.token) return;
 
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.me`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/auth.me`, {
         method: 'GET',
         headers: {
           'Content-Type': 'application/json',
@@ -504,7 +522,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     try {
       console.log("AuthProvider: Changing password...");
       
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.changePassword`, {
+      const apiUrl = getApiBaseUrl();
+      const response = await fetch(`${apiUrl}/auth.changePassword`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
