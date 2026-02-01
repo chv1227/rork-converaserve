@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
-import * as SecureStore from "expo-secure-store";
 import { Platform } from "react-native";
 import createContextHook from "@nkzw/create-context-hook";
-import { setAuthToken } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { Organization, OrganizationRole } from "@/types";
+import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 export type UserRole = "member" | "leader" | "admin" | "super_admin";
 
@@ -36,7 +36,7 @@ export interface Membership {
 
 interface AuthState {
   user: User | null;
-  token: string | null;
+  session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   currentOrganization: Organization | null;
@@ -45,135 +45,60 @@ interface AuthState {
   error: string | null;
 }
 
-const USER_KEY = "auth_user_v2";
-const TOKEN_KEY = "auth_token_v2";
-const ORG_KEY = "current_organization_v2";
+const ORG_STORAGE_KEY = "current_organization_v3";
 
-function getApiBaseUrl(): string {
-  const baseUrl = process.env.EXPO_PUBLIC_RORK_API_BASE_URL || '';
-  let cleanBase = baseUrl.endsWith('/') ? baseUrl.slice(0, -1) : baseUrl;
-  if (cleanBase.endsWith('/api/trpc')) {
-    cleanBase = cleanBase.slice(0, -9);
-  } else if (cleanBase.endsWith('/trpc')) {
-    cleanBase = cleanBase.slice(0, -5);
-  } else if (cleanBase.endsWith('/api')) {
-    cleanBase = cleanBase.slice(0, -4);
+async function getStoredOrganization(): Promise<Organization | null> {
+  try {
+    if (Platform.OS === "web") {
+      const stored = localStorage.getItem(ORG_STORAGE_KEY);
+      return stored ? JSON.parse(stored) : null;
+    }
+    const SecureStore = await import("expo-secure-store");
+    const stored = await SecureStore.getItemAsync(ORG_STORAGE_KEY);
+    return stored ? JSON.parse(stored) : null;
+  } catch {
+    return null;
   }
-  return `${cleanBase}/api/trpc`;
 }
 
-async function fetchUserChurch(userId: string, token: string): Promise<Organization | null> {
+async function setStoredOrganization(org: Organization | null): Promise<void> {
   try {
-    console.log("AuthProvider: Fetching user's active church...");
-    const apiUrl = getApiBaseUrl();
-    const response = await fetch(`${apiUrl}/churches.getUserActiveChurch`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (response.ok) {
-      const data = await response.json();
-      if (data?.result?.data?.church) {
-        const church = data.result.data.church;
-        console.log("AuthProvider: Found active church:", church.name);
-        return {
-          id: church.id,
-          name: church.name,
-          description: church.description || '',
-          logo: church.logo,
-          createdAt: church.createdAt,
-          updatedAt: church.updatedAt,
-        };
+    if (Platform.OS === "web") {
+      if (org) {
+        localStorage.setItem(ORG_STORAGE_KEY, JSON.stringify(org));
+      } else {
+        localStorage.removeItem(ORG_STORAGE_KEY);
       }
+      return;
     }
-    
-    console.log("AuthProvider: No active church found via API, trying organizations...");
-    const orgResponse = await fetch(`${apiUrl}/organizations.getUserOrganizations`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (orgResponse.ok) {
-      const orgData = await orgResponse.json();
-      if (orgData?.result?.data && orgData.result.data.length > 0) {
-        const org = orgData.result.data[0];
-        console.log("AuthProvider: Found organization:", org.name);
-        return org;
-      }
+    const SecureStore = await import("expo-secure-store");
+    if (org) {
+      await SecureStore.setItemAsync(ORG_STORAGE_KEY, JSON.stringify(org));
+    } else {
+      await SecureStore.deleteItemAsync(ORG_STORAGE_KEY);
     }
-    
-    return null;
   } catch (error) {
-    console.error("AuthProvider: Error fetching user church:", error);
-    return null;
+    console.error("Failed to store organization:", error);
   }
 }
 
-async function getStoredValue(key: string): Promise<string | null> {
-  try {
-    if (Platform.OS === "web") {
-      return localStorage.getItem(key);
-    }
-    return await SecureStore.getItemAsync(key);
-  } catch {
-    return null;
-  }
-}
-
-async function setStoredValue(key: string, value: string): Promise<void> {
-  try {
-    if (Platform.OS === "web") {
-      localStorage.setItem(key, value);
-    } else {
-      await SecureStore.setItemAsync(key, value);
-    }
-  } catch {
-    console.error("Failed to store value for key:", key);
-  }
-}
-
-async function removeStoredValue(key: string): Promise<void> {
-  try {
-    if (Platform.OS === "web") {
-      localStorage.removeItem(key);
-    } else {
-      await SecureStore.deleteItemAsync(key);
-    }
-  } catch {
-    console.error("Failed to remove value for key:", key);
-  }
-}
-
-async function clearAllAuthData(): Promise<void> {
-  await Promise.all([
-    removeStoredValue(USER_KEY),
-    removeStoredValue(TOKEN_KEY),
-    removeStoredValue(ORG_KEY),
-  ]);
-}
-
-function createUserFromData(data: { id: string; email: string; name: string; avatar?: string; role?: string; phone?: string; createdAt?: string }): User {
+function createUserFromSupabase(supabaseUser: SupabaseUser, profile?: { name?: string; avatar?: string; phone?: string; role?: string }): User {
   const now = new Date().toISOString();
-  const userEmail = data.email?.toLowerCase() || "";
+  const userEmail = (supabaseUser.email || "").toLowerCase();
   const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-  
+  const displayName = profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split("@")[0] || "User";
+
   return {
-    id: data.id,
-    email: data.email || "",
-    name: data.name || data.email?.split("@")[0] || "User",
-    avatar: data.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(data.name || "User")}&background=1A7B74&color=fff`,
-    role: isSuperAdmin ? "super_admin" : (data.role as UserRole) || "member",
+    id: supabaseUser.id,
+    email: supabaseUser.email || "",
+    name: displayName,
+    avatar: profile?.avatar || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`,
+    role: isSuperAdmin ? "super_admin" : (profile?.role as UserRole) || "member",
     ministries: [],
-    phone: data.phone,
-    joinedDate: data.createdAt || now,
+    phone: profile?.phone || supabaseUser.user_metadata?.phone,
+    joinedDate: supabaseUser.created_at || now,
     isActive: true,
-    createdAt: data.createdAt || now,
+    createdAt: supabaseUser.created_at || now,
     updatedAt: now,
   };
 }
@@ -181,7 +106,7 @@ function createUserFromData(data: { id: string; email: string; name: string; ava
 export const [AuthProvider, useAuth] = createContextHook(() => {
   const [state, setState] = useState<AuthState>({
     user: null,
-    token: null,
+    session: null,
     isLoading: true,
     isAuthenticated: false,
     currentOrganization: null,
@@ -196,57 +121,123 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     if (initRef.current) return;
     initRef.current = true;
 
-    const loadStoredAuth = async () => {
+    const initializeAuth = async () => {
       try {
-        const [storedUser, storedToken, storedOrg] = await Promise.all([
-          getStoredValue(USER_KEY),
-          getStoredValue(TOKEN_KEY),
-          getStoredValue(ORG_KEY),
-        ]);
-
-        if (!storedUser || !storedToken) {
-          console.log("AuthProvider: No stored auth found");
+        console.log("AuthProvider: Initializing Supabase auth...");
+        
+        const { data: { session }, error } = await supabase.auth.getSession();
+        
+        if (error) {
+          console.error("AuthProvider: Error getting session:", error);
           setState(prev => ({ ...prev, isLoading: false }));
           return;
         }
 
-        const user = JSON.parse(storedUser) as User;
-        const cachedOrg = storedOrg ? JSON.parse(storedOrg) as Organization : null;
+        if (session?.user) {
+          console.log("AuthProvider: Found existing session");
+          
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
 
-        const userEmail = (user.email || "").toLowerCase();
-        const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-        if (isSuperAdmin && user.role !== "super_admin" && user.role !== "admin") {
-          user.role = "super_admin";
-        }
+          const user = createUserFromSupabase(session.user, profile || undefined);
+          const storedOrg = await getStoredOrganization();
 
-        setAuthToken(storedToken);
+          let currentOrg = storedOrg;
+          if (!currentOrg) {
+            const { data: membership } = await supabase
+              .from('memberships')
+              .select('*, organizations(*)')
+              .eq('user_id', session.user.id)
+              .eq('is_active', true)
+              .limit(1)
+              .single();
 
-        let currentOrg = cachedOrg;
-        if (!currentOrg && storedToken) {
-          currentOrg = await fetchUserChurch(user.id, storedToken);
-          if (currentOrg) {
-            await setStoredValue(ORG_KEY, JSON.stringify(currentOrg));
+            if (membership?.organizations) {
+              const org = membership.organizations as unknown as {
+                id: string;
+                name: string;
+                description: string | null;
+                logo: string | null;
+                created_at: string;
+                updated_at: string;
+              };
+              currentOrg = {
+                id: org.id,
+                name: org.name,
+                description: org.description || '',
+                logo: org.logo || undefined,
+                createdAt: org.created_at,
+                updatedAt: org.updated_at,
+              };
+              await setStoredOrganization(currentOrg);
+            }
           }
-        }
 
-        setState({
-          user,
-          token: storedToken,
-          isAuthenticated: true,
-          currentOrganization: currentOrg,
-          currentMembership: null,
-          organizations: [],
-          isLoading: false,
-          error: null,
-        });
+          setState({
+            user,
+            session,
+            isLoading: false,
+            isAuthenticated: true,
+            currentOrganization: currentOrg,
+            currentMembership: null,
+            organizations: [],
+            error: null,
+          });
+        } else {
+          console.log("AuthProvider: No session found");
+          setState(prev => ({ ...prev, isLoading: false }));
+        }
       } catch (error) {
-        console.error("AuthProvider: Error loading stored auth", error);
-        await clearAllAuthData();
+        console.error("AuthProvider: Init error:", error);
         setState(prev => ({ ...prev, isLoading: false }));
       }
     };
 
-    loadStoredAuth();
+    initializeAuth();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      console.log("AuthProvider: Auth state changed:", event);
+
+      if (event === 'SIGNED_OUT' || !session) {
+        await setStoredOrganization(null);
+        setState({
+          user: null,
+          session: null,
+          isLoading: false,
+          isAuthenticated: false,
+          currentOrganization: null,
+          currentMembership: null,
+          organizations: [],
+          error: null,
+        });
+        return;
+      }
+
+      if (session?.user) {
+        const { data: profile } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', session.user.id)
+          .single();
+
+        const user = createUserFromSupabase(session.user, profile || undefined);
+        
+        setState(prev => ({
+          ...prev,
+          user,
+          session,
+          isLoading: false,
+          isAuthenticated: true,
+        }));
+      }
+    });
+
+    return () => {
+      subscription.unsubscribe();
+    };
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
@@ -266,48 +257,65 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Logging in...");
+      console.log("AuthProvider: Logging in with Supabase...");
       
-      const apiUrl = getApiBaseUrl();
-      const response = await fetch(`${apiUrl}/auth.login`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            email: email.toLowerCase().trim(),
-            password,
-          }
-        }),
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: email.toLowerCase().trim(),
+        password,
       });
 
-      const data = await response.json();
-
-      if (!response.ok || data?.error) {
-        const errorMessage = data?.error?.message || "Invalid email or password";
-        return { success: false, error: errorMessage };
+      if (error) {
+        console.error("AuthProvider: Login error:", error);
+        return { success: false, error: error.message };
       }
 
-      const result = data?.result?.data;
-      if (!result?.user || !result?.token) {
+      if (!data.user || !data.session) {
         return { success: false, error: "Login failed. Please try again." };
       }
 
-      const user = createUserFromData(result.user);
-      const token = result.token;
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', data.user.id)
+        .single();
 
-      await setStoredValue(USER_KEY, JSON.stringify(user));
-      await setStoredValue(TOKEN_KEY, token);
-      
-      setAuthToken(token);
+      const user = createUserFromSupabase(data.user, profile || undefined);
+
+      const { data: membership } = await supabase
+        .from('memberships')
+        .select('*, organizations(*)')
+        .eq('user_id', data.user.id)
+        .eq('is_active', true)
+        .limit(1)
+        .single();
+
+      let currentOrg: Organization | null = null;
+      if (membership?.organizations) {
+        const org = membership.organizations as unknown as {
+          id: string;
+          name: string;
+          description: string | null;
+          logo: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        currentOrg = {
+          id: org.id,
+          name: org.name,
+          description: org.description || '',
+          logo: org.logo || undefined,
+          createdAt: org.created_at,
+          updatedAt: org.updated_at,
+        };
+        await setStoredOrganization(currentOrg);
+      }
 
       setState({
         user,
-        token,
+        session: data.session,
         isLoading: false,
         isAuthenticated: true,
-        currentOrganization: null,
+        currentOrganization: currentOrg,
         currentMembership: null,
         organizations: [],
         error: null,
@@ -343,54 +351,59 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Registering...");
+      console.log("AuthProvider: Registering with Supabase...");
       
-      const apiUrl = getApiBaseUrl();
-      const response = await fetch(`${apiUrl}/auth.register`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            email: email.toLowerCase().trim(),
-            password,
+      const { data, error } = await supabase.auth.signUp({
+        email: email.toLowerCase().trim(),
+        password,
+        options: {
+          data: {
             name: name.trim(),
-            phone: phone?.trim() || undefined,
-          }
-        }),
+            phone: phone?.trim(),
+          },
+        },
       });
 
-      const data = await response.json();
-
-      if (!response.ok || data?.error) {
-        const errorMessage = data?.error?.message || "Registration failed. Please try again.";
-        return { success: false, error: errorMessage };
+      if (error) {
+        console.error("AuthProvider: Registration error:", error);
+        return { success: false, error: error.message };
       }
 
-      const result = data?.result?.data;
-      if (!result?.user || !result?.token) {
+      if (!data.user) {
         return { success: false, error: "Registration failed. Please try again." };
       }
 
-      const user = createUserFromData(result.user);
-      const token = result.token;
+      const { error: profileError } = await supabase
+        .from('users')
+        .upsert({
+          id: data.user.id,
+          email: data.user.email || email.toLowerCase().trim(),
+          name: name.trim(),
+          phone: phone?.trim() || null,
+          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1A7B74&color=fff`,
+          role: 'member',
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
+        });
 
-      await setStoredValue(USER_KEY, JSON.stringify(user));
-      await setStoredValue(TOKEN_KEY, token);
-      
-      setAuthToken(token);
+      if (profileError) {
+        console.error("AuthProvider: Profile creation error:", profileError);
+      }
 
-      setState({
-        user,
-        token,
-        isLoading: false,
-        isAuthenticated: true,
-        currentOrganization: null,
-        currentMembership: null,
-        organizations: [],
-        error: null,
-      });
+      if (data.session) {
+        const user = createUserFromSupabase(data.user, { name: name.trim(), phone: phone?.trim() });
+
+        setState({
+          user,
+          session: data.session,
+          isLoading: false,
+          isAuthenticated: true,
+          currentOrganization: null,
+          currentMembership: null,
+          organizations: [],
+          error: null,
+        });
+      }
 
       return { success: true };
     } catch (error: unknown) {
@@ -412,26 +425,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Sending password reset...");
+      console.log("AuthProvider: Sending password reset with Supabase...");
       
-      const apiUrl = getApiBaseUrl();
-      const response = await fetch(`${apiUrl}/auth.requestPasswordReset`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            email: email.toLowerCase().trim(),
-          }
-        }),
-      });
+      const { error } = await supabase.auth.resetPasswordForEmail(email.toLowerCase().trim());
 
-      const data = await response.json();
-
-      if (!response.ok || data?.error) {
-        const errorMessage = data?.error?.message || "Failed to send reset email";
-        return { success: false, error: errorMessage };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
       return { success: true };
@@ -445,12 +444,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const logout = useCallback(async () => {
     console.log("AuthProvider: Logging out...");
 
-    setAuthToken(null);
-    await clearAllAuthData();
+    await setStoredOrganization(null);
+    await supabase.auth.signOut();
 
     setState({
       user: null,
-      token: null,
+      session: null,
       isLoading: false,
       isAuthenticated: false,
       currentOrganization: null,
@@ -461,57 +460,52 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const updateUser = useCallback(async (updates: Partial<User>) => {
-    if (!state.user) return;
-
-    const updatedUser = { ...state.user, ...updates };
-    await setStoredValue(USER_KEY, JSON.stringify(updatedUser));
-
-    setState(prev => ({
-      ...prev,
-      user: updatedUser,
-    }));
-  }, [state.user]);
-
-  const refreshUser = useCallback(async () => {
-    if (!state.token) return;
+    if (!state.user || !state.session) return;
 
     try {
-      const apiUrl = getApiBaseUrl();
-      const response = await fetch(`${apiUrl}/auth.me`, {
-        method: 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${state.token}`,
-        },
-      });
+      const { error } = await supabase
+        .from('users')
+        .update({
+          name: updates.name,
+          avatar: updates.avatar,
+          phone: updates.phone,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', state.user.id);
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data?.result?.data) {
-          const updatedUser = createUserFromData(data.result.data);
-          
-          if (state.user) {
-            updatedUser.role = state.user.role;
-            updatedUser.ministries = state.user.ministries;
-            updatedUser.phone = state.user.phone;
-          }
+      if (error) {
+        console.error("AuthProvider: Update user error:", error);
+        return;
+      }
 
-          await setStoredValue(USER_KEY, JSON.stringify(updatedUser));
+      const updatedUser = { ...state.user, ...updates };
+      setState(prev => ({ ...prev, user: updatedUser }));
+    } catch (error) {
+      console.error("AuthProvider: Update user error:", error);
+    }
+  }, [state.user, state.session]);
 
-          setState(prev => ({
-            ...prev,
-            user: updatedUser,
-            error: null,
-          }));
-        }
+  const refreshUser = useCallback(async () => {
+    if (!state.session) return;
+
+    try {
+      const { data: profile } = await supabase
+        .from('users')
+        .select('*')
+        .eq('id', state.session.user.id)
+        .single();
+
+      if (profile) {
+        const updatedUser = createUserFromSupabase(state.session.user, profile);
+        setState(prev => ({ ...prev, user: updatedUser, error: null }));
       }
     } catch (error) {
       console.error("AuthProvider: Failed to refresh user:", error);
     }
-  }, [state.token, state.user]);
+  }, [state.session]);
 
   const changePassword = useCallback(async (newPassword: string) => {
-    if (!state.token) {
+    if (!state.session) {
       return { success: false, error: "Not authenticated" };
     }
 
@@ -520,28 +514,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
 
     try {
-      console.log("AuthProvider: Changing password...");
+      console.log("AuthProvider: Changing password with Supabase...");
       
-      const apiUrl = getApiBaseUrl();
-      const response = await fetch(`${apiUrl}/auth.changePassword`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${state.token}`,
-        },
-        body: JSON.stringify({
-          json: {
-            currentPassword: '',
-            newPassword,
-          }
-        }),
-      });
+      const { error } = await supabase.auth.updateUser({ password: newPassword });
 
-      const data = await response.json();
-
-      if (!response.ok || data?.error) {
-        const errorMessage = data?.error?.message || "Failed to change password";
-        return { success: false, error: errorMessage };
+      if (error) {
+        return { success: false, error: error.message };
       }
 
       return { success: true };
@@ -550,14 +528,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const message = error instanceof Error ? error.message : "Failed to change password. Please try again.";
       return { success: false, error: message };
     }
-  }, [state.token]);
+  }, [state.session]);
 
   const setCurrentOrganization = useCallback(async (organization: Organization | null, membership?: Membership | null) => {
-    if (organization) {
-      await setStoredValue(ORG_KEY, JSON.stringify(organization));
-    } else {
-      await removeStoredValue(ORG_KEY);
-    }
+    await setStoredOrganization(organization);
 
     setState(prev => ({
       ...prev,
@@ -578,8 +552,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, []);
 
   const getIdToken = useCallback(async (): Promise<string | null> => {
-    return state.token;
-  }, [state.token]);
+    return state.session?.access_token || null;
+  }, [state.session]);
 
   const isAdmin = useMemo(() => {
     return state.user?.role === "admin" || state.user?.role === "super_admin";
@@ -609,7 +583,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
   return {
     user: state.user,
-    token: state.token,
+    token: state.session?.access_token || null,
     isLoading: state.isLoading,
     isAuthenticated: state.isAuthenticated,
     currentOrganization: state.currentOrganization,

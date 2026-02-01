@@ -1,65 +1,364 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import createContextHook from "@nkzw/create-context-hook";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
 import { Announcement, Conversation, Event, Ministry } from "@/types";
-import { getTRPCErrorMessage, trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 
 export const [DataProvider, useData] = createContextHook(() => {
   const { currentOrganization, user, isAuthenticated } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
+  const queryClient = useQueryClient();
 
   const organizationId = currentOrganization?.id;
 
-  const ministriesQuery = trpc.ministries.list.useQuery(
-    { organizationId: organizationId ?? "" },
-    {
-      enabled: !!organizationId,
-      staleTime: 15_000,
-    }
-  );
-
-  const eventsQuery = trpc.events.list.useQuery(
-    { organizationId: organizationId ?? "" },
-    {
-      enabled: !!organizationId,
-      staleTime: 15_000,
-    }
-  );
-
-  const announcementsQuery = trpc.announcements.list.useQuery(
-    { organizationId: organizationId ?? "" },
-    {
-      enabled: !!organizationId,
-      staleTime: 15_000,
-    }
-  );
-
-  const userMinistriesQuery = trpc.ministries.getUserMinistries.useQuery(undefined, {
-    enabled: isAuthenticated,
+  const ministriesQuery = useQuery({
+    queryKey: ['ministries', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*')
+        .eq('organization_id', organizationId)
+        .order('name');
+      
+      if (error) {
+        console.error('Error fetching ministries:', error);
+        throw error;
+      }
+      
+      return (data || []).map(m => ({
+        id: m.id,
+        organizationId: m.organization_id,
+        name: m.name,
+        description: m.description || '',
+        color: m.color,
+        icon: m.icon,
+        memberCount: m.member_count,
+        image: m.image || '',
+      })) as Ministry[];
+    },
+    enabled: !!organizationId,
     staleTime: 15_000,
   });
 
-  const conversationsQuery = trpc.messages.getAllUserConversations.useQuery(
-    { organizationId: organizationId || "" },
-    {
-      enabled: !!organizationId && isAuthenticated,
-      refetchInterval: 5000,
-    }
-  );
+  const eventsQuery = useQuery({
+    queryKey: ['events', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('events')
+        .select('*, ministries(name, color)')
+        .eq('organization_id', organizationId)
+        .order('date', { ascending: true });
+      
+      if (error) {
+        console.error('Error fetching events:', error);
+        throw error;
+      }
+      
+      return (data || []).map(e => ({
+        id: e.id,
+        organizationId: e.organization_id,
+        title: e.title,
+        description: e.description || '',
+        date: e.date,
+        time: e.time,
+        location: e.location || '',
+        ministryId: e.ministry_id || '',
+        ministryName: (e.ministries as { name: string } | null)?.name || 'General',
+        color: (e.ministries as { color: string } | null)?.color || '#1A7B74',
+        attendees: e.attendees,
+      })) as Event[];
+    },
+    enabled: !!organizationId,
+    staleTime: 15_000,
+  });
 
-  const totalUnreadQuery = trpc.messages.getTotalUnread.useQuery(
-    { organizationId },
-    {
-      enabled: !!organizationId && isAuthenticated,
-      refetchInterval: 5000,
-    }
-  );
+  const announcementsQuery = useQuery({
+    queryKey: ['announcements', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*, ministries(name)')
+        .eq('organization_id', organizationId)
+        .order('is_pinned', { ascending: false })
+        .order('date', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching announcements:', error);
+        throw error;
+      }
+      
+      return (data || []).map(a => ({
+        id: a.id,
+        organizationId: a.organization_id,
+        title: a.title,
+        content: a.content,
+        author: a.author_name,
+        authorRole: a.author_role,
+        authorAvatar: a.author_avatar || '',
+        date: a.date,
+        ministryId: a.ministry_id || undefined,
+        ministryName: (a.ministries as { name: string } | null)?.name || undefined,
+        priority: a.priority as 'high' | 'normal' | 'low',
+        isPinned: a.is_pinned,
+      })) as Announcement[];
+    },
+    enabled: !!organizationId,
+    staleTime: 15_000,
+  });
 
-  const createMinistryMutation = trpc.ministries.create.useMutation();
-  const updateMinistryMutation = trpc.ministries.update.useMutation();
-  const deleteMinistryMutation = trpc.ministries.delete.useMutation();
-  const joinMinistryMutation = trpc.ministries.join.useMutation();
-  const leaveMinistryMutation = trpc.ministries.leave.useMutation();
+  const userMinistriesQuery = useQuery({
+    queryKey: ['userMinistries', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data, error } = await supabase
+        .from('ministry_members')
+        .select('*, ministries(*)')
+        .eq('user_id', user.id);
+      
+      if (error) {
+        console.error('Error fetching user ministries:', error);
+        throw error;
+      }
+      
+      return (data || []).map(mm => {
+        const m = mm.ministries as unknown as {
+          id: string;
+          organization_id: string;
+          name: string;
+          description: string | null;
+          color: string;
+          icon: string;
+          member_count: number;
+          image: string | null;
+        };
+        return {
+          id: m.id,
+          organizationId: m.organization_id,
+          name: m.name,
+          description: m.description || '',
+          color: m.color,
+          icon: m.icon,
+          memberCount: m.member_count,
+          image: m.image || '',
+        };
+      }) as Ministry[];
+    },
+    enabled: isAuthenticated && !!user?.id,
+    staleTime: 15_000,
+  });
+
+  const conversationsQuery = useQuery({
+    queryKey: ['conversations', organizationId, user?.id],
+    queryFn: async () => {
+      if (!organizationId || !user?.id) return [];
+      
+      const { data: participantData, error: participantError } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+      
+      if (participantError) {
+        console.error('Error fetching conversation participants:', participantError);
+        throw participantError;
+      }
+      
+      const conversationIds = (participantData || []).map(p => p.conversation_id);
+      if (conversationIds.length === 0) return [];
+      
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*, ministries(color)')
+        .in('id', conversationIds)
+        .eq('organization_id', organizationId)
+        .eq('is_archived', false)
+        .order('updated_at', { ascending: false });
+      
+      if (error) {
+        console.error('Error fetching conversations:', error);
+        throw error;
+      }
+      
+      const conversationsWithMessages = await Promise.all((data || []).map(async (c) => {
+        const { data: lastMessage } = await supabase
+          .from('messages')
+          .select('content, created_at')
+          .eq('conversation_id', c.id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+        
+        const { count: unreadCount } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', c.id)
+          .neq('sender_id', user.id)
+          .gt('created_at', c.updated_at);
+        
+        return {
+          id: c.id,
+          organizationId: c.organization_id,
+          name: c.name,
+          avatar: c.avatar || '',
+          lastMessage: lastMessage?.content || '',
+          lastMessageTime: lastMessage?.created_at || c.updated_at,
+          lastMessageTimestamp: lastMessage?.created_at || c.updated_at,
+          unreadCount: unreadCount || 0,
+          isGroup: c.type !== 'direct',
+          type: c.type as 'direct' | 'group' | 'ministry',
+          ministryId: c.ministry_id || undefined,
+          ministryColor: (c.ministries as { color: string } | null)?.color || undefined,
+          createdBy: c.created_by,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+          isArchived: c.is_archived,
+        };
+      }));
+      
+      return conversationsWithMessages as Conversation[];
+    },
+    enabled: !!organizationId && isAuthenticated && !!user?.id,
+    refetchInterval: 10000,
+  });
+
+  const totalUnreadQuery = useQuery({
+    queryKey: ['totalUnread', organizationId, user?.id],
+    queryFn: async () => {
+      if (!organizationId || !user?.id) return 0;
+      
+      const { data: participantData } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id, last_read_at')
+        .eq('user_id', user.id);
+      
+      if (!participantData || participantData.length === 0) return 0;
+      
+      let totalUnread = 0;
+      for (const participant of participantData) {
+        const { count } = await supabase
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', participant.conversation_id)
+          .neq('sender_id', user.id)
+          .gt('created_at', participant.last_read_at || '1970-01-01');
+        
+        totalUnread += count || 0;
+      }
+      
+      return totalUnread;
+    },
+    enabled: !!organizationId && isAuthenticated && !!user?.id,
+    refetchInterval: 10000,
+  });
+
+  const createMinistryMutation = useMutation({
+    mutationFn: async (ministry: { name: string; description?: string; color: string; icon: string; image?: string }) => {
+      if (!organizationId) throw new Error('No organization selected');
+      
+      const { data, error } = await supabase
+        .from('ministries')
+        .insert({
+          organization_id: organizationId,
+          name: ministry.name,
+          description: ministry.description || null,
+          color: ministry.color,
+          icon: ministry.icon,
+          image: ministry.image || null,
+          member_count: 0,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+    },
+  });
+
+  const updateMinistryMutation = useMutation({
+    mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string; color?: string; icon?: string; image?: string }) => {
+      const { error } = await supabase
+        .from('ministries')
+        .update({
+          name: updates.name,
+          description: updates.description,
+          color: updates.color,
+          icon: updates.icon,
+          image: updates.image,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+    },
+  });
+
+  const deleteMinistryMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase
+        .from('ministries')
+        .delete()
+        .eq('id', id);
+      
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+    },
+  });
+
+  const joinMinistryMutation = useMutation({
+    mutationFn: async ({ ministryId }: { ministryId: string; organizationId: string }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      
+      const { error } = await supabase
+        .from('ministry_members')
+        .insert({
+          ministry_id: ministryId,
+          user_id: user.id,
+          role: 'member',
+        });
+      
+      if (error) throw error;
+      
+      await supabase.rpc('increment_ministry_member_count', { ministry_id: ministryId });
+      
+      return { message: 'Successfully joined ministry' };
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+    },
+  });
+
+  const leaveMinistryMutation = useMutation({
+    mutationFn: async ({ ministryId }: { ministryId: string }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      
+      const { error } = await supabase
+        .from('ministry_members')
+        .delete()
+        .eq('ministry_id', ministryId)
+        .eq('user_id', user.id);
+      
+      if (error) throw error;
+      
+      await supabase.rpc('decrement_ministry_member_count', { ministry_id: ministryId });
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+    },
+  });
 
   const isLoading =
     ministriesQuery.isLoading ||
@@ -76,7 +375,8 @@ export const [DataProvider, useData] = createContextHook(() => {
       conversationsQuery.error ||
       totalUnreadQuery.error;
 
-    return err ? getTRPCErrorMessage(err) : null;
+    if (err instanceof Error) return err.message;
+    return err ? String(err) : null;
   }, [
     ministriesQuery.error,
     eventsQuery.error,
@@ -169,24 +469,17 @@ export const [DataProvider, useData] = createContextHook(() => {
     setIsRefreshing(true);
     try {
       await Promise.all([
-        ministriesQuery.refetch(),
-        eventsQuery.refetch(),
-        announcementsQuery.refetch(),
-        userMinistriesQuery.refetch(),
-        conversationsQuery.refetch(),
-        totalUnreadQuery.refetch(),
+        queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] }),
+        queryClient.invalidateQueries({ queryKey: ['events', organizationId] }),
+        queryClient.invalidateQueries({ queryKey: ['announcements', organizationId] }),
+        queryClient.invalidateQueries({ queryKey: ['userMinistries'] }),
+        queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] }),
+        queryClient.invalidateQueries({ queryKey: ['totalUnread', organizationId] }),
       ]);
     } finally {
       setIsRefreshing(false);
     }
-  }, [
-    ministriesQuery,
-    eventsQuery,
-    announcementsQuery,
-    userMinistriesQuery,
-    conversationsQuery,
-    totalUnreadQuery,
-  ]);
+  }, [queryClient, organizationId]);
 
   const joinMinistry = useCallback(
     async (ministryId: string) => {
@@ -198,23 +491,13 @@ export const [DataProvider, useData] = createContextHook(() => {
           ministryId,
           organizationId,
         });
-
-        await Promise.all([ministriesQuery.refetch(), userMinistriesQuery.refetch()]);
-
         return { success: true, message: result?.message ?? "Request submitted" };
       } catch (e) {
-        const msg = getTRPCErrorMessage(e);
+        const msg = e instanceof Error ? e.message : "Failed to join ministry";
         return { success: false, message: msg };
       }
     },
-    [
-      user,
-      isAuthenticated,
-      organizationId,
-      joinMinistryMutation,
-      ministriesQuery,
-      userMinistriesQuery,
-    ]
+    [user, isAuthenticated, organizationId, joinMinistryMutation]
   );
 
   const leaveMinistry = useCallback(
@@ -223,13 +506,12 @@ export const [DataProvider, useData] = createContextHook(() => {
 
       try {
         await leaveMinistryMutation.mutateAsync({ ministryId });
-        await Promise.all([ministriesQuery.refetch(), userMinistriesQuery.refetch()]);
         return { success: true };
       } catch (e) {
-        return { success: false, message: getTRPCErrorMessage(e) };
+        return { success: false, message: e instanceof Error ? e.message : "Failed to leave ministry" };
       }
     },
-    [user, isAuthenticated, leaveMinistryMutation, ministriesQuery, userMinistriesQuery]
+    [user, isAuthenticated, leaveMinistryMutation]
   );
 
   const createMinistry = useCallback(
@@ -239,7 +521,6 @@ export const [DataProvider, useData] = createContextHook(() => {
 
       try {
         const created = await createMinistryMutation.mutateAsync({
-          organizationId,
           name: ministry.name,
           description: ministry.description,
           color: ministry.color,
@@ -247,14 +528,12 @@ export const [DataProvider, useData] = createContextHook(() => {
           image: ministry.image,
         });
 
-        await ministriesQuery.refetch();
-
         return { success: true, ministry: created };
       } catch (e) {
-        return { success: false, ministry: null, message: getTRPCErrorMessage(e) };
+        return { success: false, ministry: null, message: e instanceof Error ? e.message : "Failed to create ministry" };
       }
     },
-    [user, isAuthenticated, organizationId, createMinistryMutation, ministriesQuery]
+    [user, isAuthenticated, organizationId, createMinistryMutation]
   );
 
   const updateMinistry = useCallback(
@@ -268,26 +547,24 @@ export const [DataProvider, useData] = createContextHook(() => {
           icon: updates.icon,
           image: updates.image,
         });
-        await ministriesQuery.refetch();
         return { success: true };
       } catch (e) {
-        return { success: false, message: getTRPCErrorMessage(e) };
+        return { success: false, message: e instanceof Error ? e.message : "Failed to update ministry" };
       }
     },
-    [updateMinistryMutation, ministriesQuery]
+    [updateMinistryMutation]
   );
 
   const deleteMinistry = useCallback(
     async (id: string) => {
       try {
-        await deleteMinistryMutation.mutateAsync({ id });
-        await Promise.all([ministriesQuery.refetch(), userMinistriesQuery.refetch()]);
+        await deleteMinistryMutation.mutateAsync(id);
         return { success: true };
       } catch (e) {
-        return { success: false, message: getTRPCErrorMessage(e) };
+        return { success: false, message: e instanceof Error ? e.message : "Failed to delete ministry" };
       }
     },
-    [deleteMinistryMutation, ministriesQuery, userMinistriesQuery]
+    [deleteMinistryMutation]
   );
 
   const isMinistryMember = useCallback(
@@ -306,8 +583,8 @@ export const [DataProvider, useData] = createContextHook(() => {
   );
 
   const refetchConversations = useCallback(() => {
-    return conversationsQuery.refetch();
-  }, [conversationsQuery]);
+    return queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
+  }, [queryClient, organizationId]);
 
   return {
     ministries,

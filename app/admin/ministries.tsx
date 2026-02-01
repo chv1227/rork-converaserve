@@ -43,7 +43,8 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Ministry } from "@/types";
 import { getMinistryColor } from "@/constants/ministryColors";
 import { ministryTemplates, MinistryTemplate, MINISTRY_CATEGORIES } from "@/mocks/ministryTemplates";
@@ -183,7 +184,7 @@ export default function AdminMinistriesScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { isAdmin, currentOrganization } = useAuth();
-  const utils = trpc.useUtils();
+  const queryClient = useQueryClient();
 
   const [searchQuery, setSearchQuery] = useState("");
   const [templateSearchQuery, setTemplateSearchQuery] = useState("");
@@ -199,26 +200,75 @@ export default function AdminMinistriesScreen() {
     icon: "users",
   });
 
-  const ministriesQuery = trpc.ministries.list.useQuery(
-    { organizationId: currentOrganization?.id ?? "" },
-    { enabled: !!currentOrganization?.id }
-  );
+  const ministriesQuery = useQuery({
+    queryKey: ['ministries', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*')
+        .eq('organization_id', currentOrganization.id)
+        .order('name');
+      
+      if (error) throw error;
+      
+      return (data || []).map((m: { id: string; organization_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
+        id: m.id,
+        organizationId: m.organization_id,
+        name: m.name,
+        description: m.description || '',
+        color: m.color,
+        icon: m.icon,
+        memberCount: m.member_count,
+        image: m.image || '',
+      })) as Ministry[];
+    },
+    enabled: !!currentOrganization?.id,
+  });
 
-  const membersQuery = trpc.admin.getMinistryMembers.useQuery(
-    { ministryId: selectedMinistryId || "" },
-    { enabled: !!selectedMinistryId && isAdmin }
-  );
+  const membersQuery = useQuery({
+    queryKey: ['ministryMembers', selectedMinistryId],
+    queryFn: async () => {
+      if (!selectedMinistryId) return [];
+      const { data } = await supabase
+        .from('ministry_members')
+        .select('*, users(*)')
+        .eq('ministry_id', selectedMinistryId);
+      
+      return (data || []).map((m: { id: string; role: string; users: { id: string; name: string; email: string; avatar: string | null } | null }) => ({
+        id: m.users?.id || '',
+        name: m.users?.name || '',
+        email: m.users?.email || '',
+        avatar: m.users?.avatar || '',
+        role: m.role,
+      }));
+    },
+    enabled: !!selectedMinistryId && isAdmin,
+  });
 
-  const createMutation = trpc.ministries.create.useMutation({
+  const createMutation = useMutation({
+    mutationFn: async (data: { name: string; description?: string; color: string; icon: string; image?: string }) => {
+      if (!currentOrganization?.id) throw new Error('No organization selected');
+      const { error } = await supabase.from('ministries').insert({
+        organization_id: currentOrganization.id,
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        icon: data.icon,
+        image: data.image,
+        member_count: 0,
+      });
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Ministry created successfully");
-      utils.ministries.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['ministries'] });
       resetForm();
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Ministry created successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to create ministry:", error);
       if (Platform.OS === "web") {
         alert(error.message || "Failed to create ministry");
@@ -228,16 +278,27 @@ export default function AdminMinistriesScreen() {
     },
   });
 
-  const updateMutation = trpc.ministries.update.useMutation({
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; name?: string; description?: string; color?: string; icon?: string; image?: string }) => {
+      const { error } = await supabase.from('ministries').update({
+        name: data.name,
+        description: data.description,
+        color: data.color,
+        icon: data.icon,
+        image: data.image,
+        updated_at: new Date().toISOString(),
+      }).eq('id', data.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Ministry updated successfully");
-      utils.ministries.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['ministries'] });
       resetForm();
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Ministry updated successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to update ministry:", error);
       if (Platform.OS === "web") {
         alert(error.message || "Failed to update ministry");
@@ -247,15 +308,19 @@ export default function AdminMinistriesScreen() {
     },
   });
 
-  const deleteMutation = trpc.ministries.delete.useMutation({
+  const deleteMutation = useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from('ministries').delete().eq('id', id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Ministry deleted successfully");
-      utils.ministries.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['ministries'] });
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Ministry deleted successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to delete ministry:", error);
       if (Platform.OS === "web") {
         alert(error.message || "Failed to delete ministry");
@@ -265,15 +330,21 @@ export default function AdminMinistriesScreen() {
     },
   });
 
-  const removeMemberMutation = trpc.admin.removeUserFromMinistry.useMutation({
+  const removeMemberMutation = useMutation({
+    mutationFn: async (data: { ministryId: string; userId: string }) => {
+      const { error } = await supabase.from('ministry_members').delete()
+        .eq('ministry_id', data.ministryId)
+        .eq('user_id', data.userId);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      utils.admin.getMinistryMembers.invalidate();
-      utils.ministries.list.invalidate();
+      queryClient.invalidateQueries({ queryKey: ['ministryMembers'] });
+      queryClient.invalidateQueries({ queryKey: ['ministries'] });
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Member removed from ministry");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert("Error", error.message);
     },
   });
@@ -373,14 +444,13 @@ export default function AdminMinistriesScreen() {
         description: formData.description.trim(),
         color: formData.color,
         icon: formData.icon,
-        organizationId: currentOrganization.id,
       });
     }
   };
 
   const handleDelete = (ministry: Ministry) => {
     const confirmDelete = () => {
-      deleteMutation.mutate({ id: ministry.id });
+      deleteMutation.mutate(ministry.id);
     };
 
     if (Platform.OS === "web") {

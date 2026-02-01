@@ -7,7 +7,6 @@ import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, StyleSheet, Text, Platform } from "react-native";
 
 import Colors from "@/constants/colors";
-import { trpc, trpcClient } from "@/lib/trpc";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { DataProvider } from "@/providers/DataProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -307,9 +306,7 @@ export default function RootLayout() {
       <StatusBar style="dark" />
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
-          <trpc.Provider client={trpcClient} queryClient={queryClient}>
-            <AppContent />
-          </trpc.Provider>
+          <AppContent />
         </QueryClientProvider>
       </ErrorBoundary>
     </GestureHandlerRootView>

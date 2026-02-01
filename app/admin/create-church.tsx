@@ -32,7 +32,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
+import { supabase } from '@/lib/supabase';
+import { useMutation } from '@tanstack/react-query';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -107,13 +108,56 @@ export default function AdminCreateChurchScreen() {
     }
   }, [isAdmin, router]);
 
-  const createChurchMutation = trpc.churches.create.useMutation({
-    onSuccess: (data) => {
+  const createChurchMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      denomination?: string;
+      description: string;
+      address: string;
+      city: string;
+      state: string;
+      zip: string;
+      country: string;
+      email: string;
+      phone: string;
+      website?: string;
+      logo?: string;
+      bannerImage?: string;
+      socialLinks?: { facebook?: string; instagram?: string; twitter?: string; youtube?: string };
+    }) => {
+      const { data: userData } = await supabase.auth.getUser();
+      if (!userData.user) throw new Error('Not authenticated');
+      
+      const { data: church, error } = await supabase
+        .from('organizations')
+        .insert({
+          name: data.name,
+          description: data.description,
+          address: data.address,
+          email: data.email,
+          phone: data.phone,
+          website: data.website,
+          logo: data.logo,
+          created_by: userData.user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      await supabase.from('memberships').insert({
+        user_id: userData.user.id,
+        organization_id: church.id,
+        role: 'super_admin',
+        is_active: true,
+      });
+      
+      return { church: { ...church, name: church.name, id: church.id, createdBy: church.created_by }, settings: { id: church.id }, membership: { id: church.id } };
+    },
+    onSuccess: (data: { church: { name: string; id: string; createdBy: string }; settings: { id: string }; membership: { id: string } }) => {
       console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
       console.log('Church ID:', data.church.id);
-      console.log('Settings ID:', data.settings.id);
-      console.log('Membership ID:', data.membership.id);
       console.log('Created by:', data.church.createdBy);
       console.log('================================');
       Alert.alert(
@@ -122,7 +166,7 @@ export default function AdminCreateChurchScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('=== Church Creation Error ===');
       console.error('Raw error:', error);
       const errorMessage = error.message || 'Failed to create church';

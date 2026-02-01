@@ -44,8 +44,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
-import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { Ministry, OrganizationRole } from '@/types';
 import { getMinistryColor } from '@/constants/ministryColors';
 

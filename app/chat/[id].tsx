@@ -16,10 +16,10 @@ import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Send, Users, User, MoreVertical, CheckCheck, Check } from "lucide-react-native";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/AuthProvider";
 import { Message } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import * as Haptics from "expo-haptics";
 
 export default function ChatScreen() {
@@ -32,26 +32,76 @@ export default function ChatScreen() {
   const [messageText, setMessageText] = useState("");
   const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const conversationQuery = trpc.messages.getConversation.useQuery(
-    { conversationId: id || "" },
-    { enabled: !!id }
-  );
-
-  const messagesQuery = trpc.messages.getMessages.useQuery(
-    { conversationId: id || "" },
-    { 
-      enabled: !!id, 
-      refetchInterval: 2000,
-    }
-  );
-
-  const sendMessageMutation = trpc.messages.sendMessage.useMutation({
-    onMutate: async ({ content }) => {
-      await queryClient.cancelQueries();
+  const conversationQuery = useQuery({
+    queryKey: ['conversation', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('id', id)
+        .single();
       
-      const previousMessages = queryClient.getQueryData(
-        [["messages", "getMessages"], { input: { conversationId: id } }]
-      );
+      if (error) throw error;
+      return {
+        id: data.id,
+        name: data.name,
+        avatar: data.avatar,
+        type: data.type,
+        isGroup: data.type !== 'direct',
+        unreadCount: 0,
+      };
+    },
+    enabled: !!id,
+  });
+
+  const messagesQuery = useQuery({
+    queryKey: ['messages', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*, users(name, avatar)')
+        .eq('conversation_id', id)
+        .order('created_at', { ascending: true });
+      
+      if (error) throw error;
+      return (data || []).map((m: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users: { name: string; avatar: string | null } | null }) => ({
+        id: m.id,
+        conversationId: m.conversation_id,
+        content: m.content,
+        senderId: m.sender_id,
+        senderName: m.users?.name || '',
+        senderAvatar: m.users?.avatar || '',
+        timestamp: m.created_at,
+        isRead: true,
+        readBy: [],
+        messageType: m.message_type as 'text' | 'image' | 'system',
+      })) as Message[];
+    },
+    enabled: !!id,
+    refetchInterval: 2000,
+  });
+
+  const sendMessageMutation = useMutation({
+    mutationFn: async (data: { conversationId: string; content: string }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      const { error } = await supabase.from('messages').insert({
+        conversation_id: data.conversationId,
+        content: data.content,
+        sender_id: user.id,
+        message_type: 'text',
+      });
+      if (error) throw error;
+      
+      await supabase.from('conversations').update({
+        updated_at: new Date().toISOString(),
+      }).eq('id', data.conversationId);
+    },
+    onMutate: async ({ content }: { content: string }) => {
+      await queryClient.cancelQueries({ queryKey: ['messages', id] });
+      
+      const previousMessages = queryClient.getQueryData(['messages', id]);
 
       const optimisticMessage: Message = {
         id: `temp-${Date.now()}`,
@@ -67,7 +117,7 @@ export default function ChatScreen() {
       };
 
       queryClient.setQueryData(
-        [["messages", "getMessages"], { input: { conversationId: id } }],
+        ['messages', id],
         (old: Message[] | undefined) => [...(old || []), optimisticMessage]
       );
 
@@ -77,23 +127,28 @@ export default function ChatScreen() {
       console.log("Message sent successfully");
       setMessageText("");
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['messages', id] });
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     },
-    onError: (error, _, context) => {
+    onError: (error: Error, _variables: { conversationId: string; content: string }, context: { previousMessages: unknown } | undefined) => {
       console.error("Failed to send message:", error);
       if (context?.previousMessages) {
-        queryClient.setQueryData(
-          [["messages", "getMessages"], { input: { conversationId: id } }],
-          context.previousMessages
-        );
+        queryClient.setQueryData(['messages', id], context.previousMessages);
       }
     },
   });
 
-  const markReadMutation = trpc.messages.markConversationRead.useMutation();
+  const markReadMutation = useMutation({
+    mutationFn: async (data: { conversationId: string }) => {
+      if (!user?.id) return;
+      await supabase.from('conversation_participants').update({
+        last_read_at: new Date().toISOString(),
+      }).eq('conversation_id', data.conversationId).eq('user_id', user.id);
+    },
+  });
 
   useEffect(() => {
     if (id && conversationQuery.data?.unreadCount) {
@@ -105,9 +160,11 @@ export default function ChatScreen() {
   const conversation = conversationQuery.data;
   const messages = useMemo(() => messagesQuery.data || [], [messagesQuery.data]);
 
+  const { refetch: refetchMessages } = messagesQuery;
+
   const onRefresh = useCallback(() => {
-    messagesQuery.refetch();
-  }, [messagesQuery]);
+    refetchMessages();
+  }, [refetchMessages]);
 
   const handleSend = useCallback(() => {
     if (!messageText.trim() || !id) return;

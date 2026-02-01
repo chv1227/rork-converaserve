@@ -29,7 +29,8 @@ import {
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import Colors from '@/constants/colors';
-import { trpc } from '@/lib/trpc';
+import { supabase } from '@/lib/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
 import { useData } from '@/providers/DataProvider';
 import { Announcement, Ministry } from '@/types';
@@ -57,19 +58,64 @@ export default function AnnouncementsScreen() {
   const [selectedMinistry, setSelectedMinistry] = useState<Ministry | null>(null);
   const [isGeneralAnnouncement, setIsGeneralAnnouncement] = useState(true);
 
-  const announcementsQuery = trpc.announcements.list.useQuery(
-    { organizationId: currentOrganization?.id ?? "" },
-    { enabled: !!currentOrganization?.id }
-  );
+  const queryClient = useQueryClient();
 
-  const createMutation = trpc.announcements.create.useMutation({
+  const announcementsQuery = useQuery({
+    queryKey: ['announcements', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('announcements')
+        .select('*, ministries(name)')
+        .eq('organization_id', currentOrganization.id)
+        .order('is_pinned', { ascending: false })
+        .order('date', { ascending: false });
+      
+      if (error) throw error;
+      
+      return (data || []).map((a: { id: string; organization_id: string; title: string; content: string; author_name: string; author_role: string; author_avatar: string | null; date: string; ministry_id: string | null; priority: string; is_pinned: boolean; ministries: { name: string } | null }) => ({
+        id: a.id,
+        organizationId: a.organization_id,
+        title: a.title,
+        content: a.content,
+        author: a.author_name,
+        authorRole: a.author_role,
+        authorAvatar: a.author_avatar || '',
+        date: a.date,
+        ministryId: a.ministry_id || undefined,
+        ministryName: a.ministries?.name || undefined,
+        priority: a.priority as 'high' | 'normal' | 'low',
+        isPinned: a.is_pinned,
+      })) as Announcement[];
+    },
+    enabled: !!currentOrganization?.id,
+  });
+
+  const createMutation = useMutation({
+    mutationFn: async (data: { organizationId: string; title: string; content: string; priority: string; ministryId?: string }) => {
+      if (!user) throw new Error('Not logged in');
+      const { error } = await supabase.from('announcements').insert({
+        organization_id: data.organizationId,
+        title: data.title,
+        content: data.content,
+        priority: data.priority,
+        ministry_id: data.ministryId || null,
+        author_id: user.id,
+        author_name: user.name,
+        author_role: user.role,
+        author_avatar: user.avatar,
+        date: new Date().toISOString(),
+        is_pinned: false,
+      });
+      if (error) throw error;
+    },
     onSuccess: () => {
-      announcementsQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
       setShowCreateModal(false);
       resetCreateForm();
       Alert.alert('Success', 'Announcement created successfully');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
@@ -82,11 +128,13 @@ export default function AnnouncementsScreen() {
     setIsGeneralAnnouncement(true);
   };
 
+  const { refetch: refetchAnnouncements } = announcementsQuery;
+
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await announcementsQuery.refetch();
+    await refetchAnnouncements();
     setRefreshing(false);
-  }, [announcementsQuery]);
+  }, [refetchAnnouncements]);
 
   const filteredAnnouncements = React.useMemo(() => {
     let result = announcementsQuery.data || [];

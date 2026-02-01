@@ -26,9 +26,11 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 import React, { useState } from "react";
 import { MinistryLegend, MinistryDots } from "@/components/MinistryIndicators";
+import { Ministry } from "@/types";
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -72,13 +74,34 @@ export default function ProfileScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const ministriesQuery = trpc.ministries.list.useQuery(
-    { organizationId: currentOrganization?.id ?? "" },
-    { enabled: !!currentOrganization?.id }
-  );
+  const ministriesQuery = useQuery({
+    queryKey: ['ministries', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*')
+        .eq('organization_id', currentOrganization.id)
+        .order('name');
+      
+      if (error) throw error;
+      
+      return (data || []).map((m: { id: string; organization_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
+        id: m.id,
+        organizationId: m.organization_id,
+        name: m.name,
+        description: m.description || '',
+        color: m.color,
+        icon: m.icon,
+        memberCount: m.member_count,
+        image: m.image || '',
+      })) as Ministry[];
+    },
+    enabled: !!currentOrganization?.id,
+  });
   const ministries = ministriesQuery.data || [];
 
-  const userMinistries = ministries.filter((m) => user?.ministries.includes(m.id));
+  const userMinistries = ministries.filter((m: Ministry) => user?.ministries.includes(m.id));
 
   const handleLogout = () => {
     if (Platform.OS === "web") {

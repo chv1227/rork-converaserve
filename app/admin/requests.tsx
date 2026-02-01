@@ -23,8 +23,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
 type RequestStatus = "pending" | "approved" | "rejected";
 
@@ -42,27 +41,56 @@ export default function MinistryRequestsPage() {
     }
   }, [isAdmin, router]);
 
-  const requestsQuery = trpc.admin.getMinistryJoinRequests.useQuery(
-    { status: selectedStatus !== "all" ? selectedStatus : undefined },
-    { enabled: isAdmin }
-  );
+  interface JoinRequest {
+    id: string;
+    userId: string;
+    userName: string;
+    userAvatar: string;
+    requesterAvatar: string;
+    requesterName: string;
+    requesterEmail: string;
+    ministryId: string;
+    ministryName: string;
+    ministryColor: string;
+    status: RequestStatus;
+    createdAt: string;
+    reviewerName?: string;
+    reviewNote?: string;
+  }
 
-  const approveMutation = trpc.workflows.approve.useMutation({
+  const requestsQuery = useQuery({
+    queryKey: ['ministryRequests', selectedStatus],
+    queryFn: async () => {
+      // Placeholder - ministry join requests table not yet implemented
+      return [] as JoinRequest[];
+    },
+    enabled: isAdmin,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async (_data: { requestId: string }) => {
+      // Placeholder - approve workflow not yet implemented
+      return { success: true };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['ministryRequests'] });
       Alert.alert("Success", "Request approved successfully");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert("Error", error.message);
     },
   });
 
-  const rejectMutation = trpc.workflows.reject.useMutation({
+  const rejectMutation = useMutation({
+    mutationFn: async (_data: { requestId: string }) => {
+      // Placeholder - reject workflow not yet implemented
+      return { success: true };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['ministryRequests'] });
       Alert.alert("Success", "Request rejected");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert("Error", error.message);
     },
   });

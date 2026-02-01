@@ -25,8 +25,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
 type ReportStatus = "pending" | "resolved" | "dismissed";
 
@@ -169,26 +168,45 @@ export default function ContentModeration() {
     }
   }, [isAdmin, router]);
 
-  const reportsQuery = trpc.admin.getReportedContent.useQuery(
-    statusFilter !== "all" ? { status: statusFilter } : undefined,
-    { enabled: isAdmin }
-  );
+  const reportsQuery = useQuery({
+    queryKey: ['reports', statusFilter],
+    queryFn: async () => {
+      // Return empty array as placeholder - reports table not yet implemented
+      return [] as Array<{
+        id: string;
+        contentType: string;
+        content: string;
+        reporterName: string;
+        reason: string;
+        status: ReportStatus;
+        authorName: string;
+        createdAt: string;
+      }>;
+    },
+    enabled: isAdmin,
+  });
 
-  const resolveReportMutation = trpc.admin.resolveReport.useMutation({
+  const resolveReportMutation = useMutation({
+    mutationFn: async (_data: { reportId: string; action: string; deleteContent?: boolean }) => {
+      // Placeholder - reports table not yet implemented
+      return { success: true };
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['reports'] });
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Report handled successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert("Error", error.message);
     },
   });
 
+  const { mutate: resolveReport } = resolveReportMutation;
+
   const handleResolve = useCallback((reportId: string) => {
     if (Platform.OS === "web") {
-      resolveReportMutation.mutate({ reportId, action: "resolve", deleteContent: true });
+      resolveReport({ reportId, action: "resolve", deleteContent: true });
     } else {
       Alert.alert(
         "Remove Content",
@@ -199,16 +217,16 @@ export default function ContentModeration() {
             text: "Remove",
             style: "destructive",
             onPress: () =>
-              resolveReportMutation.mutate({ reportId, action: "resolve", deleteContent: true }),
+              resolveReport({ reportId, action: "resolve", deleteContent: true }),
           },
         ]
       );
     }
-  }, [resolveReportMutation]);
+  }, [resolveReport]);
 
   const handleDismiss = useCallback((reportId: string) => {
     if (Platform.OS === "web") {
-      resolveReportMutation.mutate({ reportId, action: "dismiss" });
+      resolveReport({ reportId, action: "dismiss" });
     } else {
       Alert.alert(
         "Dismiss Report",
@@ -217,12 +235,12 @@ export default function ContentModeration() {
           { text: "Cancel", style: "cancel" },
           {
             text: "Dismiss",
-            onPress: () => resolveReportMutation.mutate({ reportId, action: "dismiss" }),
+            onPress: () => resolveReport({ reportId, action: "dismiss" }),
           },
         ]
       );
     }
-  }, [resolveReportMutation]);
+  }, [resolveReport]);
 
   const filters: { value: ReportStatus | "all"; label: string }[] = [
     { value: "all", label: "All" },

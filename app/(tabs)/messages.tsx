@@ -25,9 +25,9 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { Conversation } from "@/types";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
 interface OrgMember {
   id: string;
@@ -48,33 +48,168 @@ export default function MessagesScreen() {
   const [groupName, setGroupName] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
 
-  const conversationsQuery = trpc.messages.getAllUserConversations.useQuery(
-    { organizationId: currentOrganization?.id || "" },
-    {
-      enabled: !!currentOrganization?.id,
-      refetchInterval: 3000,
-    }
-  );
+  const conversationsQuery = useQuery({
+    queryKey: ['conversations', currentOrganization?.id, user?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id || !user?.id) return [];
+      
+      const { data: participantData } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+      
+      const conversationIds = (participantData || []).map((p: { conversation_id: string }) => p.conversation_id);
+      if (conversationIds.length === 0) return [];
+      
+      const { data } = await supabase
+        .from('conversations')
+        .select('*, ministries(color)')
+        .in('id', conversationIds)
+        .eq('organization_id', currentOrganization.id)
+        .eq('is_archived', false)
+        .order('updated_at', { ascending: false });
+      
+      return (data || []).map((c: { id: string; organization_id: string; name: string; avatar: string | null; type: string; ministry_id: string | null; created_by: string; is_archived: boolean; created_at: string; updated_at: string; ministries: { color: string } | null }) => ({
+        id: c.id,
+        organizationId: c.organization_id,
+        name: c.name,
+        avatar: c.avatar || '',
+        lastMessage: '',
+        lastMessageTime: c.updated_at,
+        unreadCount: 0,
+        isGroup: c.type !== 'direct',
+        type: c.type as 'direct' | 'group' | 'ministry',
+        ministryId: c.ministry_id || undefined,
+        ministryColor: c.ministries?.color || undefined,
+        createdBy: c.created_by,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at,
+        isArchived: c.is_archived,
+      })) as Conversation[];
+    },
+    enabled: !!currentOrganization?.id && !!user?.id,
+    refetchInterval: 3000,
+  });
 
-  const membersQuery = trpc.messages.getOrganizationMembers.useQuery(
-    { organizationId: currentOrganization?.id || "" },
-    { enabled: !!currentOrganization?.id && showNewChatModal }
-  );
+  const membersQuery = useQuery({
+    queryKey: ['orgMembers', currentOrganization?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id) return [];
+      const { data } = await supabase
+        .from('memberships')
+        .select('user_id, users(id, name, email, avatar)')
+        .eq('organization_id', currentOrganization.id)
+        .eq('is_active', true);
+      
+      const members: OrgMember[] = [];
+      for (const m of data || []) {
+        const userData = m.users as unknown as { id: string; name: string; email: string; avatar: string | null } | null;
+        if (userData && userData.id !== user?.id) {
+          members.push({
+            id: userData.id,
+            name: userData.name || '',
+            email: userData.email || '',
+            avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=1A7B74&color=fff`,
+          });
+        }
+      }
+      return members;
+    },
+    enabled: !!currentOrganization?.id && showNewChatModal,
+  });
 
-  const createDMmutation = trpc.messages.findOrCreateDirectConversation.useMutation({
+  const createDMmutation = useMutation({
+    mutationFn: async (data: { recipientId: string; recipientName: string; recipientAvatar: string; organizationId: string }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      
+      const { data: existingParticipants } = await supabase
+        .from('conversation_participants')
+        .select('conversation_id')
+        .eq('user_id', user.id);
+      
+      const myConvoIds = (existingParticipants || []).map((p: { conversation_id: string }) => p.conversation_id);
+      
+      if (myConvoIds.length > 0) {
+        const { data: recipientParticipants } = await supabase
+          .from('conversation_participants')
+          .select('conversation_id')
+          .eq('user_id', data.recipientId)
+          .in('conversation_id', myConvoIds);
+        
+        const sharedConvoIds = (recipientParticipants || []).map((p: { conversation_id: string }) => p.conversation_id);
+        
+        if (sharedConvoIds.length > 0) {
+          const { data: existingDM } = await supabase
+            .from('conversations')
+            .select('*')
+            .in('id', sharedConvoIds)
+            .eq('type', 'direct')
+            .limit(1)
+            .single();
+          
+          if (existingDM) return { id: existingDM.id };
+        }
+      }
+      
+      const { data: newConvo, error } = await supabase
+        .from('conversations')
+        .insert({
+          organization_id: data.organizationId,
+          name: data.recipientName,
+          avatar: data.recipientAvatar,
+          type: 'direct',
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      await supabase.from('conversation_participants').insert([
+        { conversation_id: newConvo.id, user_id: user.id },
+        { conversation_id: newConvo.id, user_id: data.recipientId },
+      ]);
+      
+      return { id: newConvo.id };
+    },
     onSuccess: (conversation) => {
       console.log("DM created/found:", conversation.id);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setShowNewChatModal(false);
       setSelectedMembers([]);
       router.push(`/chat/${conversation.id}` as Href);
     },
   });
 
-  const createGroupMutation = trpc.messages.createGroupConversation.useMutation({
+  const createGroupMutation = useMutation({
+    mutationFn: async (data: { name: string; memberIds: string[]; organizationId: string }) => {
+      if (!user?.id) throw new Error('Not logged in');
+      
+      const { data: newConvo, error } = await supabase
+        .from('conversations')
+        .insert({
+          organization_id: data.organizationId,
+          name: data.name,
+          type: 'group',
+          created_by: user.id,
+        })
+        .select()
+        .single();
+      
+      if (error) throw error;
+      
+      const participants = [user.id, ...data.memberIds].map(userId => ({
+        conversation_id: newConvo.id,
+        user_id: userId,
+      }));
+      
+      await supabase.from('conversation_participants').insert(participants);
+      
+      return { id: newConvo.id };
+    },
     onSuccess: (conversation) => {
       console.log("Group created:", conversation.id);
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setShowNewChatModal(false);
       setSelectedMembers([]);
       setGroupName("");
@@ -107,9 +242,11 @@ export default function MessagesScreen() {
     );
   }, [membersQuery.data, memberSearch]);
 
+  const { refetch: refetchConversations } = conversationsQuery;
+  
   const onRefresh = useCallback(() => {
-    conversationsQuery.refetch();
-  }, [conversationsQuery]);
+    refetchConversations();
+  }, [refetchConversations]);
 
   const handleStartDM = (member: OrgMember) => {
     if (!currentOrganization?.id) return;
