@@ -94,16 +94,58 @@ export default function CreateChurchScreen() {
   const [showOptionalFields, setShowOptionalFields] = useState(false);
   const [showSocialLinks, setShowSocialLinks] = useState(false);
 
-  const createChurchMutation = trpc.churches.create.useMutation({
+  const createChurchMutation = useMutation({
+    mutationFn: async (data: {
+      name: string;
+      denomination?: string;
+      description: string;
+      address: string;
+      city: string;
+      state: string;
+      zip: string;
+      country: string;
+      email: string;
+      phone: string;
+      website?: string;
+      logo?: string;
+      bannerImage?: string;
+      socialLinks?: { facebook?: string; instagram?: string; twitter?: string; youtube?: string };
+    }) => {
+      const { data: church, error } = await supabase
+        .from('churches')
+        .insert({
+          name: data.name,
+          description: data.description,
+          denomination: data.denomination || null,
+          address_line1: data.address,
+          city: data.city,
+          state: data.state,
+          postal_code: data.zip,
+          country: data.country,
+          contact_email: data.email,
+          contact_phone: data.phone,
+          website: data.website || null,
+          logo_url: data.logo || null,
+          banner_url: data.bannerImage || null,
+          settings: data.socialLinks ? { socialLinks: data.socialLinks } : {},
+          status: 'active',
+        } as never)
+        .select()
+        .single();
+      
+      if (error) throw error;
+      const churchData = church as { name: string } | null;
+      return { church: churchData };
+    },
     onSuccess: (data) => {
-      console.log('Church created successfully:', data.church.name);
+      console.log('Church created successfully:', data.church?.name);
       Alert.alert(
         'Success!', 
-        `${data.church.name} has been created. You are now the administrator.`,
+        `${data.church?.name} has been created. You are now the administrator.`,
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       const errorMessage = error.message || 'Failed to create church';
       console.error('Create church error:', errorMessage);
       Alert.alert('Error', errorMessage);

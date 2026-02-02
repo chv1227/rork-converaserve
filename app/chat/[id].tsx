@@ -38,18 +38,32 @@ export default function ChatScreen() {
       if (!id) return null;
       const { data, error } = await supabase
         .from('conversations')
-        .select('*')
+        .select('*, ministries(color)')
         .eq('id', id)
         .single();
       
       if (error) throw error;
+      
+      const convData = data as { id: string; name: string; avatar: string | null; type: string; ministries: { color: string | null } | null } | null;
+      if (!convData) return null;
+      
+      const { data: participants } = await supabase
+        .from('conversation_participants')
+        .select('user_id')
+        .eq('conversation_id', id);
+      
+      const participantIds = (participants || []).map((p: { user_id: string }) => p.user_id);
+      
       return {
-        id: data.id,
-        name: data.name,
-        avatar: data.avatar,
-        type: data.type,
-        isGroup: data.type !== 'direct',
+        id: convData.id,
+        name: convData.name,
+        avatar: convData.avatar,
+        type: convData.type,
+        isGroup: convData.type !== 'direct',
         unreadCount: 0,
+        ministryColor: convData.ministries?.color || null,
+        participantIds,
+        members: participantIds,
       };
     },
     enabled: !!id,
@@ -91,12 +105,12 @@ export default function ChatScreen() {
         content: data.content,
         sender_id: user.id,
         message_type: 'text',
-      });
+      } as never);
       if (error) throw error;
       
       await supabase.from('conversations').update({
         updated_at: new Date().toISOString(),
-      }).eq('id', data.conversationId);
+      } as never).eq('id', data.conversationId);
     },
     onMutate: async ({ content }: { content: string }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', id] });
@@ -146,7 +160,7 @@ export default function ChatScreen() {
       if (!user?.id) return;
       await supabase.from('conversation_participants').update({
         last_read_at: new Date().toISOString(),
-      }).eq('conversation_id', data.conversationId).eq('user_id', user.id);
+      } as never).eq('conversation_id', data.conversationId).eq('user_id', user.id);
     },
   });
 
@@ -220,7 +234,7 @@ export default function ChatScreen() {
             style={[
               styles.messageBubble,
               isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
-              { backgroundColor: isOwn ? (conversation?.ministryColor || Colors.primary) : Colors.surfaceSecondary },
+              { backgroundColor: isOwn ? (conversation?.ministryColor ?? Colors.primary) : Colors.surfaceSecondary },
               isTemp && styles.messageBubbleTemp,
             ]}
           >
@@ -276,7 +290,7 @@ export default function ChatScreen() {
     );
   }
 
-  const headerColor = conversation.ministryColor || Colors.primary;
+  const headerColor = conversation.ministryColor ?? Colors.primary;
 
   return (
     <KeyboardAvoidingView
@@ -304,7 +318,7 @@ export default function ChatScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.headerContent} activeOpacity={0.8}>
-          <Image source={{ uri: conversation.avatar }} style={styles.headerAvatar} />
+          <Image source={{ uri: conversation.avatar || undefined }} style={styles.headerAvatar} />
           <View style={styles.headerInfo}>
             <Text style={styles.headerTitle} numberOfLines={1}>
               {conversation.name}
@@ -314,7 +328,7 @@ export default function ChatScreen() {
                 <>
                   <Users size={12} color="rgba(255,255,255,0.8)" />
                   <Text style={styles.headerSubtitle}>
-                    {conversation.members?.length || conversation.participantIds?.length || 0} members
+                    {conversation.members?.length ?? conversation.participantIds?.length ?? 0} members
                   </Text>
                 </>
               ) : (

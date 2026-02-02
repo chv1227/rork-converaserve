@@ -95,18 +95,15 @@ export default function AnnouncementsScreen() {
     mutationFn: async (data: { organizationId: string; title: string; content: string; priority: string; ministryId?: string }) => {
       if (!user) throw new Error('Not logged in');
       const { error } = await supabase.from('announcements').insert({
-        organization_id: data.organizationId,
+        church_id: data.organizationId,
         title: data.title,
         content: data.content,
-        priority: data.priority,
+        priority: data.priority as 'low' | 'normal' | 'high',
         ministry_id: data.ministryId || null,
-        author_id: user.id,
-        author_name: user.name,
-        author_role: user.role,
-        author_avatar: user.avatar,
-        date: new Date().toISOString(),
+        created_by_profile_id: user.id,
+        status: 'published' as const,
         is_pinned: false,
-      });
+      } as never);
       if (error) throw error;
     },
     onSuccess: () => {

@@ -1177,15 +1177,44 @@ export type Database = {
           id: string;
           conversation_id: string;
           user_id: string;
+          last_read_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           conversation_id: string;
           user_id: string;
+          last_read_at?: string | null;
           created_at?: string;
         };
-        Update: never;
+        Update: {
+          last_read_at?: string | null;
+        };
+      };
+      messages: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          message_type: string;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          sender_id: string;
+          content: string;
+          message_type?: string;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          content?: string;
+          message_type?: string;
+          updated_at?: string;
+        };
       };
     };
     Functions: {

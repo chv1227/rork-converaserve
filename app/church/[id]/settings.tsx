@@ -35,7 +35,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
+import { supabase } from '@/lib/supabase';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 
 export default function ChurchSettingsScreen() {
   const router = useRouter();
@@ -68,62 +69,185 @@ export default function ChurchSettingsScreen() {
     donations: true,
   });
 
-  const churchQuery = trpc.churches.getById.useQuery(
-    { id: id || '' },
-    { enabled: !!id }
-  );
+  const queryClient = useQueryClient();
 
-  const membershipQuery = trpc.churches.getMembership.useQuery(
-    { churchId: id || '' },
-    { enabled: !!id && isAuthenticated }
-  );
+  const churchQuery = useQuery({
+    queryKey: ['church', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('churches')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      const churchData = data as { id: string; name: string; description: string | null; contact_email: string | null; contact_phone: string | null; website: string | null; logo_url: string | null } | null;
+      if (!churchData) return null;
+      return {
+        id: churchData.id,
+        name: churchData.name,
+        description: churchData.description,
+        email: churchData.contact_email,
+        phone: churchData.contact_phone,
+        website: churchData.website,
+        logo: churchData.logo_url,
+      };
+    },
+    enabled: !!id,
+  });
 
-  const settingsQuery = trpc.churches.getSettings.useQuery(
-    { churchId: id || '' },
-    { enabled: !!id && isAuthenticated && (membershipQuery.data?.role === 'super_admin' || membershipQuery.data?.role === 'admin') }
-  );
+  const membershipQuery = useQuery({
+    queryKey: ['church-membership', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('user_church_roles')
+        .select('*')
+        .eq('church_id', id)
+        .eq('user_id', currentUserId || '')
+        .single();
+      if (error && error.code !== 'PGRST116') throw error;
+      const roleData = data as { role: string } | null;
+      return roleData ? { role: roleData.role } : null;
+    },
+    enabled: !!id && isAuthenticated,
+  });
 
-  const membersQuery = trpc.churches.getMembers.useQuery(
-    { churchId: id || '' },
-    { enabled: !!id && isAuthenticated && activeTab === 'members' }
-  );
+  const settingsQuery = useQuery({
+    queryKey: ['church-settings', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('tenant_settings')
+        .select('*')
+        .eq('church_id', id);
+      if (error) throw error;
+      const settings = data?.reduce((acc: Record<string, unknown>, s: { key: string; value: Record<string, unknown> }) => {
+        acc[s.key] = s.value;
+        return acc;
+      }, {}) || {};
+      const modulesData = settings.modules as { events?: boolean; announcements?: boolean; donations?: boolean; media?: boolean; ministries?: boolean; messaging?: boolean } | undefined;
+      const notifData = settings.notifications as { newMembers?: boolean; events?: boolean; announcements?: boolean; donations?: boolean } | undefined;
+      return {
+        visibility: ((settings.visibility as { value?: string })?.value || 'public') as 'public' | 'private',
+        modulesEnabled: {
+          events: modulesData?.events ?? true,
+          announcements: modulesData?.announcements ?? true,
+          donations: modulesData?.donations ?? true,
+          media: modulesData?.media ?? true,
+          ministries: modulesData?.ministries ?? true,
+          messaging: modulesData?.messaging ?? true,
+        },
+        notificationPreferences: {
+          newMembers: notifData?.newMembers ?? true,
+          events: notifData?.events ?? true,
+          announcements: notifData?.announcements ?? true,
+          donations: notifData?.donations ?? true,
+        },
+      };
+    },
+    enabled: !!id && isAuthenticated && (membershipQuery.data?.role === 'super_admin' || membershipQuery.data?.role === 'admin'),
+  });
 
-  const updateChurchMutation = trpc.churches.update.useMutation({
+  const membersQuery = useQuery({
+    queryKey: ['church-members', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from('user_church_roles')
+        .select('*, users(id, full_name, email)')
+        .eq('church_id', id)
+        .eq('is_active', true);
+      if (error) throw error;
+      return (data || []).map((m: { id: string; user_id: string; role: string; users: { id: string; full_name: string | null; email: string } | null }) => ({
+        id: m.id,
+        userId: m.user_id,
+        name: m.users?.full_name || 'Unknown',
+        email: m.users?.email || '',
+        role: m.role,
+      }));
+    },
+    enabled: !!id && isAuthenticated && activeTab === 'members',
+  });
+
+  const updateChurchMutation = useMutation({
+    mutationFn: async (data: { id: string; name?: string; description?: string; email?: string; phone?: string; website?: string; logo?: string }) => {
+      const { error } = await supabase
+        .from('churches')
+        .update({
+          name: data.name,
+          description: data.description,
+          contact_email: data.email,
+          contact_phone: data.phone,
+          website: data.website,
+          logo_url: data.logo,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq('id', data.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       Alert.alert('Success', 'Church profile updated successfully');
-      churchQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['church', id] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update church');
     },
   });
 
-  const updateSettingsMutation = trpc.churches.updateSettings.useMutation({
+  const updateSettingsMutation = useMutation({
+    mutationFn: async (data: { churchId: string; visibility: string; modulesEnabled: typeof modulesEnabled; notificationPreferences: typeof notificationPreferences }) => {
+      const updates = [
+        { church_id: data.churchId, key: 'visibility', value: { value: data.visibility } },
+        { church_id: data.churchId, key: 'modules', value: data.modulesEnabled },
+        { church_id: data.churchId, key: 'notifications', value: data.notificationPreferences },
+      ];
+      for (const update of updates) {
+        const { error } = await supabase
+          .from('tenant_settings')
+          .upsert(update as never, { onConflict: 'church_id,key' });
+        if (error) throw error;
+      }
+    },
     onSuccess: () => {
       Alert.alert('Success', 'Settings updated successfully');
-      settingsQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['church-settings', id] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update settings');
     },
   });
 
-  const updateMemberRoleMutation = trpc.churches.updateMemberRole.useMutation({
+  const updateMemberRoleMutation = useMutation({
+    mutationFn: async (data: { membershipId: string; churchId: string; role: string }) => {
+      const { error } = await supabase
+        .from('user_church_roles')
+        .update({ role: data.role, updated_at: new Date().toISOString() } as never)
+        .eq('id', data.membershipId);
+      if (error) throw error;
+    },
     onSuccess: () => {
       Alert.alert('Success', 'Member role updated');
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['church-members', id] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to update role');
     },
   });
 
-  const removeMemberMutation = trpc.churches.removeMember.useMutation({
+  const removeMemberMutation = useMutation({
+    mutationFn: async (data: { membershipId: string; churchId: string }) => {
+      const { error } = await supabase
+        .from('user_church_roles')
+        .update({ is_active: false, updated_at: new Date().toISOString() } as never)
+        .eq('id', data.membershipId);
+      if (error) throw error;
+    },
     onSuccess: () => {
       Alert.alert('Success', 'Member removed');
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['church-members', id] });
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message || 'Failed to remove member');
     },
   });
@@ -293,7 +417,7 @@ export default function ChurchSettingsScreen() {
           <View style={styles.churchDetails}>
             <Text style={styles.churchName}>{churchQuery.data?.name}</Text>
             <Text style={styles.churchRole}>
-              {membershipQuery.data?.role?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+              {membershipQuery.data?.role?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
             </Text>
           </View>
         </View>
@@ -675,7 +799,7 @@ export default function ChurchSettingsScreen() {
                         <View style={styles.memberDetails}>
                           <Text style={styles.memberName}>{member.name}</Text>
                           <Text style={styles.memberRole}>
-                            {member.role?.replace('_', ' ').replace(/\b\w/g, l => l.toUpperCase())}
+                            {member.role?.replace('_', ' ').replace(/\b\w/g, (l: string) => l.toUpperCase())}
                           </Text>
                         </View>
                       </View>

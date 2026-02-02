@@ -126,76 +126,177 @@ export default function ChurchManagementScreen() {
   const orgId = currentOrganization?.id || '';
   const canManage = isSuperAdmin || isOrganizationSuperAdmin;
 
-  const membersQuery = trpc.organizations.getMembers.useQuery(
-    { organizationId: orgId },
-    { enabled: !!orgId && canManage }
-  );
-
-  const pendingQuery = trpc.organizations.getJoinRequests.useQuery(
-    { organizationId: orgId, status: 'pending' },
-    { enabled: !!orgId && canManage }
-  );
-
-  const ministriesQuery = trpc.ministries.list.useQuery({
-    organizationId: orgId,
+  const membersQuery = useQuery({
+    queryKey: ['organization-members', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('*, users(id, full_name, email, avatar_url)')
+        .eq('organization_id', orgId)
+        .eq('is_active', true);
+      
+      if (error) throw error;
+      return (data || []).map((m: { id: string; user_id: string; role: string; created_at: string; users: { id: string; full_name: string | null; email: string; avatar_url: string | null } | null }) => ({
+        id: m.id,
+        oderId: m.user_id,
+        userId: m.user_id,
+        name: m.users?.full_name || 'Unknown',
+        email: m.users?.email || '',
+        avatar: m.users?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.users?.full_name || 'U')}&background=1A7B74&color=fff`,
+        role: m.role as OrganizationRole,
+        joinedAt: m.created_at,
+        isActive: true,
+      })) as OrganizationMember[];
+    },
+    enabled: !!orgId && canManage,
   });
 
-  const approveMutation = trpc.organizations.approveJoinRequest.useMutation({
+  const pendingQuery = useQuery({
+    queryKey: ['organization-pending', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('*, users(id, full_name, email, avatar_url)')
+        .eq('organization_id', orgId)
+        .eq('is_active', false);
+      
+      if (error) throw error;
+      return (data || []).map((m: { id: string; user_id: string; users: { id: string; full_name: string | null; email: string; avatar_url: string | null } | null }) => ({
+        id: m.id,
+        requesterId: m.user_id,
+        requesterName: m.users?.full_name || 'Unknown',
+        requesterEmail: m.users?.email || '',
+        requesterAvatar: m.users?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.users?.full_name || 'U')}&background=1A7B74&color=fff`,
+      }));
+    },
+    enabled: !!orgId && canManage,
+  });
+
+  const ministriesQuery = useQuery({
+    queryKey: ['organization-ministries', orgId],
+    queryFn: async () => {
+      if (!orgId) return [];
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*, ministry_members(id)')
+        .eq('church_id', orgId)
+        .eq('status', 'active');
+      
+      if (error) throw error;
+      return (data || []).map((m: { id: string; name: string; description: string | null; color: string | null; icon: string | null; image_url: string | null; ministry_members: { id: string }[] | null }) => ({
+        id: m.id,
+        name: m.name,
+        description: m.description || '',
+        color: m.color,
+        icon: m.icon,
+        image: m.image_url,
+        memberCount: m.ministry_members?.length || 0,
+      })) as Ministry[];
+    },
+    enabled: !!orgId,
+  });
+
+  const approveMutation = useMutation({
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .update({ is_active: true, updated_at: new Date().toISOString() } as never)
+        .eq('id', requestId);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      pendingQuery.refetch();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['organization-pending', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member request approved');
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const rejectMutation = trpc.organizations.rejectJoinRequest.useMutation({
+  const rejectMutation = useMutation({
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', requestId);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      pendingQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['organization-pending', orgId] });
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member request rejected');
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateRoleMutation = trpc.organizations.updateMemberRole.useMutation({
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ membershipId, role }: { membershipId: string; role: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .update({ role, updated_at: new Date().toISOString() } as never)
+        .eq('id', membershipId);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
       setShowRoleModal(false);
       setSelectedMember(null);
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member role updated');
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const removeMutation = trpc.organizations.removeMember.useMutation({
+  const removeMutation = useMutation({
+    mutationFn: async ({ membershipId }: { membershipId: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', membershipId);
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['organization-members', orgId] });
       if (Platform.OS !== 'web') {
         Alert.alert('Success', 'Member removed');
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateChurchMutation = trpc.organizations.update.useMutation({
+  const updateChurchMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; description: string; address?: string; phone?: string; email?: string; website?: string; logo?: string }) => {
+      const { data: updatedOrg, error } = await supabase
+        .from('organizations')
+        .update({
+          name: data.name,
+          description: data.description,
+          address: data.address || null,
+          phone: data.phone || null,
+          email: data.email || null,
+          website: data.website || null,
+          logo: data.logo || null,
+          updated_at: new Date().toISOString(),
+        } as never)
+        .eq('id', data.id)
+        .select()
+        .single();
+      if (error) throw error;
+      return updatedOrg as unknown as typeof currentOrganization;
+    },
     onSuccess: async (updatedOrg) => {
       console.log('Organization updated successfully:', updatedOrg?.name);
       if (updatedOrg) {
@@ -203,7 +304,7 @@ export default function ChurchManagementScreen() {
       }
       Alert.alert('Success', 'Church profile updated!');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Update organization error:', error.message);
       Alert.alert('Error', error.message || 'Failed to update church profile');
     },
