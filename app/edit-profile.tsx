@@ -18,8 +18,9 @@ import { ArrowLeft, Camera, User, Phone, Mail, Users, Check, ImageIcon, X } from
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
 import { Ministry } from "@/types";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { getMinistryColor } from "@/constants/ministryColors";
 import {
   pickImageFromCamera,
@@ -52,10 +53,18 @@ export default function EditProfileScreen() {
   const [showPreviewModal, setShowPreviewModal] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
 
-  const ministriesQuery = trpc.ministries.list.useQuery(
-    { organizationId: "" },
-    { enabled: false }
-  );
+  const ministriesQuery = useQuery({
+    queryKey: ['ministries'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*')
+        .eq('status', 'active');
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: false,
+  });
   const availableMinistries: Ministry[] = ministriesQuery.data || [];
 
   useEffect(() => {
@@ -72,14 +81,30 @@ export default function EditProfileScreen() {
     );
   };
 
-  const updateProfileMutation = trpc.auth.updateProfile.useMutation({
-    onSuccess: async (updatedUser) => {
-      console.log("Profile updated successfully:", updatedUser.name);
+  const updateProfileMutation = useMutation({
+    mutationFn: async (data: { name: string; phone?: string; avatar?: string; ministries: string[] }) => {
+      if (!user) throw new Error('Not authenticated');
+      
+      const { error } = await supabase
+        .from('users')
+        .update({
+          full_name: data.name,
+          phone: data.phone,
+          avatar_url: data.avatar,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', user.id);
+      
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: async (updatedData) => {
+      console.log("Profile updated successfully:", updatedData.name);
       await updateUser({
-        name: updatedUser.name,
-        phone: updatedUser.phone,
-        avatar: updatedUser.avatar,
-        ministries: updatedUser.ministries,
+        name: updatedData.name,
+        phone: updatedData.phone,
+        avatar: updatedData.avatar,
+        ministries: updatedData.ministries,
       });
       
       if (Platform.OS === "web") {
@@ -89,7 +114,7 @@ export default function EditProfileScreen() {
       }
       router.back();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error updating profile:", error);
       if (Platform.OS === "web") {
         alert(error.message || "Failed to update profile");
