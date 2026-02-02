@@ -23,7 +23,6 @@ import {
 } from "lucide-react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/providers/AuthProvider";
 import { VocalPart, AudioPart } from "@/types";
 

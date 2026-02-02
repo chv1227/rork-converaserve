@@ -29,7 +29,6 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
 import { useQueryClient } from '@tanstack/react-query';
 import { OrganizationRole } from '@/types';
 

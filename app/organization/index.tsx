@@ -14,7 +14,6 @@ import { useRouter } from 'expo-router';
 import { Building2, Plus, ChevronRight, Users, CheckCircle, ArrowLeft, Shield } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
 import { Organization, OrganizationRole } from '@/types';
 
 type OrgWithRole = Organization & { role: OrganizationRole; joinedAt: string };

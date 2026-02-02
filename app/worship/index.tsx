@@ -16,7 +16,6 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href, Stack } from "expo-router";
 import { Music, Play, Settings, Clock, Mic2, ArrowLeft, Search, X } from "lucide-react-native";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/providers/AuthProvider";
 import { Song } from "@/types";
 

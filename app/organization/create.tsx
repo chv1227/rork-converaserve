@@ -17,7 +17,6 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Mail, Lock, Eye, EyeOff, User, Phone, LogIn, UserPlus, X, Send, RefreshCw } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
 
 export default function CreateOrganizationScreen() {
   const router = useRouter();

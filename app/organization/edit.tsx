@@ -17,7 +17,6 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Camera, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
 
 const LOGO_OPTIONS = [
   'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=200&h=200&fit=crop',

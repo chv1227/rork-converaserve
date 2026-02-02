@@ -41,7 +41,6 @@ import {
   Bell,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient } from "@tanstack/react-query";
 import DiscussionCard from "@/components/DiscussionCard";

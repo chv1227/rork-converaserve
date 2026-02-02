@@ -48,7 +48,6 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { trpc } from "@/lib/trpc";
 import { Ministry } from "@/types";
 import { getMinistryColor } from "@/constants/ministryColors";
 
