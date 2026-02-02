@@ -42,7 +42,7 @@ export default function ChurchesManagementScreen() {
   const { user, isSuperAdmin } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const userChurchesQuery = useQuery({
+  const userChurchesQuery = useQuery<Array<ChurchType & { role: ChurchRole; joinedAt: string }>>({
     queryKey: ['churches', 'user', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -76,8 +76,16 @@ export default function ChurchesManagementScreen() {
 
       if (error) throw error;
       
-      return data?.map(membership => ({
-        ...(membership.churches as any),
+      type MembershipRow = {
+        id: string;
+        role: ChurchRole;
+        joined_at: string;
+        is_active: boolean;
+        churches: ChurchType | null;
+      };
+      
+      return (data as MembershipRow[] | null)?.map(membership => ({
+        ...(membership.churches as ChurchType),
         role: membership.role,
         joinedAt: membership.joined_at,
       })) || [];

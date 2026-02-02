@@ -652,7 +652,7 @@ export default function GroupDetailScreen() {
         </View>
       ) : (
         <View style={styles.eventsListContainer}>
-          {events.slice(0, 3).map((event, index) => (
+          {events.slice(0, 3).map((event: { id: string; title: string; date: string; time: string; location: string; attendees: number }, index: number) => (
             <TouchableOpacity 
               key={event.id} 
               style={[

@@ -97,7 +97,7 @@ export default function ChatScreen() {
     refetchInterval: 2000,
   });
 
-  const sendMessageMutation = useMutation({
+  const sendMessageMutation = useMutation<void, Error, { conversationId: string; content: string }, { previousMessages: unknown }>({
     mutationFn: async (data: { conversationId: string; content: string }) => {
       if (!user?.id) throw new Error('Not logged in');
       const { error } = await supabase.from('messages').insert({
@@ -112,7 +112,7 @@ export default function ChatScreen() {
         updated_at: new Date().toISOString(),
       } as never).eq('id', data.conversationId);
     },
-    onMutate: async ({ content }: { content: string }) => {
+    onMutate: async ({ content }) => {
       await queryClient.cancelQueries({ queryKey: ['messages', id] });
       
       const previousMessages = queryClient.getQueryData(['messages', id]);
@@ -147,7 +147,7 @@ export default function ChatScreen() {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
     },
-    onError: (error: Error, _variables: { conversationId: string; content: string }, context: { previousMessages: unknown } | undefined) => {
+    onError: (error: Error, _variables, context) => {
       console.error("Failed to send message:", error);
       if (context?.previousMessages) {
         queryClient.setQueryData(['messages', id], context.previousMessages);
