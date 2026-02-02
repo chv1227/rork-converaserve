@@ -25,7 +25,8 @@ import {
 } from "lucide-react-native";
 import { useQueryClient } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
 import { Song } from "@/types";
 
@@ -108,10 +109,38 @@ export default function ManageSongsScreen() {
   const [newDuration, setNewDuration] = useState("");
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  const songsQuery = trpc.songs.list.useQuery();
+  const songsQuery = useQuery({
+    queryKey: ['songs'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('songs')
+        .select('*')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map(s => ({
+        id: s.id,
+        title: s.title,
+        artist: s.artist,
+        duration: s.duration,
+        coverImage: s.cover_image,
+        audioUrl: s.audio_url,
+      }));
+    },
+  });
   const songs = songsQuery.data || [];
 
-  const createMutation = trpc.songs.create.useMutation({
+  const createMutation = useMutation({
+    mutationFn: async (data: { title: string; artist: string; duration: number; audioUrl: string }) => {
+      const { error } = await supabase
+        .from('songs')
+        .insert({
+          title: data.title,
+          artist: data.artist,
+          duration: data.duration,
+          audio_url: data.audioUrl,
+        });
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Song created successfully");
       queryClient.invalidateQueries();
@@ -124,7 +153,14 @@ export default function ManageSongsScreen() {
     },
   });
 
-  const deleteMutation = trpc.songs.delete.useMutation({
+  const deleteMutation = useMutation({
+    mutationFn: async (data: { id: string }) => {
+      const { error } = await supabase
+        .from('songs')
+        .delete()
+        .eq('id', data.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Song deleted successfully");
       queryClient.invalidateQueries();

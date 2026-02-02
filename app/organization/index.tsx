@@ -15,6 +15,8 @@ import { Building2, Plus, ChevronRight, Users, CheckCircle, ArrowLeft, Shield } 
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { Organization, OrganizationRole } from '@/types';
+import { supabase } from '@/lib/supabase';
+import { useQuery } from '@tanstack/react-query';
 
 type OrgWithRole = Organization & { role: OrganizationRole; joinedAt: string };
 
@@ -24,7 +26,38 @@ export default function OrganizationSelectScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [orgsWithRoles, setOrgsWithRoles] = useState<OrgWithRole[]>([]);
 
-  const userOrgsQuery = trpc.organizations.getUserOrganizations.useQuery(undefined, {
+  const userOrgsQuery = useQuery({
+    queryKey: ['user-organizations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('church_memberships')
+        .select(`
+          id,
+          role,
+          joined_at,
+          churches (
+            id,
+            name,
+            description,
+            logo_url,
+            address,
+            phone,
+            email,
+            website,
+            created_at,
+            updated_at
+          )
+        `);
+      if (error) throw error;
+      return (data || []).map((m: any) => ({
+        ...m.churches,
+        logo: m.churches.logo_url,
+        createdAt: m.churches.created_at,
+        updatedAt: m.churches.updated_at,
+        role: m.role,
+        joinedAt: m.joined_at,
+      }));
+    },
     enabled: isAuthenticated,
   });
 

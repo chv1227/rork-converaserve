@@ -21,7 +21,8 @@ import {
   ChevronUp,
   ArrowLeft,
 } from "lucide-react-native";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { VocalPart, AudioPart } from "@/types";
@@ -54,10 +55,54 @@ export default function EditSongScreen() {
 
   const [lyricsText, setLyricsText] = useState("");
 
-  const songQuery = trpc.songs.getSongWithDetails.useQuery(
-    { songId: songId || "" },
-    { enabled: !!songId }
-  );
+  const songQuery = useQuery({
+    queryKey: ['song', songId],
+    queryFn: async () => {
+      if (!songId) return null;
+      const { data: song, error: songError } = await supabase
+        .from('songs')
+        .select('*')
+        .eq('id', songId)
+        .single();
+      if (songError) throw songError;
+      
+      const { data: audioParts, error: audioError } = await supabase
+        .from('song_audio_parts')
+        .select('*')
+        .eq('song_id', songId);
+      if (audioError) throw audioError;
+      
+      const { data: lyrics, error: lyricsError } = await supabase
+        .from('song_lyrics')
+        .select('*')
+        .eq('song_id', songId)
+        .order('timestamp_ms', { ascending: true });
+      if (lyricsError) throw lyricsError;
+      
+      return {
+        song: song ? {
+          id: song.id,
+          title: song.title,
+          artist: song.artist,
+          duration: song.duration,
+          coverImage: song.cover_image,
+          audioUrl: song.audio_url,
+        } : null,
+        audioParts: (audioParts || []).map(ap => ({
+          id: ap.id,
+          vocalPart: ap.part_name,
+          audioFileUrl: ap.audio_url,
+        })),
+        lyrics: (lyrics || []).map(l => ({
+          id: l.id,
+          startTime: l.timestamp_ms || 0,
+          endTime: (l.timestamp_ms || 0) + 3000,
+          lineText: l.content,
+        })),
+      };
+    },
+    enabled: !!songId
+  });
 
   const song = songQuery.data?.song;
   const audioParts = useMemo(() => songQuery.data?.audioParts || [], [songQuery.data?.audioParts]);
@@ -81,48 +126,90 @@ export default function EditSongScreen() {
     }
   }, [lyrics]);
 
-  const updateMutation = trpc.songs.update.useMutation({
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; title: string; artist: string; coverImage?: string; duration: number }) => {
+      const { error } = await supabase
+        .from('songs')
+        .update({
+          title: data.title,
+          artist: data.artist,
+          cover_image: data.coverImage,
+          duration: data.duration,
+        })
+        .eq('id', data.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Song updated successfully");
       queryClient.invalidateQueries();
       Alert.alert("Success", "Song details updated successfully");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error updating song:", error);
       Alert.alert("Error", "Failed to update song");
     },
   });
 
-  const addAudioPartMutation = trpc.songs.addAudioPart.useMutation({
+  const addAudioPartMutation = useMutation({
+    mutationFn: async (data: { songId: string; vocalPart: VocalPart; audioUrl: string }) => {
+      const { error } = await supabase
+        .from('song_audio_parts')
+        .insert({
+          song_id: data.songId,
+          part_name: data.vocalPart,
+          audio_url: data.audioUrl,
+        });
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Audio part added successfully");
       queryClient.invalidateQueries();
       setNewAudioUrl("");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error adding audio part:", error);
       Alert.alert("Error", "Failed to add audio part");
     },
   });
 
-  const removeAudioPartMutation = trpc.songs.removeAudioPart.useMutation({
+  const removeAudioPartMutation = useMutation({
+    mutationFn: async (data: { audioPartId: string }) => {
+      const { error } = await supabase
+        .from('song_audio_parts')
+        .delete()
+        .eq('id', data.audioPartId);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Audio part removed successfully");
       queryClient.invalidateQueries();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error removing audio part:", error);
       Alert.alert("Error", "Failed to remove audio part");
     },
   });
 
-  const updateLyricsMutation = trpc.songs.updateAllLyrics.useMutation({
+  const updateLyricsMutation = useMutation({
+    mutationFn: async (data: { songId: string; lyrics: Array<{ startTime: number; endTime: number; lineText: string }> }) => {
+      await supabase.from('song_lyrics').delete().eq('song_id', data.songId);
+      const { error } = await supabase
+        .from('song_lyrics')
+        .insert(
+          data.lyrics.map(l => ({
+            song_id: data.songId,
+            content: l.lineText,
+            timestamp_ms: l.startTime,
+          }))
+        );
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Lyrics updated successfully");
       queryClient.invalidateQueries();
       Alert.alert("Success", "Lyrics saved successfully");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Error updating lyrics:", error);
       Alert.alert("Error", "Failed to save lyrics");
     },

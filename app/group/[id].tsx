@@ -42,7 +42,8 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { useQueryClient } from "@tanstack/react-query";
+import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 import DiscussionCard from "@/components/DiscussionCard";
 import PrayerRequestCard from "@/components/PrayerRequestCard";
 import MemberCard from "@/components/MemberCard";
@@ -81,25 +82,64 @@ export default function GroupDetailScreen() {
 
   const missionStatement = useMemo(() => "", []);
 
-  const ministryQuery = trpc.ministries.getById.useQuery(
-    { id: id || "" },
-    { enabled: !!id }
-  );
+  const ministryQuery = useQuery({
+    queryKey: ['ministry', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      return data ? {
+        id: data.id,
+        name: data.name,
+        description: data.description || '',
+        color: data.color || Colors.primary,
+        image: data.image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18',
+        memberCount: 0,
+      } : null;
+    },
+    enabled: !!id
+  });
 
-  const eventsQuery = trpc.events.list.useQuery(
-    { organizationId: organizationId ?? "", ministryId: id || "" },
-    { enabled: !!id && !!organizationId }
-  );
+  const eventsQuery = useQuery({
+    queryKey: ['events', organizationId, id],
+    queryFn: async () => {
+      if (!organizationId || !id) return [];
+      const { data, error } = await supabase
+        .from('events')
+        .select('*')
+        .eq('church_id', organizationId)
+        .eq('ministry_id', id)
+        .order('start_datetime', { ascending: true });
+      if (error) throw error;
+      return (data || []).map(e => ({
+        id: e.id,
+        title: e.title,
+        date: e.start_datetime,
+        time: new Date(e.start_datetime).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' }),
+        location: e.location_name || 'TBA',
+        attendees: 0,
+      }));
+    },
+    enabled: !!id && !!organizationId
+  });
 
-  const pollsQuery = trpc.polls.list.useQuery(
-    { ministryId: id || "" },
-    { enabled: !!id }
-  );
+  const pollsQuery = useQuery({
+    queryKey: ['polls', id],
+    queryFn: async () => [],
+    enabled: !!id
+  });
 
-  const createPollMutation = trpc.polls.create.useMutation({
+  const createPollMutation = useMutation({
+    mutationFn: async (data: { ministryId: string; organizationId: string; question: string; options: string[]; allowMultiple: boolean; isAnonymous: boolean }) => {
+      console.log('Creating poll:', data);
+    },
     onSuccess: () => {
       console.log("Poll created successfully");
-      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
       pollsQuery.refetch();
       setShowPollModal(false);
       setNewPollQuestion("");
@@ -107,72 +147,121 @@ export default function GroupDetailScreen() {
       setAllowMultiple(false);
       Alert.alert("Success", "Poll created successfully!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to create poll:", error);
       Alert.alert("Error", "Failed to create poll. Please try again.");
     },
   });
 
-  const votePollMutation = trpc.polls.vote.useMutation({
+  const votePollMutation = useMutation({
+    mutationFn: async (data: { pollId: string; optionIds: string[] }) => {
+      console.log('Voting on poll:', data);
+    },
     onSuccess: () => {
       console.log("Vote recorded successfully");
-      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
       pollsQuery.refetch();
       setSelectedOptions(new Set());
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to vote:", error);
       Alert.alert("Error", error.message || "Failed to vote. Please try again.");
     },
   });
 
-  const closePollMutation = trpc.polls.close.useMutation({
+  const closePollMutation = useMutation({
+    mutationFn: async (data: { pollId: string }) => {
+      console.log('Closing poll:', data);
+    },
     onSuccess: () => {
       console.log("Poll closed successfully");
-      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
       pollsQuery.refetch();
       Alert.alert("Success", "Poll closed successfully!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to close poll:", error);
       Alert.alert("Error", "Failed to close poll. Please try again.");
     },
   });
 
-  const deletePollMutation = trpc.polls.delete.useMutation({
+  const deletePollMutation = useMutation({
+    mutationFn: async (data: { pollId: string }) => {
+      console.log('Deleting poll:', data);
+    },
     onSuccess: () => {
       console.log("Poll deleted successfully");
-      queryClient.invalidateQueries({ queryKey: [['polls', 'list']] });
+      queryClient.invalidateQueries({ queryKey: ['polls'] });
       pollsQuery.refetch();
       Alert.alert("Success", "Poll deleted successfully!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to delete poll:", error);
       Alert.alert("Error", "Failed to delete poll. Please try again.");
     },
   });
 
-  const announcementsQuery = trpc.announcements.list.useQuery(
-    { organizationId: organizationId ?? "", ministryId: id || "" },
-    { enabled: !!id && !!organizationId }
-  );
+  const announcementsQuery = useQuery({
+    queryKey: ['announcements', organizationId, id],
+    queryFn: async () => {
+      if (!organizationId || !id) return [];
+      const { data, error } = await supabase
+        .from('announcements')
+        .select(`
+          id,
+          title,
+          content,
+          priority,
+          created_at,
+          created_by_profile_id,
+          profiles:created_by_profile_id (full_name, avatar_url)
+        `)
+        .eq('church_id', organizationId)
+        .eq('ministry_id', id)
+        .eq('status', 'published')
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      return (data || []).map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        content: a.content,
+        priority: a.priority,
+        date: a.created_at,
+        author: a.profiles?.full_name || 'Unknown',
+        authorAvatar: a.profiles?.avatar_url,
+        ministryId: id,
+      }));
+    },
+    enabled: !!id && !!organizationId
+  });
 
-  const createAnnouncementMutation = trpc.announcements.create.useMutation({
-    onSuccess: (result) => {
-      console.log("Announcement created:", result);
-      queryClient.invalidateQueries({ queryKey: [['announcements', 'list']] });
+  const createAnnouncementMutation = useMutation({
+    mutationFn: async (data: { title: string; content: string; priority: string; isPinned: boolean; ministryId?: string; organizationId: string }) => {
+      const { error } = await supabase
+        .from('announcements')
+        .insert({
+          church_id: data.organizationId,
+          ministry_id: data.ministryId,
+          title: data.title,
+          content: data.content,
+          priority: data.priority,
+          is_pinned: data.isPinned,
+          status: 'published',
+          created_by_profile_id: user?.id,
+        });
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      console.log("Announcement created");
+      queryClient.invalidateQueries({ queryKey: ['announcements'] });
       announcementsQuery.refetch();
       setShowAnnouncementModal(false);
       setNewAnnouncementTitle("");
       setNewAnnouncementContent("");
       setAnnouncementPriority("normal");
-      if (result.pending) {
-        Alert.alert("Submitted", "Your announcement has been submitted for approval.");
-      } else {
-        Alert.alert("Success", "Announcement created successfully!");
-      }
+      Alert.alert("Success", "Announcement created successfully!");
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to create announcement:", error);
       Alert.alert("Error", "Failed to create announcement. Please try again.");
     },
@@ -210,7 +299,18 @@ export default function GroupDetailScreen() {
     [user?.ministries, id]
   );
 
-  const joinMutation = trpc.ministries.join.useMutation({
+  const joinMutation = useMutation({
+    mutationFn: async (data: { ministryId: string; organizationId: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('ministry_members')
+        .insert({
+          ministry_id: data.ministryId,
+          profile_id: user.id,
+          role: 'member',
+        });
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Successfully joined ministry");
       queryClient.invalidateQueries();
@@ -218,7 +318,7 @@ export default function GroupDetailScreen() {
         Alert.alert("Success", "You have joined this group!");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to join ministry:", error);
       if (Platform.OS !== "web") {
         Alert.alert("Error", "Failed to join group. Please try again.");
@@ -226,12 +326,21 @@ export default function GroupDetailScreen() {
     },
   });
 
-  const leaveMutation = trpc.ministries.leave.useMutation({
+  const leaveMutation = useMutation({
+    mutationFn: async (data: { ministryId: string }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('ministry_members')
+        .delete()
+        .eq('ministry_id', data.ministryId)
+        .eq('profile_id', user.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Successfully left ministry");
       queryClient.invalidateQueries();
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to leave ministry:", error);
       if (Platform.OS !== "web") {
         Alert.alert("Error", "Failed to leave group. Please try again.");

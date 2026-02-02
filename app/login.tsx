@@ -188,21 +188,15 @@ export default function LoginScreen() {
     setVerifyError("");
 
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.resendVerification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          email: verifyEmail.trim().toLowerCase(),
-        }),
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: verifyEmail.trim().toLowerCase(),
       });
 
-      if (response.ok) {
+      if (!error) {
         setVerificationSent(true);
       } else {
-        const data = await response.json();
-        setVerifyError(data?.error?.message || "Failed to resend verification email");
+        setVerifyError(error.message || "Failed to resend verification email");
       }
     } catch (err) {
       setVerifyError(err instanceof Error ? err.message : "Failed to resend verification email");

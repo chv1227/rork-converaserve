@@ -25,7 +25,8 @@ import {
 import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
 import Colors from "@/constants/colors";
-import { trpc } from "@/lib/trpc";
+import { supabase } from "@/lib/supabase";
+import { useQuery } from "@tanstack/react-query";
 import { VocalPart, LyricLine } from "@/types";
 
 const VOCAL_PARTS: { key: VocalPart; label: string; color: string }[] = [
@@ -60,10 +61,54 @@ export default function PlayerScreen() {
   const lyricPositions = useRef<Record<number, number>>({});
   const pulseAnim = useRef(new Animated.Value(1)).current;
 
-  const songQuery = trpc.songs.getSongWithDetails.useQuery(
-    { songId: songId || "" },
-    { enabled: !!songId }
-  );
+  const songQuery = useQuery({
+    queryKey: ['song', songId],
+    queryFn: async () => {
+      if (!songId) return null;
+      const { data: song, error: songError } = await supabase
+        .from('songs')
+        .select('*')
+        .eq('id', songId)
+        .single();
+      if (songError) throw songError;
+      
+      const { data: audioParts, error: audioError } = await supabase
+        .from('song_audio_parts')
+        .select('*')
+        .eq('song_id', songId);
+      if (audioError) throw audioError;
+      
+      const { data: lyrics, error: lyricsError } = await supabase
+        .from('song_lyrics')
+        .select('*')
+        .eq('song_id', songId)
+        .order('timestamp_ms', { ascending: true });
+      if (lyricsError) throw lyricsError;
+      
+      return {
+        song: song ? {
+          id: song.id,
+          title: song.title,
+          artist: song.artist,
+          duration: song.duration,
+          coverImage: song.cover_image,
+          audioUrl: song.audio_url,
+        } : null,
+        audioParts: (audioParts || []).map(ap => ({
+          id: ap.id,
+          vocalPart: ap.part_name,
+          audioFileUrl: ap.audio_url,
+        })),
+        lyrics: (lyrics || []).map(l => ({
+          id: l.id,
+          startTime: l.timestamp_ms || 0,
+          endTime: (l.timestamp_ms || 0) + 3000,
+          lineText: l.content,
+        })),
+      };
+    },
+    enabled: !!songId
+  });
 
   const song = songQuery.data?.song;
   const audioParts = useMemo(() => songQuery.data?.audioParts || [], [songQuery.data?.audioParts]);

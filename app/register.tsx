@@ -92,25 +92,17 @@ export default function RegisterScreen() {
     setResendSuccess(false);
     
     try {
-      const response = await fetch(`${process.env.EXPO_PUBLIC_RORK_API_BASE_URL || ''}/trpc/auth.resendVerification`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          json: {
-            email: verificationEmail,
-          }
-        }),
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: verificationEmail,
       });
       
-      if (response.ok) {
+      if (!error) {
         console.log("Verification email resent");
         setResendSuccess(true);
       } else {
-        const data = await response.json();
-        console.error("Resend verification error:", data);
-        setResendError(data?.error?.message || "Failed to resend verification email");
+        console.error("Resend verification error:", error);
+        setResendError(error.message || "Failed to resend verification email");
       }
     } catch (err) {
       console.error("Resend error:", err);
