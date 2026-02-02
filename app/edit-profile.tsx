@@ -92,7 +92,7 @@ export default function EditProfileScreen() {
           phone: data.phone,
           avatar_url: data.avatar,
           updated_at: new Date().toISOString(),
-        } as Record<string, unknown>)
+        } as any)
         .eq('id', user.id);
       
       if (error) throw error;

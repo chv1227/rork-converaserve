@@ -42,7 +42,7 @@ export default function ChurchesManagementScreen() {
   const { user, isSuperAdmin } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const userChurchesQuery = useQuery<Array<ChurchType & { role: ChurchRole; joinedAt: string }>>({
+  const userChurchesQuery = useQuery<(ChurchType & { role: ChurchRole; joinedAt: string })[]>({
     queryKey: ['churches', 'user', user?.id],
     queryFn: async () => {
       if (!user?.id) return [];
@@ -81,19 +81,38 @@ export default function ChurchesManagementScreen() {
         role: ChurchRole;
         joined_at: string;
         is_active: boolean;
-        churches: ChurchType | null;
+        churches: any | null;
       };
       
-      return (data as MembershipRow[] | null)?.map(membership => ({
-        ...(membership.churches as ChurchType),
-        role: membership.role,
-        joinedAt: membership.joined_at,
-      })) || [];
+      return (data as MembershipRow[] | null)?.map(membership => {
+        const church = membership.churches;
+        if (!church) return null;
+        return {
+          id: church.id,
+          name: church.name,
+          denomination: church.denomination || '',
+          description: '',
+          address: church.address || '',
+          city: church.city || '',
+          state: church.state || '',
+          zip: church.zip_code || '',
+          country: church.country || '',
+          email: church.email || '',
+          phone: church.phone || '',
+          website: church.website || '',
+          logo: church.logo || '',
+          createdBy: church.created_by,
+          createdAt: church.created_at,
+          updatedAt: church.updated_at || church.created_at,
+          role: membership.role,
+          joinedAt: membership.joined_at,
+        };
+      }).filter((c): c is NonNullable<typeof c> => c !== null) || [];
     },
     enabled: !!user?.id,
   });
 
-  const allChurchesQuery = useQuery({
+  const allChurchesQuery = useQuery<ChurchType[]>({
     queryKey: ['churches', 'all'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -102,16 +121,36 @@ export default function ChurchesManagementScreen() {
         .order('created_at', { ascending: false });
 
       if (error) throw error;
-      return data || [];
+      return (data || []).map((c: any) => ({
+        id: c.id,
+        name: c.name,
+        denomination: c.denomination || '',
+        description: c.description || '',
+        address: c.address || '',
+        city: c.city || '',
+        state: c.state || '',
+        zip: c.zip_code || '',
+        country: c.country || '',
+        email: c.email || '',
+        phone: c.phone || '',
+        website: c.website || '',
+        logo: c.logo || '',
+        createdBy: c.created_by,
+        createdAt: c.created_at,
+        updatedAt: c.updated_at || c.created_at,
+      }));
     },
     enabled: !!user?.id && isSuperAdmin,
   });
 
+  const userChurchesData = userChurchesQuery.data || [];
+  const allChurchesData = allChurchesQuery.data || [];
+
   const churches: ChurchWithMembership[] = React.useMemo(() => {
     if (!user?.id) return [];
     
-    const userChurches = userChurchesQuery.data || [];
-    const allChurches = allChurchesQuery.data || [];
+    const userChurches = userChurchesData;
+    const allChurches = allChurchesData;
     
     if (isSuperAdmin) {
       const churchMap = new Map<string, ChurchWithMembership>();
@@ -132,7 +171,7 @@ export default function ChurchesManagementScreen() {
         }
       });
       
-      allChurches.forEach(church => {
+      allChurches.forEach((church: ChurchType) => {
         if (!churchMap.has(church.id) && church.createdBy === user.id) {
           churchMap.set(church.id, {
             ...church,
@@ -192,7 +231,7 @@ export default function ChurchesManagementScreen() {
   const refetch = useCallback(async () => {
     await userChurchesQuery.refetch();
     if (isSuperAdmin) await allChurchesQuery.refetch();
-  }, [userChurchesQuery, allChurchesQuery, isSuperAdmin]);
+  }, [userChurchesQuery.refetch, allChurchesQuery.refetch, isSuperAdmin]);
 
   const handleRefresh = useCallback(async () => {
     setRefreshing(true);

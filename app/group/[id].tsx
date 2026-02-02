@@ -82,7 +82,14 @@ export default function GroupDetailScreen() {
 
   const missionStatement = useMemo(() => "", []);
 
-  const ministryQuery = useQuery({
+  const ministryQuery = useQuery<{
+    id: string;
+    name: string;
+    description: string;
+    color: string;
+    image: string;
+    memberCount: number;
+  } | null>({
     queryKey: ['ministry', id],
     queryFn: async () => {
       if (!id) return null;
@@ -92,19 +99,27 @@ export default function GroupDetailScreen() {
         .eq('id', id)
         .single();
       if (error) throw error;
-      return data ? {
-        id: data.id,
-        name: data.name,
-        description: data.description || '',
-        color: data.color || Colors.primary,
-        image: data.image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18',
+      const result: any = data;
+      return result ? {
+        id: result.id,
+        name: result.name,
+        description: result.description || '',
+        color: result.color || Colors.primary,
+        image: result.image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18',
         memberCount: 0,
       } : null;
     },
     enabled: !!id
   });
 
-  const eventsQuery = useQuery({
+  const eventsQuery = useQuery<{
+    id: string;
+    title: string;
+    date: string;
+    time: string;
+    location: string;
+    attendees: number;
+  }[]>({
     queryKey: ['events', organizationId, id],
     queryFn: async () => {
       if (!organizationId || !id) return [];
@@ -115,7 +130,7 @@ export default function GroupDetailScreen() {
         .eq('ministry_id', id)
         .order('start_datetime', { ascending: true });
       if (error) throw error;
-      return (data || []).map(e => ({
+      return (data || []).map((e: any) => ({
         id: e.id,
         title: e.title,
         date: e.start_datetime,
@@ -201,7 +216,7 @@ export default function GroupDetailScreen() {
     },
   });
 
-  const announcementsQuery = useQuery({
+  const announcementsQuery = useQuery<Announcement[]>({
     queryKey: ['announcements', organizationId, id],
     queryFn: async () => {
       if (!organizationId || !id) return [];
@@ -209,9 +224,11 @@ export default function GroupDetailScreen() {
         .from('announcements')
         .select(`
           id,
+          church_id,
           title,
           content,
           priority,
+          is_pinned,
           created_at,
           created_by_profile_id,
           profiles:created_by_profile_id (full_name, avatar_url)
@@ -223,12 +240,15 @@ export default function GroupDetailScreen() {
       if (error) throw error;
       return (data || []).map((a: any) => ({
         id: a.id,
+        organizationId: a.church_id,
         title: a.title,
         content: a.content,
-        priority: a.priority,
+        priority: a.priority || 'normal',
+        isPinned: a.is_pinned || false,
         date: a.created_at,
         author: a.profiles?.full_name || 'Unknown',
-        authorAvatar: a.profiles?.avatar_url,
+        authorRole: 'leader',
+        authorAvatar: a.profiles?.avatar_url || '',
         ministryId: id,
       }));
     },
@@ -248,7 +268,7 @@ export default function GroupDetailScreen() {
           is_pinned: data.isPinned,
           status: 'published',
           created_by_profile_id: user?.id,
-        });
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -308,7 +328,7 @@ export default function GroupDetailScreen() {
           ministry_id: data.ministryId,
           profile_id: user.id,
           role: 'member',
-        });
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -355,7 +375,7 @@ export default function GroupDetailScreen() {
     eventsQuery.refetch();
     pollsQuery.refetch();
     setTimeout(() => setIsRefreshing(false), 1000);
-  }, [ministryQuery, eventsQuery, pollsQuery]);
+  }, [ministryQuery.refetch, eventsQuery.refetch, pollsQuery.refetch]);
 
   const handleJoinLeave = () => {
     if (!id) return;

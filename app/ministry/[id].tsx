@@ -48,6 +48,8 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Ministry } from "@/types";
 import { getMinistryColor } from "@/constants/ministryColors";
 
@@ -309,32 +311,77 @@ export default function MinistryPageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAdmin, currentOrganization } = useAuth();
-  const utils = trpc.useUtils();
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const [settingsVisible, setSettingsVisible] = useState(false);
 
-  const ministryQuery = trpc.ministries.getById.useQuery(
-    { id: id || "" },
-    { enabled: !!id }
-  );
+  const ministryQuery = useQuery<Ministry | null>({
+    queryKey: ['ministry', id],
+    queryFn: async () => {
+      if (!id) return null;
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('*, ministry_members(count)')
+        .eq('id', id)
+        .single();
+      if (error) throw error;
+      const result: any = data;
+      return result ? {
+        id: result.id,
+        organizationId: result.church_id || '',
+        name: result.name,
+        description: result.description || '',
+        color: result.color || Colors.primary,
+        image: result.image_url || '',
+        icon: result.icon || 'Users',
+        memberCount: 0,
+      } : null;
+    },
+    enabled: !!id
+  });
 
-  const membersQuery = trpc.ministries.getMembers.useQuery(
-    { ministryId: id || "" },
-    { enabled: !!id }
-  );
+  const membersQuery = useQuery({
+    queryKey: ['ministry-members', id],
+    queryFn: async () => {
+      if (!id) return [];
+      const { data, error } = await supabase
+        .from('ministry_members')
+        .select('*, users(id, full_name, avatar_url)')
+        .eq('ministry_id', id);
+      if (error) throw error;
+      return (data || []).map((m: any) => ({
+        id: m.users?.id || '',
+        name: m.users?.full_name || '',
+        avatar: m.users?.avatar_url || '',
+        role: m.role || 'member',
+      }));
+    },
+    enabled: !!id
+  });
 
-  const updateMutation = trpc.ministries.update.useMutation({
+  const updateMutation = useMutation({
+    mutationFn: async (data: { id: string; name: string; description: string; color: string; icon: string }) => {
+      const { error } = await supabase
+        .from('ministries')
+        .update({
+          name: data.name,
+          description: data.description,
+          color: data.color,
+          icon: data.icon,
+          updated_at: new Date().toISOString(),
+        } as any)
+        .eq('id', data.id);
+      if (error) throw error;
+    },
     onSuccess: () => {
       console.log("Ministry updated successfully");
-      utils.ministries.getById.invalidate({ id: id || "" });
-      utils.ministries.list.invalidate();
+      ministryQuery.refetch();
       setSettingsVisible(false);
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Ministry updated successfully");
       }
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error("Failed to update ministry:", error);
       if (Platform.OS === "web") {
         alert(error.message || "Failed to update ministry");
@@ -344,15 +391,27 @@ export default function MinistryPageScreen() {
     },
   });
 
-  const joinMutation = trpc.ministries.join.useMutation({
-    onSuccess: (result) => {
-      if (Platform.OS === "web") {
-        alert(result.message || "Your request to join has been submitted!");
-      } else {
-        Alert.alert("Request Sent", result.message || "Your request to join this ministry has been submitted for approval.");
-      }
+  const joinMutation = useMutation({
+    mutationFn: async (data: { ministryId: string; organizationId?: string }) => {
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await supabase
+        .from('ministry_members')
+        .insert({
+          ministry_id: data.ministryId,
+          user_id: user.id,
+          role: 'member',
+        } as any);
+      if (error) throw error;
     },
-    onError: (error) => {
+    onSuccess: () => {
+      if (Platform.OS === "web") {
+        alert("Your request to join has been submitted!");
+      } else {
+        Alert.alert("Request Sent", "Your request to join this ministry has been submitted for approval.");
+      }
+      membersQuery.refetch();
+    },
+    onError: (error: Error) => {
       if (Platform.OS === "web") {
         alert(error.message || "Failed to submit join request");
       } else {
@@ -406,7 +465,7 @@ export default function MinistryPageScreen() {
       ministryId: id, 
       organizationId: currentOrganization?.id 
     });
-  }, [user, router, id, currentOrganization, joinMutation]);
+  }, [user, router, id, currentOrganization?.id, joinMutation.mutate]);
 
   const handleSaveSettings = useCallback((data: { name: string; description: string; color: string; icon: string }) => {
     if (!id) return;
@@ -417,7 +476,7 @@ export default function MinistryPageScreen() {
       color: data.color,
       icon: data.icon,
     });
-  }, [id, updateMutation]);
+  }, [id, updateMutation.mutate]);
 
   if (ministryQuery.isLoading) {
     return (

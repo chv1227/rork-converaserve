@@ -286,7 +286,7 @@ export default function MessagesScreen() {
     return conversation.name;
   };
 
-  const renderConversationItem = ({ item }: { item: Conversation }) => {
+  const ConversationItem = ({ item }: { item: Conversation }) => {
     const isUnread = item.unreadCount > 0;
     const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -461,7 +461,7 @@ export default function MessagesScreen() {
       <FlatList
         data={filteredConversations}
         keyExtractor={(item) => item.id}
-        renderItem={renderConversationItem}
+        renderItem={ConversationItem}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl
