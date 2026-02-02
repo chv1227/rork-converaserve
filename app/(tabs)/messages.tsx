@@ -102,8 +102,8 @@ export default function MessagesScreen() {
         .eq('is_active', true);
       
       const members: OrgMember[] = [];
-      for (const m of data || []) {
-        const userData = m.users as unknown as { id: string; name: string; email: string; avatar: string | null } | null;
+      for (const m of (data || []) as { user_id: string; users: { id: string; name: string; email: string; avatar: string | null } | null }[]) {
+        const userData = m.users;
         if (userData && userData.id !== user?.id) {
           members.push({
             id: userData.id,
@@ -147,12 +147,12 @@ export default function MessagesScreen() {
             .limit(1)
             .single();
           
-          if (existingDM) return { id: existingDM.id };
+          if (existingDM) return { id: (existingDM as { id: string }).id };
         }
       }
       
-      const { data: newConvo, error } = await supabase
-        .from('conversations')
+      const { data: newConvo, error } = await (supabase
+        .from('conversations') as any)
         .insert({
           organization_id: data.organizationId,
           name: data.recipientName,
@@ -164,13 +164,14 @@ export default function MessagesScreen() {
         .single();
       
       if (error) throw error;
+      const convo = newConvo as { id: string };
       
-      await supabase.from('conversation_participants').insert([
-        { conversation_id: newConvo.id, user_id: user.id },
-        { conversation_id: newConvo.id, user_id: data.recipientId },
+      await (supabase.from('conversation_participants') as any).insert([
+        { conversation_id: convo.id, user_id: user.id },
+        { conversation_id: convo.id, user_id: data.recipientId },
       ]);
       
-      return { id: newConvo.id };
+      return { id: convo.id };
     },
     onSuccess: (conversation) => {
       console.log("DM created/found:", conversation.id);
@@ -185,8 +186,8 @@ export default function MessagesScreen() {
     mutationFn: async (data: { name: string; memberIds: string[]; organizationId: string }) => {
       if (!user?.id) throw new Error('Not logged in');
       
-      const { data: newConvo, error } = await supabase
-        .from('conversations')
+      const { data: newConvo, error } = await (supabase
+        .from('conversations') as any)
         .insert({
           organization_id: data.organizationId,
           name: data.name,
@@ -197,15 +198,16 @@ export default function MessagesScreen() {
         .single();
       
       if (error) throw error;
+      const convo = newConvo as { id: string };
       
       const participants = [user.id, ...data.memberIds].map(userId => ({
-        conversation_id: newConvo.id,
+        conversation_id: convo.id,
         user_id: userId,
       }));
       
-      await supabase.from('conversation_participants').insert(participants);
+      await (supabase.from('conversation_participants') as any).insert(participants);
       
-      return { id: newConvo.id };
+      return { id: convo.id };
     },
     onSuccess: (conversation) => {
       console.log("Group created:", conversation.id);

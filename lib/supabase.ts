@@ -1075,6 +1075,118 @@ export type Database = {
         };
         Update: never;
       };
+      organizations: {
+        Row: {
+          id: string;
+          name: string;
+          description: string | null;
+          address: string | null;
+          email: string | null;
+          phone: string | null;
+          website: string | null;
+          logo: string | null;
+          created_by: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          description?: string | null;
+          address?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          logo?: string | null;
+          created_by?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          description?: string | null;
+          address?: string | null;
+          email?: string | null;
+          phone?: string | null;
+          website?: string | null;
+          logo?: string | null;
+          updated_at?: string;
+        };
+      };
+      memberships: {
+        Row: {
+          id: string;
+          user_id: string;
+          organization_id: string;
+          role: string;
+          is_active: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          user_id: string;
+          organization_id: string;
+          role?: string;
+          is_active?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          role?: string;
+          is_active?: boolean;
+          updated_at?: string;
+        };
+      };
+      conversations: {
+        Row: {
+          id: string;
+          organization_id: string;
+          name: string;
+          avatar: string | null;
+          type: string;
+          ministry_id: string | null;
+          created_by: string;
+          is_archived: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          organization_id: string;
+          name: string;
+          avatar?: string | null;
+          type?: string;
+          ministry_id?: string | null;
+          created_by: string;
+          is_archived?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          name?: string;
+          avatar?: string | null;
+          type?: string;
+          ministry_id?: string | null;
+          is_archived?: boolean;
+          updated_at?: string;
+        };
+      };
+      conversation_participants: {
+        Row: {
+          id: string;
+          conversation_id: string;
+          user_id: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          conversation_id: string;
+          user_id: string;
+          created_at?: string;
+        };
+        Update: never;
+      };
     };
     Functions: {
       user_belongs_to_church: {

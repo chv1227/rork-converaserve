@@ -249,14 +249,13 @@ export default function AdminMinistriesScreen() {
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; color: string; icon: string; image?: string }) => {
       if (!currentOrganization?.id) throw new Error('No organization selected');
-      const { error } = await supabase.from('ministries').insert({
-        organization_id: currentOrganization.id,
+      const { error } = await (supabase.from('ministries') as any).insert({
+        church_id: currentOrganization.id,
         name: data.name,
         description: data.description,
         color: data.color,
         icon: data.icon,
-        image: data.image,
-        member_count: 0,
+        image_url: data.image,
       });
       if (error) throw error;
     },
@@ -280,12 +279,12 @@ export default function AdminMinistriesScreen() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; name?: string; description?: string; color?: string; icon?: string; image?: string }) => {
-      const { error } = await supabase.from('ministries').update({
+      const { error } = await (supabase.from('ministries') as any).update({
         name: data.name,
         description: data.description,
         color: data.color,
         icon: data.icon,
-        image: data.image,
+        image_url: data.image,
         updated_at: new Date().toISOString(),
       }).eq('id', data.id);
       if (error) throw error;

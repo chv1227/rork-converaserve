@@ -232,6 +232,8 @@ export default function UserManagement() {
     role: string;
     status: string;
     createdAt: string;
+    ministryNames?: string[];
+    invitedByName?: string;
   }
 
   const usersQuery = useQuery({
@@ -307,8 +309,8 @@ export default function UserManagement() {
 
   const updateProfileMutation = useMutation({
     mutationFn: async (data: { userId: string; name: string; email: string; phone?: string }) => {
-      const { error } = await supabase.from('users').update({
-        name: data.name,
+      const { error } = await (supabase.from('users') as any).update({
+        full_name: data.name,
         email: data.email,
         phone: data.phone,
         updated_at: new Date().toISOString(),
@@ -329,10 +331,10 @@ export default function UserManagement() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async (data: { userId: string; role: string }) => {
-      const { error } = await supabase.from('users').update({
+      const { error } = await (supabase.from('user_church_roles') as any).update({
         role: data.role,
         updated_at: new Date().toISOString(),
-      }).eq('id', data.userId);
+      }).eq('user_id', data.userId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -448,8 +450,8 @@ export default function UserManagement() {
     if (!editingUser) return;
     updateProfileMutation.mutate({
       userId: editingUser,
-      name: editForm.name || undefined,
-      email: editForm.email || undefined,
+      name: editForm.name || '',
+      email: editForm.email || '',
       phone: editForm.phone || undefined,
     });
   };

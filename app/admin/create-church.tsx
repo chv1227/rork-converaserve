@@ -128,8 +128,8 @@ export default function AdminCreateChurchScreen() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
       
-      const { data: church, error } = await supabase
-        .from('organizations')
+      const { data: church, error } = await (supabase
+        .from('organizations') as any)
         .insert({
           name: data.name,
           description: data.description,
@@ -144,15 +144,16 @@ export default function AdminCreateChurchScreen() {
         .single();
       
       if (error) throw error;
+      const org = church as { id: string; name: string; created_by: string };
       
-      await supabase.from('memberships').insert({
+      await (supabase.from('memberships') as any).insert({
         user_id: userData.user.id,
-        organization_id: church.id,
+        organization_id: org.id,
         role: 'super_admin',
         is_active: true,
       });
       
-      return { church: { ...church, name: church.name, id: church.id, createdBy: church.created_by }, settings: { id: church.id }, membership: { id: church.id } };
+      return { church: { ...org, name: org.name, id: org.id, createdBy: org.created_by }, settings: { id: org.id }, membership: { id: org.id } };
     },
     onSuccess: (data: { church: { name: string; id: string; createdBy: string }; settings: { id: string }; membership: { id: string } }) => {
       console.log('=== Church Creation Success ===' );
