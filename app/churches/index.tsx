@@ -28,8 +28,8 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { trpc } from '@/lib/trpc';
-import { useQueryClient } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
 import { Church as ChurchType, ChurchMembership, ChurchRole } from '@/types';
 
 interface ChurchWithMembership extends ChurchType {
@@ -42,11 +42,60 @@ export default function ChurchesManagementScreen() {
   const { user, isSuperAdmin } = useAuth();
   const [refreshing, setRefreshing] = useState(false);
 
-  const userChurchesQuery = trpc.churches.getUserChurches.useQuery(undefined, {
+  const userChurchesQuery = useQuery({
+    queryKey: ['churches', 'user', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      
+      const { data, error } = await supabase
+        .from('church_memberships')
+        .select(`
+          id,
+          role,
+          joined_at,
+          is_active,
+          churches (
+            id,
+            name,
+            denomination,
+            address,
+            city,
+            state,
+            zip_code,
+            country,
+            email,
+            phone,
+            website,
+            logo,
+            created_by,
+            created_at
+          )
+        `)
+        .eq('user_id', user.id)
+        .eq('is_active', true);
+
+      if (error) throw error;
+      
+      return data?.map(membership => ({
+        ...(membership.churches as any),
+        role: membership.role,
+        joinedAt: membership.joined_at,
+      })) || [];
+    },
     enabled: !!user?.id,
   });
 
-  const allChurchesQuery = trpc.churches.list.useQuery(undefined, {
+  const allChurchesQuery = useQuery({
+    queryKey: ['churches', 'all'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('churches')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
     enabled: !!user?.id && isSuperAdmin,
   });
 
@@ -109,9 +158,17 @@ export default function ChurchesManagementScreen() {
 
   const isLoading = userChurchesQuery.isLoading || (isSuperAdmin && allChurchesQuery.isLoading);
 
-  const deleteChurchMutation = trpc.churches.delete.useMutation({
+  const deleteChurchMutation = useMutation({
+    mutationFn: async ({ id }: { id: string }) => {
+      const { error } = await supabase
+        .from('churches')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
+      queryClient.invalidateQueries({ queryKey: ['churches'] });
       userChurchesQuery.refetch();
       if (isSuperAdmin) allChurchesQuery.refetch();
       Alert.alert('Success', 'Church deleted successfully');
