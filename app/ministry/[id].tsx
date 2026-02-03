@@ -369,7 +369,7 @@ export default function MinistryPageScreen() {
           color: data.color,
           icon: data.icon,
           updated_at: new Date().toISOString(),
-        } as any)
+        })
         .eq('id', data.id);
       if (error) throw error;
     },
@@ -400,7 +400,7 @@ export default function MinistryPageScreen() {
           ministry_id: data.ministryId,
           user_id: user.id,
           role: 'member',
-        } as any);
+        });
       if (error) throw error;
     },
     onSuccess: () => {
