@@ -23,8 +23,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .order('name');
       
       if (error) {
-        console.error('Error fetching ministries:', error);
-        throw error;
+        console.error('Error fetching ministries:', error.message || JSON.stringify(error));
+        throw new Error(error.message || 'Failed to fetch ministries');
       }
       
       return (data || []).map(m => ({
@@ -53,8 +53,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .order('date', { ascending: true });
       
       if (error) {
-        console.error('Error fetching events:', error);
-        throw error;
+        console.error('Error fetching events:', error.message || JSON.stringify(error));
+        throw new Error(error.message || 'Failed to fetch events');
       }
       
       return (data || []).map(e => ({
@@ -87,8 +87,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .order('date', { ascending: false });
       
       if (error) {
-        console.error('Error fetching announcements:', error);
-        throw error;
+        console.error('Error fetching announcements:', error.message || JSON.stringify(error));
+        throw new Error(error.message || 'Failed to fetch announcements');
       }
       
       return (data || []).map(a => ({
@@ -120,8 +120,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .eq('user_id', user.id);
       
       if (error) {
-        console.error('Error fetching user ministries:', error);
-        throw error;
+        console.error('Error fetching user ministries:', error.message || JSON.stringify(error));
+        throw new Error(error.message || 'Failed to fetch user ministries');
       }
       
       return (data || []).map(mm => {
@@ -162,8 +162,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .eq('user_id', user.id);
       
       if (participantError) {
-        console.error('Error fetching conversation participants:', participantError);
-        throw participantError;
+        console.error('Error fetching conversation participants:', participantError.message || JSON.stringify(participantError));
+        throw new Error(participantError.message || 'Failed to fetch conversation participants');
       }
       
       const conversationIds = (participantData || []).map(p => p.conversation_id);
@@ -178,8 +178,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         .order('updated_at', { ascending: false });
       
       if (error) {
-        console.error('Error fetching conversations:', error);
-        throw error;
+        console.error('Error fetching conversations:', error.message || JSON.stringify(error));
+        throw new Error(error.message || 'Failed to fetch conversations');
       }
       
       const conversationsWithMessages = await Promise.all((data || []).map(async (c) => {
