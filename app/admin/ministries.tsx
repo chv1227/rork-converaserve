@@ -232,14 +232,15 @@ export default function AdminMinistriesScreen() {
       if (!selectedMinistryId) return [];
       const { data } = await supabase
         .from('ministry_members')
-        .select('*, users(*)')
-        .eq('ministry_id', selectedMinistryId);
+        .select('*, profiles(id, user_id, display_name, avatar_url)')
+        .eq('ministry_id', selectedMinistryId)
+        .eq('is_active', true);
       
-      return (data || []).map((m: { id: string; role: string; users: { id: string; name: string; email: string; avatar: string | null } | null }) => ({
-        id: m.users?.id || '',
-        name: m.users?.name || '',
-        email: m.users?.email || '',
-        avatar: m.users?.avatar || '',
+      return (data || []).map((m: { id: string; profile_id: string; role: string; profiles: { id: string; user_id: string; display_name: string | null; avatar_url: string | null } | null }) => ({
+        id: m.profile_id,
+        name: m.profiles?.display_name || '',
+        email: '',
+        avatar: m.profiles?.avatar_url || '',
         role: m.role,
       }));
     },
@@ -330,10 +331,10 @@ export default function AdminMinistriesScreen() {
   });
 
   const removeMemberMutation = useMutation({
-    mutationFn: async (data: { ministryId: string; userId: string }) => {
+    mutationFn: async (data: { ministryId: string; profileId: string }) => {
       const { error } = await supabase.from('ministry_members').delete()
         .eq('ministry_id', data.ministryId)
-        .eq('user_id', data.userId);
+        .eq('profile_id', data.profileId);
       if (error) throw error;
     },
     onSuccess: () => {
@@ -468,11 +469,11 @@ export default function AdminMinistriesScreen() {
     }
   };
 
-  const handleRemoveMember = useCallback((userId: string, userName: string) => {
+  const handleRemoveMember = useCallback((profileId: string, userName: string) => {
     if (!selectedMinistryId) return;
     
     if (Platform.OS === "web") {
-      removeMemberMutation.mutate({ userId, ministryId: selectedMinistryId });
+      removeMemberMutation.mutate({ profileId, ministryId: selectedMinistryId });
     } else {
       Alert.alert(
         "Remove Member",
@@ -482,7 +483,7 @@ export default function AdminMinistriesScreen() {
           {
             text: "Remove",
             style: "destructive",
-            onPress: () => removeMemberMutation.mutate({ userId, ministryId: selectedMinistryId }),
+            onPress: () => removeMemberMutation.mutate({ profileId, ministryId: selectedMinistryId }),
           },
         ]
       );
