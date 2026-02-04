@@ -1,13 +1,15 @@
 import React, { useRef, useCallback } from 'react';
-import { Animated, TouchableOpacity, StyleSheet, ViewStyle, TouchableOpacityProps } from 'react-native';
+import { Animated, Pressable, ViewStyle, PressableProps, Platform } from 'react-native';
 
-interface AnimatedPressableProps extends TouchableOpacityProps {
+interface AnimatedPressableProps extends Omit<PressableProps, 'style'> {
   children: React.ReactNode;
   style?: ViewStyle | ViewStyle[];
   scaleValue?: number;
 }
 
-export default function AnimatedPressable({ 
+const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
+
+export default function AnimatedPressableComponent({ 
   children, 
   style, 
   scaleValue = 0.97,
@@ -20,7 +22,7 @@ export default function AnimatedPressable({
   const handlePressIn = useCallback((e: any) => {
     Animated.spring(scale, {
       toValue: scaleValue,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
       speed: 50,
       bounciness: 4,
     }).start();
@@ -30,7 +32,7 @@ export default function AnimatedPressable({
   const handlePressOut = useCallback((e: any) => {
     Animated.spring(scale, {
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver: Platform.OS !== 'web',
       speed: 50,
       bounciness: 4,
     }).start();
@@ -38,17 +40,13 @@ export default function AnimatedPressable({
   }, [scale, onPressOut]);
 
   return (
-    <TouchableOpacity
-      activeOpacity={1}
+    <AnimatedPressable
       onPressIn={handlePressIn}
       onPressOut={handlePressOut}
+      style={[style, { transform: [{ scale }] }]}
       {...props}
     >
-      <Animated.View style={[style, { transform: [{ scale }] }]}>
-        {children}
-      </Animated.View>
-    </TouchableOpacity>
+      {children}
+    </AnimatedPressable>
   );
 }
-
-const styles = StyleSheet.create({});
