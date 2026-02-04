@@ -111,13 +111,28 @@ export const [DataProvider, useData] = createContextHook(() => {
   });
 
   const userMinistriesQuery = useQuery({
-    queryKey: ['userMinistries', user?.id],
+    queryKey: ['userMinistries', user?.id, organizationId],
     queryFn: async () => {
-      if (!user?.id) return [];
+      if (!user?.id || !organizationId) return [];
+      
+      // First get the user's profile_id for this organization
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', organizationId)
+        .single();
+      
+      if (profileError || !profileData) {
+        console.log('No profile found for user in this organization');
+        return [];
+      }
+      
       const { data, error } = await supabase
         .from('ministry_members')
         .select('*, ministries(*)')
-        .eq('user_id', user.id);
+        .eq('profile_id', profileData.id)
+        .eq('is_active', true);
       
       if (error) {
         console.error('Error fetching user ministries:', error.message || JSON.stringify(error));
@@ -147,7 +162,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         };
       }) as Ministry[];
     },
-    enabled: isAuthenticated && !!user?.id,
+    enabled: isAuthenticated && !!user?.id && !!organizationId,
     staleTime: 15_000,
   });
 
@@ -317,14 +332,26 @@ export const [DataProvider, useData] = createContextHook(() => {
   });
 
   const joinMinistryMutation = useMutation({
-    mutationFn: async ({ ministryId }: { ministryId: string; organizationId: string }) => {
+    mutationFn: async ({ ministryId, organizationId: orgId }: { ministryId: string; organizationId: string }) => {
       if (!user?.id) throw new Error('Not logged in');
+      
+      // Get the user's profile_id for this organization
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', orgId)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error('Profile not found. Please ensure you are a member of this organization.');
+      }
       
       const { error } = await supabase
         .from('ministry_members')
         .insert({
           ministry_id: ministryId,
-          user_id: user.id,
+          profile_id: profileData.id,
           role: 'member',
         });
       
@@ -342,13 +369,25 @@ export const [DataProvider, useData] = createContextHook(() => {
 
   const leaveMinistryMutation = useMutation({
     mutationFn: async ({ ministryId }: { ministryId: string }) => {
-      if (!user?.id) throw new Error('Not logged in');
+      if (!user?.id || !organizationId) throw new Error('Not logged in');
+      
+      // Get the user's profile_id for this organization
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', organizationId)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error('Profile not found');
+      }
       
       const { error } = await supabase
         .from('ministry_members')
         .delete()
         .eq('ministry_id', ministryId)
-        .eq('user_id', user.id);
+        .eq('profile_id', profileData.id);
       
       if (error) throw error;
       

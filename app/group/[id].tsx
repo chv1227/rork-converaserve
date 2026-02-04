@@ -322,13 +322,26 @@ export default function GroupDetailScreen() {
   const joinMutation = useMutation({
     mutationFn: async (data: { ministryId: string; organizationId: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
+      
+      // Get user's profile for this organization
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', data.organizationId)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error('Profile not found. Please ensure you are a member of this organization.');
+      }
+      
       const { error } = await supabase
         .from('ministry_members')
         .insert({
           ministry_id: data.ministryId,
-          profile_id: user.id,
+          profile_id: profileData.id,
           role: 'member',
-        } as any);
+        });
       if (error) throw error;
     },
     onSuccess: () => {
@@ -347,13 +360,35 @@ export default function GroupDetailScreen() {
   });
 
   const leaveMutation = useMutation({
-    mutationFn: async (data: { ministryId: string }) => {
+    mutationFn: async (data: { ministryId: string; organizationId?: string }) => {
       if (!user?.id) throw new Error('Not authenticated');
+      
+      // Get ministry to find church_id
+      const { data: ministryData } = await supabase
+        .from('ministries')
+        .select('church_id')
+        .eq('id', data.ministryId)
+        .single();
+      
+      if (!ministryData?.church_id) throw new Error('Ministry not found');
+      
+      // Get user's profile for this church
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', ministryData.church_id)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error('Profile not found');
+      }
+      
       const { error } = await supabase
         .from('ministry_members')
         .delete()
         .eq('ministry_id', data.ministryId)
-        .eq('profile_id', user.id);
+        .eq('profile_id', profileData.id);
       if (error) throw error;
     },
     onSuccess: () => {

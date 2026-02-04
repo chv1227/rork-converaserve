@@ -346,13 +346,14 @@ export default function MinistryPageScreen() {
       if (!id) return [];
       const { data, error } = await supabase
         .from('ministry_members')
-        .select('*, users(id, full_name, avatar_url)')
-        .eq('ministry_id', id);
+        .select('*, profiles(id, user_id, display_name, avatar_url)')
+        .eq('ministry_id', id)
+        .eq('is_active', true);
       if (error) throw error;
       return (data || []).map((m: any) => ({
-        id: m.users?.id || '',
-        name: m.users?.full_name || '',
-        avatar: m.users?.avatar_url || '',
+        id: m.profiles?.user_id || m.profile_id || '',
+        name: m.profiles?.display_name || '',
+        avatar: m.profiles?.avatar_url || '',
         role: m.role || 'member',
       }));
     },
@@ -394,11 +395,33 @@ export default function MinistryPageScreen() {
   const joinMutation = useMutation({
     mutationFn: async (data: { ministryId: string; organizationId?: string }) => {
       if (!user) throw new Error('Not authenticated');
+      
+      // Get ministry to find church_id
+      const { data: ministryData } = await supabase
+        .from('ministries')
+        .select('church_id')
+        .eq('id', data.ministryId)
+        .single();
+      
+      if (!ministryData?.church_id) throw new Error('Ministry not found');
+      
+      // Get user's profile for this church
+      const { data: profileData, error: profileError } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', ministryData.church_id)
+        .single();
+      
+      if (profileError || !profileData) {
+        throw new Error('Profile not found. Please ensure you are a member of this organization.');
+      }
+      
       const { error } = await supabase
         .from('ministry_members')
         .insert({
           ministry_id: data.ministryId,
-          user_id: user.id,
+          profile_id: profileData.id,
           role: 'member',
         });
       if (error) throw error;
