@@ -2,19 +2,21 @@ import { Tabs } from "expo-router";
 import { Home, User, MessageCircle } from "lucide-react-native";
 import React from "react";
 
-import Colors from "@/constants/colors";
+import { useTheme } from "@/providers/ThemeProvider";
 import TabBarDropdown from "@/components/TabBarDropdown";
 
 export default function TabLayout() {
+  const { colors } = useTheme();
+  
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.textTertiary,
+        tabBarActiveTintColor: colors.primary,
+        tabBarInactiveTintColor: colors.textTertiary,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: Colors.surface,
-          borderTopColor: Colors.borderLight,
+          backgroundColor: colors.surface,
+          borderTopColor: colors.borderLight,
           paddingTop: 8,
           height: 88,
         },

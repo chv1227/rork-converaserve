@@ -10,6 +10,7 @@ import Colors from "@/constants/colors";
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { DataProvider } from "@/providers/DataProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
+import { ThemeProvider, useTheme } from "@/providers/ThemeProvider";
 
 SplashScreen.preventAutoHideAsync();
 
@@ -66,10 +67,14 @@ function AuthGate({ children }: { children: ReactNode }) {
 }
 
 function RootLayoutNav() {
+  const { colors } = useTheme();
+  
   return (
     <Stack screenOptions={{ 
         headerBackTitle: "Back",
-        headerTintColor: Colors.primary,
+        headerTintColor: colors.primary,
+        headerStyle: { backgroundColor: colors.surface },
+        contentStyle: { backgroundColor: colors.background },
       }}>
       <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       <Stack.Screen 
@@ -278,13 +283,21 @@ function RootLayoutNav() {
 function AppContent() {
   return (
     <AuthProvider>
-      <DataProvider>
-        <AuthGate>
-          <RootLayoutNav />
-        </AuthGate>
-      </DataProvider>
+      <ThemeProvider>
+        <DataProvider>
+          <AuthGate>
+            <ThemedStatusBar />
+            <RootLayoutNav />
+          </AuthGate>
+        </DataProvider>
+      </ThemeProvider>
     </AuthProvider>
   );
+}
+
+function ThemedStatusBar() {
+  const { isDark } = useTheme();
+  return <StatusBar style={isDark ? "light" : "dark"} />;
 }
 
 export default function RootLayout() {
@@ -303,7 +316,6 @@ export default function RootLayout() {
 
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
-      <StatusBar style="dark" />
       <ErrorBoundary>
         <QueryClientProvider client={queryClient}>
           <AppContent />
