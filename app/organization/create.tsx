@@ -1,4 +1,5 @@
 import React, { useState, useCallback } from 'react';
+import { useMutation } from '@tanstack/react-query';
 import {
   View,
   Text,
@@ -17,6 +18,7 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Mail, Lock, Eye, EyeOff, User, Phone, LogIn, UserPlus, X, Send, RefreshCw } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
+import { supabase } from '@/lib/supabase';
 
 export default function CreateOrganizationScreen() {
   const router = useRouter();
@@ -49,7 +51,61 @@ export default function CreateOrganizationScreen() {
   const [resendError, setResendError] = useState('');
   const [isCreatingAfterAuth, setIsCreatingAfterAuth] = useState(false);
 
-  const createMutation = trpc.organizations.create.useMutation({
+  const createMutation = useMutation({
+    mutationFn: async (orgData: {
+      name: string;
+      description: string;
+      address?: string;
+      phone?: string;
+      email?: string;
+      website?: string;
+    }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('You must be logged in to create an organization');
+
+      const { data: org, error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          name: orgData.name,
+          description: orgData.description,
+          address: orgData.address || null,
+          phone: orgData.phone || null,
+          email: orgData.email || null,
+          website: orgData.website || null,
+        })
+        .select()
+        .single();
+
+      if (orgError) throw orgError;
+
+      const { data: membership, error: membershipError } = await supabase
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          organization_id: org.id,
+          role: 'super_admin',
+          is_active: true,
+        })
+        .select()
+        .single();
+
+      if (membershipError) throw membershipError;
+
+      return {
+        organization: {
+          id: org.id,
+          name: org.name,
+          description: org.description || '',
+          logo: org.logo || undefined,
+          createdAt: org.created_at,
+          updatedAt: org.updated_at,
+        },
+        membership: {
+          id: membership.id,
+          joinedAt: membership.joined_at || membership.created_at,
+        },
+      };
+    },
     onSuccess: async (data) => {
       console.log('Organization created successfully:', data.organization.name);
       setIsCreatingAfterAuth(false);
@@ -63,7 +119,7 @@ export default function CreateOrganizationScreen() {
         { text: 'OK', onPress: () => router.replace('/(tabs)') },
       ]);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Create organization error:', error.message);
       setIsCreatingAfterAuth(false);
       

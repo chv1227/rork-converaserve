@@ -387,7 +387,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         });
 
       if (profileError) {
-        console.error("AuthProvider: Profile creation error:", profileError);
+        console.error("AuthProvider: Profile creation error:", profileError.message || JSON.stringify(profileError));
       }
 
       if (data.session) {
