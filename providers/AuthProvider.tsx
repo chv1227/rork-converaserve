@@ -155,8 +155,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
               .limit(1)
               .single();
 
-            if (membership?.organizations) {
-              const org = membership.organizations as unknown as {
+            const membershipData = membership as any;
+            if (membershipData?.organizations) {
+              const org = membershipData.organizations as {
                 id: string;
                 name: string;
                 description: string | null;
@@ -290,8 +291,9 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         .single();
 
       let currentOrg: Organization | null = null;
-      if (membership?.organizations) {
-        const org = membership.organizations as unknown as {
+      const membershipData2 = membership as any;
+      if (membershipData2?.organizations) {
+        const org = membershipData2.organizations as {
           id: string;
           name: string;
           description: string | null;
@@ -384,7 +386,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           role: 'member',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
-        });
+        } as any);
 
       if (profileError) {
         console.error("AuthProvider: Profile creation error:", profileError.message || JSON.stringify(profileError));
@@ -463,8 +465,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     if (!state.user || !state.session) return;
 
     try {
-      const { error } = await supabase
-        .from('users')
+      const { error } = await (supabase
+        .from('users') as any)
         .update({
           name: updates.name,
           avatar: updates.avatar,

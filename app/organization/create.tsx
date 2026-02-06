@@ -72,37 +72,39 @@ export default function CreateOrganizationScreen() {
           phone: orgData.phone || null,
           email: orgData.email || null,
           website: orgData.website || null,
-        })
+        } as any)
         .select()
         .single();
 
       if (orgError) throw orgError;
+      const orgData2 = org as any;
 
       const { data: membership, error: membershipError } = await supabase
         .from('memberships')
         .insert({
           user_id: user.id,
-          organization_id: org.id,
+          organization_id: orgData2.id,
           role: 'super_admin',
           is_active: true,
-        })
+        } as any)
         .select()
         .single();
 
       if (membershipError) throw membershipError;
+      const membershipData = membership as any;
 
       return {
         organization: {
-          id: org.id,
-          name: org.name,
-          description: org.description || '',
-          logo: org.logo || undefined,
-          createdAt: org.created_at,
-          updatedAt: org.updated_at,
+          id: orgData2.id,
+          name: orgData2.name,
+          description: orgData2.description || '',
+          logo: orgData2.logo || undefined,
+          createdAt: orgData2.created_at,
+          updatedAt: orgData2.updated_at,
         },
         membership: {
-          id: membership.id,
-          joinedAt: membership.joined_at || membership.created_at,
+          id: membershipData.id,
+          joinedAt: membershipData.joined_at || membershipData.created_at,
         },
       };
     },

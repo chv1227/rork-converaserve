@@ -85,8 +85,8 @@ export default function EditProfileScreen() {
     mutationFn: async (data: { name: string; phone?: string; avatar?: string; ministries: string[] }) => {
       if (!user) throw new Error('Not authenticated');
       
-      const { error } = await supabase
-        .from('users')
+      const { error } = await (supabase
+        .from('users') as any)
         .update({
           full_name: data.name,
           phone: data.phone,

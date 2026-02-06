@@ -362,8 +362,8 @@ export default function MinistryPageScreen() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; name: string; description: string; color: string; icon: string }) => {
-      const { error } = await supabase
-        .from('ministries')
+      const { error } = await (supabase
+        .from('ministries') as any)
         .update({
           name: data.name,
           description: data.description,
@@ -403,27 +403,29 @@ export default function MinistryPageScreen() {
         .eq('id', data.ministryId)
         .single();
       
-      if (!ministryData?.church_id) throw new Error('Ministry not found');
+      const ministryInfo = ministryData as any;
+      if (!ministryInfo?.church_id) throw new Error('Ministry not found');
       
       // Get user's profile for this church
       const { data: profileData, error: profileError } = await supabase
         .from('profiles')
         .select('id')
         .eq('user_id', user.id)
-        .eq('church_id', ministryData.church_id)
+        .eq('church_id', ministryInfo.church_id)
         .single();
       
       if (profileError || !profileData) {
         throw new Error('Profile not found. Please ensure you are a member of this organization.');
       }
+      const profileInfo = profileData as any;
       
       const { error } = await supabase
         .from('ministry_members')
         .insert({
           ministry_id: data.ministryId,
-          profile_id: profileData.id,
+          profile_id: profileInfo.id,
           role: 'member',
-        });
+        } as any);
       if (error) throw error;
     },
     onSuccess: () => {
