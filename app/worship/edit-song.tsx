@@ -59,41 +59,46 @@ export default function EditSongScreen() {
     queryKey: ['song', songId],
     queryFn: async () => {
       if (!songId) return null;
-      const { data: song, error: songError } = await supabase
+      const { data: song, error: songError } = await (supabase as any)
         .from('songs')
         .select('*')
         .eq('id', songId)
         .single();
       if (songError) throw songError;
+      const s = song as { id: string; title: string; artist: string | null; duration: number; cover_image: string | null; audio_url: string | null } | null;
       
-      const { data: audioParts, error: audioError } = await supabase
+      const { data: audioParts, error: audioError } = await (supabase as any)
         .from('song_audio_parts')
         .select('*')
         .eq('song_id', songId);
       if (audioError) throw audioError;
+      const aps = (audioParts || []) as { id: string; part_name: string; audio_url: string }[];
       
-      const { data: lyrics, error: lyricsError } = await supabase
+      const { data: lyrics, error: lyricsError } = await (supabase as any)
         .from('song_lyrics')
         .select('*')
         .eq('song_id', songId)
         .order('timestamp_ms', { ascending: true });
       if (lyricsError) throw lyricsError;
+      const lrs = (lyrics || []) as { id: string; timestamp_ms: number | null; content: string }[];
       
       return {
-        song: song ? {
-          id: song.id,
-          title: song.title,
-          artist: song.artist,
-          duration: song.duration,
-          coverImage: song.cover_image,
-          audioUrl: song.audio_url,
+        song: s ? {
+          id: s.id,
+          title: s.title,
+          artist: s.artist,
+          duration: s.duration,
+          coverImage: s.cover_image,
+          audioUrl: s.audio_url,
         } : null,
-        audioParts: (audioParts || []).map(ap => ({
+        audioParts: aps.map(ap => ({
           id: ap.id,
-          vocalPart: ap.part_name,
+          songId: songId!,
+          vocalPart: ap.part_name as VocalPart,
           audioFileUrl: ap.audio_url,
+          duration: 0,
         })),
-        lyrics: (lyrics || []).map(l => ({
+        lyrics: lrs.map(l => ({
           id: l.id,
           startTime: l.timestamp_ms || 0,
           endTime: (l.timestamp_ms || 0) + 3000,
@@ -128,7 +133,7 @@ export default function EditSongScreen() {
 
   const updateMutation = useMutation({
     mutationFn: async (data: { id: string; title: string; artist: string; coverImage?: string; duration: number }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('songs')
         .update({
           title: data.title,
@@ -152,7 +157,7 @@ export default function EditSongScreen() {
 
   const addAudioPartMutation = useMutation({
     mutationFn: async (data: { songId: string; vocalPart: VocalPart; audioUrl: string }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('song_audio_parts')
         .insert({
           song_id: data.songId,
@@ -174,7 +179,7 @@ export default function EditSongScreen() {
 
   const removeAudioPartMutation = useMutation({
     mutationFn: async (data: { audioPartId: string }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('song_audio_parts')
         .delete()
         .eq('id', data.audioPartId);
@@ -192,8 +197,8 @@ export default function EditSongScreen() {
 
   const updateLyricsMutation = useMutation({
     mutationFn: async (data: { songId: string; lyrics: Array<{ startTime: number; endTime: number; lineText: string }> }) => {
-      await supabase.from('song_lyrics').delete().eq('song_id', data.songId);
-      const { error } = await supabase
+      await (supabase as any).from('song_lyrics').delete().eq('song_id', data.songId);
+      const { error } = await (supabase as any)
         .from('song_lyrics')
         .insert(
           data.lyrics.map(l => ({
@@ -223,9 +228,9 @@ export default function EditSongScreen() {
 
     console.log("Updating song details:", songId);
     updateMutation.mutate({
-      songId,
+      id: songId,
       title: title.trim(),
-      artist: artist.trim() || undefined,
+      artist: artist.trim(),
       coverImage: coverUrl.trim() || undefined,
       duration: parseInt(duration) || 180,
     });
@@ -241,8 +246,7 @@ export default function EditSongScreen() {
     addAudioPartMutation.mutate({
       songId,
       vocalPart: newAudioPart,
-      audioFileUrl: newAudioUrl.trim(),
-      duration: parseInt(duration) || 180,
+      audioUrl: newAudioUrl.trim(),
     });
   };
 

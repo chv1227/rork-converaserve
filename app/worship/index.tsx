@@ -18,6 +18,8 @@ import { Music, Play, Settings, Clock, Mic2, ArrowLeft, Search, X } from "lucide
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { Song } from "@/types";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/lib/supabase";
 
 function formatDuration(seconds: number): string {
   const mins = Math.floor(seconds / 60);
@@ -31,8 +33,18 @@ interface SongCardProps {
 }
 
 function SongCard({ song, onPress }: SongCardProps) {
-  const audioPartsQuery = trpc.songs.getAudioParts.useQuery({ songId: song.id });
-  const availableParts = (audioPartsQuery.data || []).map((p) => p.vocalPart);
+  const audioPartsQuery = useQuery({
+    queryKey: ['song-audio-parts', song.id],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('song_audio_parts')
+        .select('*')
+        .eq('song_id', song.id);
+      if (error) { console.log('Audio parts query error:', error.message); return []; }
+      return (data || []) as { id: string; part_name: string; audio_url: string }[];
+    },
+  });
+  const availableParts = (audioPartsQuery.data || []).map((p: { part_name: string }) => p.part_name);
   return (
     <TouchableOpacity
       style={styles.songCard}
@@ -90,14 +102,34 @@ export default function WorshipScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [activeLetterIndex, setActiveLetterIndex] = useState<number | null>(null);
 
-  const songsQuery = trpc.songs.list.useQuery();
+  const songsQuery = useQuery({
+    queryKey: ['songs-list'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('songs')
+        .select('*')
+        .order('title');
+      if (error) { console.log('Songs query error:', error.message); return []; }
+      return (data || []).map((s: { id: string; title: string; artist: string | null; duration: number; cover_image: string | null; organization_id: string | null; created_by: string | null; created_at: string; updated_at: string }): Song => ({
+        id: s.id,
+        title: s.title,
+        artist: s.artist || undefined,
+        duration: s.duration || 0,
+        coverImage: s.cover_image || undefined,
+        organizationId: s.organization_id || '',
+        createdBy: s.created_by || '',
+        createdAt: s.created_at,
+        updatedAt: s.updated_at,
+      }));
+    },
+  });
   const songs = useMemo(() => songsQuery.data || [], [songsQuery.data]);
 
   const filteredSongs = useMemo(() => {
     if (!searchQuery.trim()) return songs;
     const query = searchQuery.toLowerCase();
     return songs.filter(
-      (song) =>
+      (song: Song) =>
         song.title.toLowerCase().includes(query) ||
         (song.artist && song.artist.toLowerCase().includes(query))
     );

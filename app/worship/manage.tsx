@@ -112,32 +112,35 @@ export default function ManageSongsScreen() {
   const songsQuery = useQuery({
     queryKey: ['songs'],
     queryFn: async () => {
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('songs')
         .select('*')
         .order('created_at', { ascending: false });
       if (error) throw error;
-      return (data || []).map(s => ({
+      return (data || []).map((s: { id: string; title: string; artist: string | null; duration: number; cover_image: string | null; audio_url: string | null; organization_id: string | null; created_by: string | null; created_at: string; updated_at: string }): Song => ({
         id: s.id,
         title: s.title,
-        artist: s.artist,
-        duration: s.duration,
-        coverImage: s.cover_image,
-        audioUrl: s.audio_url,
+        artist: s.artist || undefined,
+        duration: s.duration || 0,
+        coverImage: s.cover_image || undefined,
+        organizationId: s.organization_id || '',
+        createdBy: s.created_by || '',
+        createdAt: s.created_at,
+        updatedAt: s.updated_at,
       }));
     },
   });
   const songs = songsQuery.data || [];
 
   const createMutation = useMutation({
-    mutationFn: async (data: { title: string; artist: string; duration: number; audioUrl: string }) => {
-      const { error } = await supabase
+    mutationFn: async (data: { title: string; artist?: string; duration: number; coverImage?: string }) => {
+      const { error } = await (supabase as any)
         .from('songs')
         .insert({
           title: data.title,
-          artist: data.artist,
+          artist: data.artist || null,
           duration: data.duration,
-          audio_url: data.audioUrl,
+          cover_image: data.coverImage || null,
         });
       if (error) throw error;
     },
@@ -155,7 +158,7 @@ export default function ManageSongsScreen() {
 
   const deleteMutation = useMutation({
     mutationFn: async (data: { id: string }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('songs')
         .delete()
         .eq('id', data.id);
@@ -192,8 +195,8 @@ export default function ManageSongsScreen() {
     createMutation.mutate({
       title: newTitle.trim(),
       artist: newArtist.trim() || undefined,
-      coverImage: newCoverUrl.trim() || undefined,
       duration: durationSeconds,
+      coverImage: newCoverUrl.trim() || undefined,
     });
   };
 
@@ -209,7 +212,7 @@ export default function ManageSongsScreen() {
           onPress: () => {
             console.log("Deleting song:", song.id);
             setDeletingId(song.id);
-            deleteMutation.mutate({ songId: song.id });
+            deleteMutation.mutate({ id: song.id });
           },
         },
       ]
@@ -365,7 +368,7 @@ export default function ManageSongsScreen() {
             </View>
           ) : (
             <View style={styles.songsList}>
-              {songs.map((song) => (
+              {songs.map((song: Song) => (
                 <SongRow
                   key={song.id}
                   song={song}

@@ -18,6 +18,7 @@ import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowLeft, Send, X, RefreshCw } f
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
 
 export default function RegisterScreen() {
   const router = useRouter();

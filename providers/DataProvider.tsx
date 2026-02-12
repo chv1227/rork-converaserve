@@ -16,7 +16,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     queryKey: ['ministries', organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('ministries')
         .select('*')
         .eq('organization_id', organizationId)
@@ -27,7 +27,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch ministries');
       }
       
-      return (data || []).map(m => ({
+      return (data || []).map((m: { id: string; organization_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
         id: m.id,
         organizationId: m.organization_id,
         name: m.name,
@@ -46,7 +46,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     queryKey: ['events', organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('events')
         .select('*, ministries(name, color)')
         .eq('organization_id', organizationId)
@@ -57,7 +57,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch events');
       }
       
-      return (data || []).map(e => ({
+      return (data || []).map((e: { id: string; organization_id: string; title: string; description: string | null; date: string; time: string; location: string | null; ministry_id: string | null; ministries: { name: string; color: string } | null; attendees: number }) => ({
         id: e.id,
         organizationId: e.organization_id,
         title: e.title,
@@ -66,8 +66,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         time: e.time,
         location: e.location || '',
         ministryId: e.ministry_id || '',
-        ministryName: (e.ministries as { name: string } | null)?.name || 'General',
-        color: (e.ministries as { color: string } | null)?.color || '#1A7B74',
+        ministryName: e.ministries?.name || 'General',
+        color: e.ministries?.color || '#1A7B74',
         attendees: e.attendees,
       })) as Event[];
     },
@@ -79,7 +79,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     queryKey: ['announcements', organizationId],
     queryFn: async () => {
       if (!organizationId) return [];
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('announcements')
         .select('*, ministries(name)')
         .eq('organization_id', organizationId)
@@ -91,7 +91,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch announcements');
       }
       
-      return (data || []).map(a => ({
+      return (data || []).map((a: { id: string; organization_id: string; title: string; content: string; author_name: string; author_role: string; author_avatar: string | null; date: string; ministry_id: string | null; ministries: { name: string } | null; priority: string; is_pinned: boolean }) => ({
         id: a.id,
         organizationId: a.organization_id,
         title: a.title,
@@ -101,7 +101,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         authorAvatar: a.author_avatar || '',
         date: a.date,
         ministryId: a.ministry_id || undefined,
-        ministryName: (a.ministries as { name: string } | null)?.name || undefined,
+        ministryName: a.ministries?.name || undefined,
         priority: a.priority as 'high' | 'normal' | 'low',
         isPinned: a.is_pinned,
       })) as Announcement[];
@@ -128,10 +128,10 @@ export const [DataProvider, useData] = createContextHook(() => {
         return [];
       }
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('ministry_members')
         .select('*, ministries(*)')
-        .eq('profile_id', profileData.id)
+        .eq('profile_id', (profileData as { id: string }).id)
         .eq('is_active', true);
       
       if (error) {
@@ -139,8 +139,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch user ministries');
       }
       
-      return (data || []).map(mm => {
-        const m = mm.ministries as unknown as {
+      return (data || []).map((mm: any) => {
+        const m = mm.ministries as {
           id: string;
           organization_id: string;
           name: string;
@@ -171,7 +171,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     queryFn: async () => {
       if (!organizationId || !user?.id) return [];
       
-      const { data: participantData, error: participantError } = await supabase
+      const { data: participantData, error: participantError } = await (supabase as any)
         .from('conversation_participants')
         .select('conversation_id')
         .eq('user_id', user.id);
@@ -181,10 +181,10 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(participantError.message || 'Failed to fetch conversation participants');
       }
       
-      const conversationIds = (participantData || []).map(p => p.conversation_id);
+      const conversationIds = (participantData || []).map((p: { conversation_id: string }) => p.conversation_id);
       if (conversationIds.length === 0) return [];
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('conversations')
         .select('*, ministries(color)')
         .in('id', conversationIds)
@@ -197,8 +197,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch conversations');
       }
       
-      const conversationsWithMessages = await Promise.all((data || []).map(async (c) => {
-        const { data: lastMessage } = await supabase
+      const conversationsWithMessages = await Promise.all((data || []).map(async (c: any) => {
+        const { data: lastMessage } = await (supabase as any)
           .from('messages')
           .select('content, created_at')
           .eq('conversation_id', c.id)
@@ -206,7 +206,7 @@ export const [DataProvider, useData] = createContextHook(() => {
           .limit(1)
           .single();
         
-        const { count: unreadCount } = await supabase
+        const { count: unreadCount } = await (supabase as any)
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('conversation_id', c.id)
@@ -244,7 +244,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     queryFn: async () => {
       if (!organizationId || !user?.id) return 0;
       
-      const { data: participantData } = await supabase
+      const { data: participantData } = await (supabase as any)
         .from('conversation_participants')
         .select('conversation_id, last_read_at')
         .eq('user_id', user.id);
@@ -252,8 +252,8 @@ export const [DataProvider, useData] = createContextHook(() => {
       if (!participantData || participantData.length === 0) return 0;
       
       let totalUnread = 0;
-      for (const participant of participantData) {
-        const { count } = await supabase
+      for (const participant of (participantData as { conversation_id: string; last_read_at: string | null }[])) {
+        const { count } = await (supabase as any)
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('conversation_id', participant.conversation_id)
@@ -273,7 +273,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     mutationFn: async (ministry: { name: string; description?: string; color: string; icon: string; image?: string }) => {
       if (!organizationId) throw new Error('No organization selected');
       
-      const { data, error } = await supabase
+      const { data, error } = await (supabase as any)
         .from('ministries')
         .insert({
           organization_id: organizationId,
@@ -297,7 +297,7 @@ export const [DataProvider, useData] = createContextHook(() => {
 
   const updateMinistryMutation = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string; color?: string; icon?: string; image?: string }) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ministries')
         .update({
           name: updates.name,
@@ -318,7 +318,7 @@ export const [DataProvider, useData] = createContextHook(() => {
 
   const deleteMinistryMutation = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ministries')
         .delete()
         .eq('id', id);
@@ -347,17 +347,17 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error('Profile not found. Please ensure you are a member of this organization.');
       }
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ministry_members')
         .insert({
           ministry_id: ministryId,
-          profile_id: profileData.id,
+          profile_id: (profileData as { id: string }).id,
           role: 'member',
         });
       
       if (error) throw error;
       
-      await supabase.rpc('increment_ministry_member_count', { ministry_id: ministryId });
+      await (supabase as any).rpc('increment_ministry_member_count', { ministry_id: ministryId });
       
       return { message: 'Successfully joined ministry' };
     },
@@ -383,15 +383,15 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error('Profile not found');
       }
       
-      const { error } = await supabase
+      const { error } = await (supabase as any)
         .from('ministry_members')
         .delete()
         .eq('ministry_id', ministryId)
-        .eq('profile_id', profileData.id);
+        .eq('profile_id', (profileData as { id: string }).id);
       
       if (error) throw error;
       
-      await supabase.rpc('decrement_ministry_member_count', { ministry_id: ministryId });
+      await (supabase as any).rpc('decrement_ministry_member_count', { ministry_id: ministryId });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });

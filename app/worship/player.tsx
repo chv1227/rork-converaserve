@@ -65,41 +65,44 @@ export default function PlayerScreen() {
     queryKey: ['song', songId],
     queryFn: async () => {
       if (!songId) return null;
-      const { data: song, error: songError } = await supabase
+      const { data: song, error: songError } = await (supabase as any)
         .from('songs')
         .select('*')
         .eq('id', songId)
         .single();
       if (songError) throw songError;
+      const s = song as { id: string; title: string; artist: string | null; duration: number; cover_image: string | null; audio_url: string | null } | null;
       
-      const { data: audioParts, error: audioError } = await supabase
+      const { data: audioParts, error: audioError } = await (supabase as any)
         .from('song_audio_parts')
         .select('*')
         .eq('song_id', songId);
       if (audioError) throw audioError;
+      const aps = (audioParts || []) as { id: string; part_name: string; audio_url: string }[];
       
-      const { data: lyrics, error: lyricsError } = await supabase
+      const { data: lyrics, error: lyricsError } = await (supabase as any)
         .from('song_lyrics')
         .select('*')
         .eq('song_id', songId)
         .order('timestamp_ms', { ascending: true });
       if (lyricsError) throw lyricsError;
+      const lrs = (lyrics || []) as { id: string; timestamp_ms: number | null; content: string }[];
       
       return {
-        song: song ? {
-          id: song.id,
-          title: song.title,
-          artist: song.artist,
-          duration: song.duration,
-          coverImage: song.cover_image,
-          audioUrl: song.audio_url,
+        song: s ? {
+          id: s.id,
+          title: s.title,
+          artist: s.artist,
+          duration: s.duration,
+          coverImage: s.cover_image,
+          audioUrl: s.audio_url,
         } : null,
-        audioParts: (audioParts || []).map(ap => ({
+        audioParts: aps.map(ap => ({
           id: ap.id,
           vocalPart: ap.part_name,
           audioFileUrl: ap.audio_url,
         })),
-        lyrics: (lyrics || []).map(l => ({
+        lyrics: lrs.map(l => ({
           id: l.id,
           startTime: l.timestamp_ms || 0,
           endTime: (l.timestamp_ms || 0) + 3000,
@@ -316,7 +319,7 @@ export default function PlayerScreen() {
     }, 500);
   };
 
-  const handleLyricPress = async (lyric: LyricLine) => {
+  const handleLyricPress = async (lyric: { id: string; startTime: number; endTime: number; lineText: string }) => {
     if (!sound) return;
 
     try {
