@@ -63,14 +63,16 @@ export default function EditOrganizationScreen() {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return null;
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('*')
-        .eq('organization_id', currentOrganization!.id)
+        .eq('church_id', currentOrganization!.id)
         .eq('user_id', authUser.id)
         .eq('is_active', true)
         .single();
       if (error) { console.log('Membership query error:', error.message); return null; }
-      return data as { id: string; role: string };
+      const row = data as any;
+      const mappedRole = row.role === 'owner' ? 'super_admin' : row.role === 'admin' ? 'organization_admin' : row.role;
+      return { id: row.id, role: mappedRole };
     },
     enabled: !!currentOrganization?.id,
   });
@@ -92,16 +94,16 @@ export default function EditOrganizationScreen() {
 
   const updateMutation = useMutation({
     mutationFn: async (params: { id: string; name: string; description: string; address?: string; phone?: string; email?: string; website?: string; logo?: string }) => {
-      const { data, error } = await (supabase as any)
-        .from('organizations')
+      const { data, error } = await (supabase
+        .from('churches') as any)
         .update({
           name: params.name,
           description: params.description,
-          address: params.address || null,
-          phone: params.phone || null,
-          email: params.email || null,
+          address_line1: params.address || null,
+          contact_phone: params.phone || null,
+          contact_email: params.email || null,
           website: params.website || null,
-          logo: params.logo || null,
+          logo_url: params.logo || null,
           updated_at: new Date().toISOString(),
         })
         .eq('id', params.id)
@@ -110,17 +112,17 @@ export default function EditOrganizationScreen() {
       if (error) throw new Error(error.message);
       return data;
     },
-    onSuccess: async (updatedOrg: { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string }) => {
-      console.log('Organization updated successfully:', updatedOrg?.name);
+    onSuccess: async (updatedOrg: any) => {
+      console.log('Church updated successfully:', updatedOrg?.name);
       if (updatedOrg) {
         const mapped: Organization = {
           id: updatedOrg.id,
           name: updatedOrg.name,
           description: updatedOrg.description || '',
-          logo: updatedOrg.logo || undefined,
-          address: updatedOrg.address || undefined,
-          phone: updatedOrg.phone || undefined,
-          email: updatedOrg.email || undefined,
+          logo: updatedOrg.logo_url || undefined,
+          address: updatedOrg.address_line1 || undefined,
+          phone: updatedOrg.contact_phone || undefined,
+          email: updatedOrg.contact_email || undefined,
           website: updatedOrg.website || undefined,
           createdAt: updatedOrg.created_at,
           updatedAt: updatedOrg.updated_at,

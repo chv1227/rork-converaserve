@@ -81,20 +81,20 @@ export default function ProfileScreen() {
       const { data, error } = await supabase
         .from('ministries')
         .select('*')
-        .eq('organization_id', currentOrganization.id)
+        .eq('church_id', currentOrganization.id)
         .order('name');
       
       if (error) throw error;
       
-      return (data || []).map((m: { id: string; organization_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
+      return (data || []).map((m: { id: string; church_id: string; name: string; description: string | null; color: string | null; icon: string | null; image_url: string | null }) => ({
         id: m.id,
-        organizationId: m.organization_id,
+        organizationId: m.church_id,
         name: m.name,
         description: m.description || '',
-        color: m.color,
-        icon: m.icon,
-        memberCount: m.member_count,
-        image: m.image || '',
+        color: m.color || '#1A7B74',
+        icon: m.icon || 'Users',
+        memberCount: 0,
+        image: m.image_url || '',
       })) as Ministry[];
     },
     enabled: !!currentOrganization?.id,

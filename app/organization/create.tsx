@@ -63,17 +63,17 @@ export default function CreateOrganizationScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('You must be logged in to create an organization');
 
-      const { data: org, error: orgError } = await supabase
-        .from('organizations')
+      const { data: org, error: orgError } = await (supabase
+        .from('churches') as any)
         .insert({
           name: orgData.name,
           description: orgData.description,
-          address: orgData.address || null,
-          phone: orgData.phone || null,
-          email: orgData.email || null,
+          address_line1: orgData.address || null,
+          contact_phone: orgData.phone || null,
+          contact_email: orgData.email || null,
           website: orgData.website || null,
-          created_by: user.id,
-        } as any)
+          owner_user_id: user.id,
+        })
         .select()
         .single();
 
@@ -81,24 +81,24 @@ export default function CreateOrganizationScreen() {
       const orgData2 = org as any;
 
       const { data: existingMembership } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('id')
         .eq('user_id', user.id)
-        .eq('organization_id', orgData2.id)
+        .eq('church_id', orgData2.id)
         .maybeSingle();
 
       if (existingMembership) {
-        throw new Error('You are already a member of this organization');
+        throw new Error('You are already a member of this church');
       }
 
-      const { data: membership, error: membershipError } = await supabase
-        .from('memberships')
+      const { data: membership, error: membershipError } = await (supabase
+        .from('user_church_roles') as any)
         .insert({
           user_id: user.id,
-          organization_id: orgData2.id,
-          role: 'super_admin',
+          church_id: orgData2.id,
+          role: 'owner',
           is_active: true,
-        } as any)
+        })
         .select()
         .single();
 
@@ -110,13 +110,13 @@ export default function CreateOrganizationScreen() {
           id: orgData2.id,
           name: orgData2.name,
           description: orgData2.description || '',
-          logo: orgData2.logo || undefined,
+          logo: orgData2.logo_url || undefined,
           createdAt: orgData2.created_at,
           updatedAt: orgData2.updated_at,
         },
         membership: {
           id: membershipData.id,
-          joinedAt: membershipData.joined_at || membershipData.created_at,
+          joinedAt: membershipData.created_at,
         },
       };
     },
@@ -126,7 +126,7 @@ export default function CreateOrganizationScreen() {
       await setCurrentOrganization(data.organization, {
         id: data.membership.id,
         organizationId: data.organization.id,
-        role: 'super_admin',
+        role: 'organization_admin',
         joinedAt: data.membership.joinedAt,
       });
       Alert.alert('Success', 'Your church has been created!', [

@@ -84,14 +84,16 @@ export default function OrganizationAdminScreen() {
     queryFn: async () => {
       if (!user?.id) return null;
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('*')
-        .eq('organization_id', orgId)
+        .eq('church_id', orgId)
         .eq('user_id', user.id)
         .eq('is_active', true)
         .single();
       if (error) { console.log('Membership query error:', error.message); return null; }
-      return data as { id: string; role: RoleType };
+      const row = data as any;
+      const mappedRole = row.role === 'owner' ? 'super_admin' : row.role === 'admin' ? 'organization_admin' : row.role;
+      return { id: row.id, role: mappedRole as RoleType };
     },
     enabled: !!orgId && !!user?.id,
   });
@@ -116,9 +118,9 @@ export default function OrganizationAdminScreen() {
     queryKey: ['org-members', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('id, user_id, role, is_active, created_at')
-        .eq('organization_id', orgId)
+        .eq('church_id', orgId)
         .eq('is_active', true);
       if (error) { console.log('Members query error:', error.message); return []; }
       const members: OrganizationMember[] = [];
@@ -126,13 +128,14 @@ export default function OrganizationAdminScreen() {
       for (const m of rows) {
         const { data: u } = await supabase.from('users').select('full_name, email, avatar_url').eq('id', m.user_id).single();
         const usr = u as { full_name: string | null; email: string; avatar_url: string | null } | null;
+        const mappedRole = m.role === 'owner' ? 'super_admin' : m.role === 'admin' ? 'organization_admin' : m.role;
         members.push({
           id: m.id,
           userId: m.user_id,
           name: usr?.full_name || usr?.email || 'Unknown',
           email: usr?.email || '',
           avatar: usr?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(usr?.full_name || 'U')}&background=1A7B74&color=fff`,
-          role: m.role as OrganizationRole,
+          role: mappedRole as OrganizationRole,
           joinedAt: m.created_at,
           isActive: m.is_active,
         });
@@ -146,9 +149,9 @@ export default function OrganizationAdminScreen() {
     queryKey: ['org-pending', orgId],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('id, user_id, created_at')
-        .eq('organization_id', orgId)
+        .eq('church_id', orgId)
         .eq('is_active', false);
       if (error) { console.log('Pending query error:', error.message); return []; }
       const requests: { id: string; requesterName: string; requesterEmail: string; requesterAvatar: string }[] = [];
@@ -170,8 +173,8 @@ export default function OrganizationAdminScreen() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
-      const { error } = await (supabase as any)
-        .from('memberships')
+      const { error } = await (supabase
+        .from('user_church_roles') as any)
         .update({ is_active: true, role: 'member', updated_at: new Date().toISOString() })
         .eq('id', requestId);
       if (error) throw new Error(error.message);
@@ -189,7 +192,7 @@ export default function OrganizationAdminScreen() {
   const rejectMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
       const { error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .delete()
         .eq('id', requestId);
       if (error) throw new Error(error.message);
@@ -205,9 +208,10 @@ export default function OrganizationAdminScreen() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ membershipId, role }: { membershipId: string; role: string }) => {
-      const { error } = await (supabase as any)
-        .from('memberships')
-        .update({ role, updated_at: new Date().toISOString() })
+      const churchRole = role === 'super_admin' ? 'owner' : role === 'organization_admin' ? 'admin' : role;
+      const { error } = await (supabase
+        .from('user_church_roles') as any)
+        .update({ role: churchRole, updated_at: new Date().toISOString() })
         .eq('id', membershipId);
       if (error) throw new Error(error.message);
     },
@@ -225,7 +229,7 @@ export default function OrganizationAdminScreen() {
   const removeMutation = useMutation({
     mutationFn: async ({ membershipId }: { membershipId: string }) => {
       const { error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .delete()
         .eq('id', membershipId);
       if (error) throw new Error(error.message);

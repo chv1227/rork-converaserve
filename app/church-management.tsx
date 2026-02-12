@@ -131,9 +131,9 @@ export default function ChurchManagementScreen() {
     queryFn: async () => {
       if (!orgId) return [];
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('*, users(id, full_name, email, avatar_url)')
-        .eq('organization_id', orgId)
+        .eq('church_id', orgId)
         .eq('is_active', true);
       
       if (error) throw error;
@@ -157,9 +157,9 @@ export default function ChurchManagementScreen() {
     queryFn: async () => {
       if (!orgId) return [];
       const { data, error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .select('*, users(id, full_name, email, avatar_url)')
-        .eq('organization_id', orgId)
+        .eq('church_id', orgId)
         .eq('is_active', false);
       
       if (error) throw error;
@@ -200,9 +200,9 @@ export default function ChurchManagementScreen() {
 
   const approveMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
-      const { error } = await supabase
-        .from('memberships')
-        .update({ is_active: true, updated_at: new Date().toISOString() } as never)
+      const { error } = await (supabase
+        .from('user_church_roles') as any)
+        .update({ is_active: true, updated_at: new Date().toISOString() })
         .eq('id', requestId);
       if (error) throw error;
     },
@@ -221,7 +221,7 @@ export default function ChurchManagementScreen() {
   const rejectMutation = useMutation({
     mutationFn: async ({ requestId }: { requestId: string }) => {
       const { error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .delete()
         .eq('id', requestId);
       if (error) throw error;
@@ -239,9 +239,10 @@ export default function ChurchManagementScreen() {
 
   const updateRoleMutation = useMutation({
     mutationFn: async ({ membershipId, role }: { membershipId: string; role: string }) => {
-      const { error } = await supabase
-        .from('memberships')
-        .update({ role, updated_at: new Date().toISOString() } as never)
+      const churchRole = role === 'super_admin' ? 'owner' : role === 'organization_admin' ? 'admin' : role;
+      const { error } = await (supabase
+        .from('user_church_roles') as any)
+        .update({ role: churchRole, updated_at: new Date().toISOString() })
         .eq('id', membershipId);
       if (error) throw error;
     },
@@ -261,7 +262,7 @@ export default function ChurchManagementScreen() {
   const removeMutation = useMutation({
     mutationFn: async ({ membershipId }: { membershipId: string }) => {
       const { error } = await supabase
-        .from('memberships')
+        .from('user_church_roles')
         .delete()
         .eq('id', membershipId);
       if (error) throw error;
@@ -279,23 +280,35 @@ export default function ChurchManagementScreen() {
 
   const updateChurchMutation = useMutation({
     mutationFn: async (data: { id: string; name: string; description: string; address?: string; phone?: string; email?: string; website?: string; logo?: string }) => {
-      const { data: updatedOrg, error } = await supabase
-        .from('organizations')
+      const { data: updatedOrg, error } = await (supabase
+        .from('churches') as any)
         .update({
           name: data.name,
           description: data.description,
-          address: data.address || null,
-          phone: data.phone || null,
-          email: data.email || null,
+          address_line1: data.address || null,
+          contact_phone: data.phone || null,
+          contact_email: data.email || null,
           website: data.website || null,
-          logo: data.logo || null,
+          logo_url: data.logo || null,
           updated_at: new Date().toISOString(),
-        } as never)
+        })
         .eq('id', data.id)
         .select()
         .single();
       if (error) throw error;
-      return updatedOrg as unknown as typeof currentOrganization;
+      const org = updatedOrg as any;
+      return {
+        id: org.id,
+        name: org.name,
+        description: org.description || '',
+        logo: org.logo_url || undefined,
+        address: org.address_line1 || undefined,
+        phone: org.contact_phone || undefined,
+        email: org.contact_email || undefined,
+        website: org.website || undefined,
+        createdAt: org.created_at,
+        updatedAt: org.updated_at,
+      } as typeof currentOrganization;
     },
     onSuccess: async (updatedOrg) => {
       console.log('Organization updated successfully:', updatedOrg?.name);

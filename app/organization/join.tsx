@@ -27,22 +27,23 @@ export default function JoinOrganizationScreen() {
   const [refreshing, setRefreshing] = useState(false);
 
   const organizationsQuery = useQuery({
-    queryKey: ['all-organizations'],
+    queryKey: ['all-churches'],
     queryFn: async () => {
       const { data, error } = await supabase
-        .from('organizations')
+        .from('churches')
         .select('*')
+        .eq('status', 'active')
         .order('name');
-      if (error) { console.log('Orgs query error:', error.message); return []; }
-      const rows = (data || []) as { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string }[];
+      if (error) { console.log('Churches query error:', error.message); return []; }
+      const rows = (data || []) as { id: string; name: string; description: string | null; logo_url: string | null; address_line1: string | null; contact_phone: string | null; contact_email: string | null; website: string | null; created_at: string; updated_at: string }[];
       return rows.map((o): Organization => ({
         id: o.id,
         name: o.name,
         description: o.description || '',
-        logo: o.logo || undefined,
-        address: o.address || undefined,
-        phone: o.phone || undefined,
-        email: o.email || undefined,
+        logo: o.logo_url || undefined,
+        address: o.address_line1 || undefined,
+        phone: o.contact_phone || undefined,
+        email: o.contact_email || undefined,
         website: o.website || undefined,
         createdAt: o.created_at,
         updatedAt: o.updated_at,
@@ -51,17 +52,17 @@ export default function JoinOrganizationScreen() {
   });
 
   const userOrgsQuery = useQuery({
-    queryKey: ['user-organizations'],
+    queryKey: ['user-churches'],
     queryFn: async () => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) return [];
       const { data, error } = await supabase
-        .from('memberships')
-        .select('organization_id')
+        .from('user_church_roles')
+        .select('church_id')
         .eq('user_id', user.id);
-      if (error) { console.log('User orgs query error:', error.message); return []; }
-      const rows = (data || []) as { organization_id: string }[];
-      return rows.map((m) => ({ id: m.organization_id }));
+      if (error) { console.log('User churches query error:', error.message); return []; }
+      const rows = (data || []) as { church_id: string }[];
+      return rows.map((m) => ({ id: m.church_id }));
     },
   });
 
@@ -75,27 +76,27 @@ export default function JoinOrganizationScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: existing } = await (supabase as any)
-        .from('memberships')
+      const { data: existing } = await supabase
+        .from('user_church_roles')
         .select('id, is_active')
         .eq('user_id', user.id)
-        .eq('organization_id', organizationId)
+        .eq('church_id', organizationId)
         .maybeSingle();
 
       const existingRow = existing as { id: string; is_active: boolean } | null;
       if (existingRow) {
         if (existingRow.is_active) {
-          throw new Error('You are already a member of this organization');
+          throw new Error('You are already a member of this church');
         } else {
-          throw new Error('You already have a pending request for this organization');
+          throw new Error('You already have a pending request for this church');
         }
       }
 
-      const { error } = await (supabase as any)
-        .from('memberships')
+      const { error } = await (supabase
+        .from('user_church_roles') as any)
         .insert({
           user_id: user.id,
-          organization_id: organizationId,
+          church_id: organizationId,
           role: 'member',
           is_active: false,
         });

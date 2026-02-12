@@ -148,20 +148,24 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           let currentOrg = storedOrg;
           if (!currentOrg) {
             const { data: membership } = await supabase
-              .from('memberships')
-              .select('*, organizations(*)')
+              .from('user_church_roles')
+              .select('*, churches(*)')
               .eq('user_id', session.user.id)
               .eq('is_active', true)
               .limit(1)
               .single();
 
             const membershipData = membership as any;
-            if (membershipData?.organizations) {
-              const org = membershipData.organizations as {
+            if (membershipData?.churches) {
+              const org = membershipData.churches as {
                 id: string;
                 name: string;
                 description: string | null;
-                logo: string | null;
+                logo_url: string | null;
+                contact_email: string | null;
+                contact_phone: string | null;
+                website: string | null;
+                address_line1: string | null;
                 created_at: string;
                 updated_at: string;
               };
@@ -169,7 +173,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
                 id: org.id,
                 name: org.name,
                 description: org.description || '',
-                logo: org.logo || undefined,
+                logo: org.logo_url || undefined,
+                email: org.contact_email || undefined,
+                phone: org.contact_phone || undefined,
+                website: org.website || undefined,
+                address: org.address_line1 || undefined,
                 createdAt: org.created_at,
                 updatedAt: org.updated_at,
               };
@@ -227,8 +235,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         const user = createUserFromSupabase(session.user, profile || undefined);
 
         const { data: membershipOnChange } = await supabase
-          .from('memberships')
-          .select('*, organizations(*)')
+          .from('user_church_roles')
+          .select('*, churches(*)')
           .eq('user_id', session.user.id)
           .eq('is_active', true)
           .limit(1)
@@ -237,13 +245,17 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         let orgOnChange: Organization | null = null;
         if (membershipOnChange) {
           const md = membershipOnChange as any;
-          if (md?.organizations) {
-            const o = md.organizations as { id: string; name: string; description: string | null; logo: string | null; created_at: string; updated_at: string };
+          if (md?.churches) {
+            const o = md.churches as { id: string; name: string; description: string | null; logo_url: string | null; contact_email: string | null; contact_phone: string | null; website: string | null; address_line1: string | null; created_at: string; updated_at: string };
             orgOnChange = {
               id: o.id,
               name: o.name,
               description: o.description || '',
-              logo: o.logo || undefined,
+              logo: o.logo_url || undefined,
+              email: o.contact_email || undefined,
+              phone: o.contact_phone || undefined,
+              website: o.website || undefined,
+              address: o.address_line1 || undefined,
               createdAt: o.created_at,
               updatedAt: o.updated_at,
             };
@@ -309,8 +321,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const user = createUserFromSupabase(data.user, profile || undefined);
 
       const { data: membership } = await supabase
-        .from('memberships')
-        .select('*, organizations(*)')
+        .from('user_church_roles')
+        .select('*, churches(*)')
         .eq('user_id', data.user.id)
         .eq('is_active', true)
         .limit(1)
@@ -318,12 +330,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       let currentOrg: Organization | null = null;
       const membershipData2 = membership as any;
-      if (membershipData2?.organizations) {
-        const org = membershipData2.organizations as {
+      if (membershipData2?.churches) {
+        const org = membershipData2.churches as {
           id: string;
           name: string;
           description: string | null;
-          logo: string | null;
+          logo_url: string | null;
+          contact_email: string | null;
+          contact_phone: string | null;
+          website: string | null;
+          address_line1: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -331,7 +347,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           id: org.id,
           name: org.name,
           description: org.description || '',
-          logo: org.logo || undefined,
+          logo: org.logo_url || undefined,
+          email: org.contact_email || undefined,
+          phone: org.contact_phone || undefined,
+          website: org.website || undefined,
+          address: org.address_line1 || undefined,
           createdAt: org.created_at,
           updatedAt: org.updated_at,
         };

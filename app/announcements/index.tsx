@@ -67,21 +67,21 @@ export default function AnnouncementsScreen() {
       const { data, error } = await supabase
         .from('announcements')
         .select('*, ministries(name)')
-        .eq('organization_id', currentOrganization.id)
+        .eq('church_id', currentOrganization.id)
         .order('is_pinned', { ascending: false })
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) throw error;
       
-      return (data || []).map((a: { id: string; organization_id: string; title: string; content: string; author_name: string; author_role: string; author_avatar: string | null; date: string; ministry_id: string | null; priority: string; is_pinned: boolean; ministries: { name: string } | null }) => ({
+      return (data || []).map((a: { id: string; church_id: string; title: string; content: string; created_by_profile_id: string | null; created_at: string; ministry_id: string | null; priority: string; is_pinned: boolean; ministries: { name: string } | null }) => ({
         id: a.id,
-        organizationId: a.organization_id,
+        organizationId: a.church_id,
         title: a.title,
         content: a.content,
-        author: a.author_name,
-        authorRole: a.author_role,
-        authorAvatar: a.author_avatar || '',
-        date: a.date,
+        author: '',
+        authorRole: '',
+        authorAvatar: '',
+        date: a.created_at,
         ministryId: a.ministry_id || undefined,
         ministryName: a.ministries?.name || undefined,
         priority: a.priority as 'high' | 'normal' | 'low',

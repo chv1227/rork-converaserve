@@ -129,31 +129,36 @@ export default function AdminCreateChurchScreen() {
       if (!userData.user) throw new Error('Not authenticated');
       
       const { data: church, error } = await (supabase
-        .from('organizations') as any)
+        .from('churches') as any)
         .insert({
           name: data.name,
           description: data.description,
-          address: data.address,
-          email: data.email,
-          phone: data.phone,
+          address_line1: data.address,
+          contact_email: data.email,
+          contact_phone: data.phone,
           website: data.website,
-          logo: data.logo,
-          created_by: userData.user.id,
+          logo_url: data.logo,
+          owner_user_id: userData.user.id,
+          denomination: data.denomination,
+          city: data.city || null,
+          state: data.state || null,
+          postal_code: data.zip || null,
+          country: data.country || 'United States',
         })
         .select()
         .single();
       
       if (error) throw error;
-      const org = church as { id: string; name: string; created_by: string };
+      const org = church as { id: string; name: string; owner_user_id: string };
       
-      await (supabase.from('memberships') as any).insert({
+      await (supabase.from('user_church_roles') as any).insert({
         user_id: userData.user.id,
-        organization_id: org.id,
-        role: 'super_admin',
+        church_id: org.id,
+        role: 'owner',
         is_active: true,
       });
       
-      return { church: { ...org, name: org.name, id: org.id, createdBy: org.created_by }, settings: { id: org.id }, membership: { id: org.id } };
+      return { church: { ...org, name: org.name, id: org.id, createdBy: org.owner_user_id }, settings: { id: org.id }, membership: { id: org.id } };
     },
     onSuccess: (data: { church: { name: string; id: string; createdBy: string }; settings: { id: string }; membership: { id: string } }) => {
       console.log('=== Church Creation Success ===' );

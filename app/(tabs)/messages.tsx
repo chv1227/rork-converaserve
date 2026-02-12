@@ -96,20 +96,20 @@ export default function MessagesScreen() {
     queryFn: async () => {
       if (!currentOrganization?.id) return [];
       const { data } = await supabase
-        .from('memberships')
-        .select('user_id, users(id, name, email, avatar)')
-        .eq('organization_id', currentOrganization.id)
+        .from('user_church_roles')
+        .select('user_id, users(id, full_name, email, avatar_url)')
+        .eq('church_id', currentOrganization.id)
         .eq('is_active', true);
       
       const members: OrgMember[] = [];
-      for (const m of (data || []) as { user_id: string; users: { id: string; name: string; email: string; avatar: string | null } | null }[]) {
+      for (const m of (data || []) as { user_id: string; users: { id: string; full_name: string | null; email: string; avatar_url: string | null } | null }[]) {
         const userData = m.users;
         if (userData && userData.id !== user?.id) {
           members.push({
             id: userData.id,
-            name: userData.name || '',
+            name: userData.full_name || '',
             email: userData.email || '',
-            avatar: userData.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.name || 'User')}&background=1A7B74&color=fff`,
+            avatar: userData.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.full_name || 'User')}&background=1A7B74&color=fff`,
           });
         }
       }

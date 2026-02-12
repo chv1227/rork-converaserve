@@ -19,7 +19,7 @@ export const [DataProvider, useData] = createContextHook(() => {
       const { data, error } = await (supabase as any)
         .from('ministries')
         .select('*')
-        .eq('organization_id', organizationId)
+        .eq('church_id', organizationId)
         .order('name');
       
       if (error) {
@@ -27,9 +27,9 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch ministries');
       }
       
-      return (data || []).map((m: { id: string; organization_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
+      return (data || []).map((m: { id: string; church_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
         id: m.id,
-        organizationId: m.organization_id,
+        organizationId: m.church_id,
         name: m.name,
         description: m.description || '',
         color: m.color,
@@ -49,26 +49,26 @@ export const [DataProvider, useData] = createContextHook(() => {
       const { data, error } = await (supabase as any)
         .from('events')
         .select('*, ministries(name, color)')
-        .eq('organization_id', organizationId)
-        .order('date', { ascending: true });
+        .eq('church_id', organizationId)
+        .order('start_datetime', { ascending: true });
       
       if (error) {
         console.error('Error fetching events:', error.message || JSON.stringify(error));
         throw new Error(error.message || 'Failed to fetch events');
       }
       
-      return (data || []).map((e: { id: string; organization_id: string; title: string; description: string | null; date: string; time: string; location: string | null; ministry_id: string | null; ministries: { name: string; color: string } | null; attendees: number }) => ({
+      return (data || []).map((e: { id: string; church_id: string; title: string; description: string | null; start_datetime: string; location_name: string | null; ministry_id: string | null; ministries: { name: string; color: string } | null; max_attendees: number | null }) => ({
         id: e.id,
-        organizationId: e.organization_id,
+        organizationId: e.church_id,
         title: e.title,
         description: e.description || '',
-        date: e.date,
-        time: e.time,
-        location: e.location || '',
+        date: e.start_datetime?.split('T')[0] || '',
+        time: e.start_datetime?.split('T')[1]?.substring(0, 5) || '',
+        location: e.location_name || '',
         ministryId: e.ministry_id || '',
         ministryName: e.ministries?.name || 'General',
         color: e.ministries?.color || '#1A7B74',
-        attendees: e.attendees,
+        attendees: e.max_attendees || 0,
       })) as Event[];
     },
     enabled: !!organizationId,
@@ -82,24 +82,24 @@ export const [DataProvider, useData] = createContextHook(() => {
       const { data, error } = await (supabase as any)
         .from('announcements')
         .select('*, ministries(name)')
-        .eq('organization_id', organizationId)
+        .eq('church_id', organizationId)
         .order('is_pinned', { ascending: false })
-        .order('date', { ascending: false });
+        .order('created_at', { ascending: false });
       
       if (error) {
         console.error('Error fetching announcements:', error.message || JSON.stringify(error));
         throw new Error(error.message || 'Failed to fetch announcements');
       }
       
-      return (data || []).map((a: { id: string; organization_id: string; title: string; content: string; author_name: string; author_role: string; author_avatar: string | null; date: string; ministry_id: string | null; ministries: { name: string } | null; priority: string; is_pinned: boolean }) => ({
+      return (data || []).map((a: { id: string; church_id: string; title: string; content: string; created_by_profile_id: string | null; created_at: string; ministry_id: string | null; ministries: { name: string } | null; priority: string; is_pinned: boolean }) => ({
         id: a.id,
-        organizationId: a.organization_id,
+        organizationId: a.church_id,
         title: a.title,
         content: a.content,
-        author: a.author_name,
-        authorRole: a.author_role,
-        authorAvatar: a.author_avatar || '',
-        date: a.date,
+        author: '',
+        authorRole: '',
+        authorAvatar: '',
+        date: a.created_at,
         ministryId: a.ministry_id || undefined,
         ministryName: a.ministries?.name || undefined,
         priority: a.priority as 'high' | 'normal' | 'low',
@@ -142,23 +142,23 @@ export const [DataProvider, useData] = createContextHook(() => {
       return (data || []).map((mm: any) => {
         const m = mm.ministries as {
           id: string;
-          organization_id: string;
+          church_id: string;
           name: string;
           description: string | null;
           color: string;
           icon: string;
           member_count: number;
-          image: string | null;
+          image_url: string | null;
         };
         return {
           id: m.id,
-          organizationId: m.organization_id,
+          organizationId: m.church_id,
           name: m.name,
           description: m.description || '',
           color: m.color,
           icon: m.icon,
           memberCount: m.member_count,
-          image: m.image || '',
+          image: m.image_url || '',
         };
       }) as Ministry[];
     },
@@ -276,7 +276,7 @@ export const [DataProvider, useData] = createContextHook(() => {
       const { data, error } = await (supabase as any)
         .from('ministries')
         .insert({
-          organization_id: organizationId,
+          church_id: organizationId,
           name: ministry.name,
           description: ministry.description || null,
           color: ministry.color,

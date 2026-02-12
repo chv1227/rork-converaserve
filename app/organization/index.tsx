@@ -27,44 +27,45 @@ export default function OrganizationSelectScreen() {
   const [orgsWithRoles, setOrgsWithRoles] = useState<OrgWithRole[]>([]);
 
   const userOrgsQuery = useQuery({
-    queryKey: ['user-organizations'],
+    queryKey: ['user-churches'],
     queryFn: async () => {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return [];
       const { data, error } = await supabase
-        .from('memberships')
-        .select('id, role, is_active, created_at, updated_at, organization_id')
+        .from('user_church_roles')
+        .select('id, role, is_active, created_at, updated_at, church_id')
         .eq('user_id', authUser.id)
         .eq('is_active', true);
       if (error) {
-        console.error('Error fetching user memberships:', error.message);
+        console.error('Error fetching user church roles:', error.message);
         throw error;
       }
-      const rows = (data || []) as { id: string; role: string; is_active: boolean; created_at: string; updated_at: string; organization_id: string }[];
+      const rows = (data || []) as { id: string; role: string; is_active: boolean; created_at: string; updated_at: string; church_id: string }[];
       const orgs: any[] = [];
       for (const m of rows) {
         const { data: orgData, error: orgError } = await supabase
-          .from('organizations')
+          .from('churches')
           .select('*')
-          .eq('id', m.organization_id)
+          .eq('id', m.church_id)
           .single();
         if (orgError || !orgData) {
-          console.log('Could not fetch org:', m.organization_id, orgError?.message);
+          console.log('Could not fetch church:', m.church_id, orgError?.message);
           continue;
         }
-        const org = orgData as { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string };
+        const org = orgData as { id: string; name: string; description: string | null; logo_url: string | null; address_line1: string | null; contact_phone: string | null; contact_email: string | null; website: string | null; created_at: string; updated_at: string };
+        const mappedRole = m.role === 'owner' ? 'super_admin' : m.role === 'admin' ? 'organization_admin' : m.role;
         orgs.push({
           id: org.id,
           name: org.name,
           description: org.description || '',
-          logo: org.logo || undefined,
-          address: org.address || undefined,
-          phone: org.phone || undefined,
-          email: org.email || undefined,
+          logo: org.logo_url || undefined,
+          address: org.address_line1 || undefined,
+          phone: org.contact_phone || undefined,
+          email: org.contact_email || undefined,
           website: org.website || undefined,
           createdAt: org.created_at,
           updatedAt: org.updated_at,
-          role: m.role,
+          role: mappedRole,
           joinedAt: m.created_at,
           membershipId: m.id,
         });

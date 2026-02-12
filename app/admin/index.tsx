@@ -197,27 +197,27 @@ export default function AdminDashboard() {
     queryFn: async () => {
       if (!user?.id) return [];
       const { data } = await supabase
-        .from('memberships')
-        .select('*, organizations(*)')
+        .from('user_church_roles')
+        .select('*, churches(*)')
         .eq('user_id', user.id)
         .eq('is_active', true)
-        .in('role', ['super_admin', 'admin']);
+        .in('role', ['owner', 'admin']);
       
-      return (data || []).map((m: { id: string; organization_id: string; role: string; joined_at: string; organizations: { id: string; name: string; description: string | null; logo: string | null; address: string | null } | null }) => ({
-        id: m.organizations?.id || '',
-        name: m.organizations?.name || '',
-        description: m.organizations?.description || '',
-        logo: m.organizations?.logo,
+      return (data || []).map((m: any) => ({
+        id: m.churches?.id || '',
+        name: m.churches?.name || '',
+        description: m.churches?.description || '',
+        logo: m.churches?.logo_url,
         city: '',
         state: '',
-        role: m.role as ChurchRole,
-        joinedAt: m.joined_at,
+        role: (m.role === 'owner' ? 'admin' : m.role) as ChurchRole,
+        joinedAt: m.created_at,
         membership: {
           id: m.id,
-          churchId: m.organization_id,
+          churchId: m.church_id,
           userId: user?.id || '',
-          role: m.role as ChurchRole,
-          joinedAt: m.joined_at,
+          role: (m.role === 'owner' ? 'admin' : m.role) as ChurchRole,
+          joinedAt: m.created_at,
           isActive: true,
         } as ChurchMembership,
       }));
