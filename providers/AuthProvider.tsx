@@ -225,13 +225,39 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           .single();
 
         const user = createUserFromSupabase(session.user, profile || undefined);
-        
+
+        const { data: membershipOnChange } = await supabase
+          .from('memberships')
+          .select('*, organizations(*)')
+          .eq('user_id', session.user.id)
+          .eq('is_active', true)
+          .limit(1)
+          .maybeSingle();
+
+        let orgOnChange: Organization | null = null;
+        if (membershipOnChange) {
+          const md = membershipOnChange as any;
+          if (md?.organizations) {
+            const o = md.organizations as { id: string; name: string; description: string | null; logo: string | null; created_at: string; updated_at: string };
+            orgOnChange = {
+              id: o.id,
+              name: o.name,
+              description: o.description || '',
+              logo: o.logo || undefined,
+              createdAt: o.created_at,
+              updatedAt: o.updated_at,
+            };
+            await setStoredOrganization(orgOnChange);
+          }
+        }
+
         setState(prev => ({
           ...prev,
           user,
           session,
           isLoading: false,
           isAuthenticated: true,
+          currentOrganization: orgOnChange || prev.currentOrganization,
         }));
       }
     });
@@ -468,8 +494,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       const { error } = await (supabase
         .from('users') as any)
         .update({
-          name: updates.name,
-          avatar: updates.avatar,
+          full_name: updates.name,
+          avatar_url: updates.avatar,
           phone: updates.phone,
           updated_at: new Date().toISOString(),
         })

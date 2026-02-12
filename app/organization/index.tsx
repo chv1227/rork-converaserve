@@ -29,34 +29,47 @@ export default function OrganizationSelectScreen() {
   const userOrgsQuery = useQuery({
     queryKey: ['user-organizations'],
     queryFn: async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return [];
       const { data, error } = await supabase
-        .from('church_memberships')
-        .select(`
-          id,
-          role,
-          joined_at,
-          churches (
-            id,
-            name,
-            description,
-            logo_url,
-            address,
-            phone,
-            email,
-            website,
-            created_at,
-            updated_at
-          )
-        `);
-      if (error) throw error;
-      return (data || []).map((m: any) => ({
-        ...m.churches,
-        logo: m.churches.logo_url,
-        createdAt: m.churches.created_at,
-        updatedAt: m.churches.updated_at,
-        role: m.role,
-        joinedAt: m.joined_at,
-      }));
+        .from('memberships')
+        .select('id, role, is_active, created_at, updated_at, organization_id')
+        .eq('user_id', authUser.id)
+        .eq('is_active', true);
+      if (error) {
+        console.error('Error fetching user memberships:', error.message);
+        throw error;
+      }
+      const rows = (data || []) as { id: string; role: string; is_active: boolean; created_at: string; updated_at: string; organization_id: string }[];
+      const orgs: any[] = [];
+      for (const m of rows) {
+        const { data: orgData, error: orgError } = await supabase
+          .from('organizations')
+          .select('*')
+          .eq('id', m.organization_id)
+          .single();
+        if (orgError || !orgData) {
+          console.log('Could not fetch org:', m.organization_id, orgError?.message);
+          continue;
+        }
+        const org = orgData as { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string };
+        orgs.push({
+          id: org.id,
+          name: org.name,
+          description: org.description || '',
+          logo: org.logo || undefined,
+          address: org.address || undefined,
+          phone: org.phone || undefined,
+          email: org.email || undefined,
+          website: org.website || undefined,
+          createdAt: org.created_at,
+          updatedAt: org.updated_at,
+          role: m.role,
+          joinedAt: m.created_at,
+          membershipId: m.id,
+        });
+      }
+      return orgs;
     },
     enabled: isAuthenticated,
   });
@@ -66,7 +79,7 @@ export default function OrganizationSelectScreen() {
     return userOrgsQuery.data
       .filter((org): org is NonNullable<typeof org> => org !== null && org.id !== undefined)
       .map((org): OrgWithRole => ({
-        id: org.id!,
+        id: org.id,
         name: org.name || '',
         description: org.description || '',
         logo: org.logo,
@@ -76,8 +89,8 @@ export default function OrganizationSelectScreen() {
         website: org.website,
         createdAt: org.createdAt || new Date().toISOString(),
         updatedAt: org.updatedAt || new Date().toISOString(),
-        role: ((org as any).role || 'member') as OrganizationRole,
-        joinedAt: (org as any).joinedAt || org.createdAt || new Date().toISOString(),
+        role: (org.role || 'member') as OrganizationRole,
+        joinedAt: org.joinedAt || org.createdAt || new Date().toISOString(),
       }));
   }, [userOrgsQuery.data]);
 
@@ -93,8 +106,9 @@ export default function OrganizationSelectScreen() {
 
   const handleSelectOrganization = async (org: OrgWithRole) => {
     console.log('Selecting organization:', org.name);
+    const matchingRaw = userOrgsQuery.data?.find((o: any) => o.id === org.id);
     await setCurrentOrganization(org, {
-      id: '',
+      id: matchingRaw?.membershipId || '',
       organizationId: org.id,
       role: org.role,
       joinedAt: org.joinedAt,

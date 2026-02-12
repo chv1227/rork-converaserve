@@ -74,6 +74,23 @@ export default function JoinOrganizationScreen() {
     mutationFn: async ({ organizationId, message: msg }: { organizationId: string; message?: string }) => {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
+
+      const { data: existing } = await (supabase as any)
+        .from('memberships')
+        .select('id, is_active')
+        .eq('user_id', user.id)
+        .eq('organization_id', organizationId)
+        .maybeSingle();
+
+      const existingRow = existing as { id: string; is_active: boolean } | null;
+      if (existingRow) {
+        if (existingRow.is_active) {
+          throw new Error('You are already a member of this organization');
+        } else {
+          throw new Error('You already have a pending request for this organization');
+        }
+      }
+
       const { error } = await (supabase as any)
         .from('memberships')
         .insert({

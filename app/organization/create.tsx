@@ -72,12 +72,24 @@ export default function CreateOrganizationScreen() {
           phone: orgData.phone || null,
           email: orgData.email || null,
           website: orgData.website || null,
+          created_by: user.id,
         } as any)
         .select()
         .single();
 
       if (orgError) throw orgError;
       const orgData2 = org as any;
+
+      const { data: existingMembership } = await supabase
+        .from('memberships')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('organization_id', orgData2.id)
+        .maybeSingle();
+
+      if (existingMembership) {
+        throw new Error('You are already a member of this organization');
+      }
 
       const { data: membership, error: membershipError } = await supabase
         .from('memberships')
