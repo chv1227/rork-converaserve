@@ -16,6 +16,8 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Search, Building2, Send } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Organization } from '@/types';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
 
 export default function JoinOrganizationScreen() {
   const router = useRouter();
@@ -24,15 +26,64 @@ export default function JoinOrganizationScreen() {
   const [message, setMessage] = useState('');
   const [refreshing, setRefreshing] = useState(false);
 
-  const organizationsQuery = trpc.organizations.list.useQuery();
-  const userOrgsQuery = trpc.organizations.getUserOrganizations.useQuery();
+  const organizationsQuery = useQuery({
+    queryKey: ['all-organizations'],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('organizations')
+        .select('*')
+        .order('name');
+      if (error) { console.log('Orgs query error:', error.message); return []; }
+      const rows = (data || []) as { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string }[];
+      return rows.map((o): Organization => ({
+        id: o.id,
+        name: o.name,
+        description: o.description || '',
+        logo: o.logo || undefined,
+        address: o.address || undefined,
+        phone: o.phone || undefined,
+        email: o.email || undefined,
+        website: o.website || undefined,
+        createdAt: o.created_at,
+        updatedAt: o.updated_at,
+      }));
+    },
+  });
+
+  const userOrgsQuery = useQuery({
+    queryKey: ['user-organizations'],
+    queryFn: async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return [];
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('organization_id')
+        .eq('user_id', user.id);
+      if (error) { console.log('User orgs query error:', error.message); return []; }
+      const rows = (data || []) as { organization_id: string }[];
+      return rows.map((m) => ({ id: m.organization_id }));
+    },
+  });
 
   const organizations = organizationsQuery.data;
   const userOrgs = userOrgsQuery.data;
   const isLoading = organizationsQuery.isLoading;
   const refetch = organizationsQuery.refetch;
 
-  const requestMutation = trpc.organizations.requestJoin.useMutation({
+  const requestMutation = useMutation({
+    mutationFn: async ({ organizationId, message: msg }: { organizationId: string; message?: string }) => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) throw new Error('Not authenticated');
+      const { error } = await (supabase as any)
+        .from('memberships')
+        .insert({
+          user_id: user.id,
+          organization_id: organizationId,
+          role: 'member',
+          is_active: false,
+        });
+      if (error) throw new Error(error.message);
+    },
     onSuccess: () => {
       Alert.alert(
         'Request Sent',
@@ -40,7 +91,7 @@ export default function JoinOrganizationScreen() {
         [{ text: 'OK', onPress: () => router.back() }]
       );
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Join request error:', error);
       Alert.alert('Error', error.message || 'Failed to send join request');
     },
@@ -65,7 +116,7 @@ export default function JoinOrganizationScreen() {
     });
   };
 
-  const userOrgIds = userOrgs?.filter((o): o is NonNullable<typeof o> => o !== null).map((o) => o.id) || [];
+  const userOrgIds = userOrgs?.map((o) => o.id) || [];
 
   const filteredOrganizations = organizations?.filter((org) => {
     if (userOrgIds.includes(org.id)) return false;

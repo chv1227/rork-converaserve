@@ -29,8 +29,9 @@ import {
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrganizationRole } from '@/types';
+import { supabase } from '@/lib/supabase';
 
 interface OrganizationMember {
   id: string;
@@ -78,10 +79,22 @@ export default function OrganizationAdminScreen() {
 
   const orgId = currentOrganization?.id || '';
 
-  const membershipQuery = trpc.organizations.getMembership.useQuery(
-    { organizationId: orgId },
-    { enabled: !!orgId }
-  );
+  const membershipQuery = useQuery({
+    queryKey: ['org-membership', orgId, user?.id],
+    queryFn: async () => {
+      if (!user?.id) return null;
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('*')
+        .eq('organization_id', orgId)
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .single();
+      if (error) { console.log('Membership query error:', error.message); return null; }
+      return data as { id: string; role: RoleType };
+    },
+    enabled: !!orgId && !!user?.id,
+  });
 
   useEffect(() => {
     if (!orgId) {
@@ -99,59 +112,129 @@ export default function OrganizationAdminScreen() {
     setCheckingPermission(false);
   }, [orgId, membershipQuery.data, membershipQuery.isLoading]);
 
-  const membersQuery = trpc.organizations.getMembers.useQuery(
-    { organizationId: orgId },
-    { enabled: !!orgId && canManage }
-  );
+  const membersQuery = useQuery({
+    queryKey: ['org-members', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('id, user_id, role, is_active, created_at')
+        .eq('organization_id', orgId)
+        .eq('is_active', true);
+      if (error) { console.log('Members query error:', error.message); return []; }
+      const members: OrganizationMember[] = [];
+      const rows = (data || []) as { id: string; user_id: string; role: string; is_active: boolean; created_at: string }[];
+      for (const m of rows) {
+        const { data: u } = await supabase.from('users').select('full_name, email, avatar_url').eq('id', m.user_id).single();
+        const usr = u as { full_name: string | null; email: string; avatar_url: string | null } | null;
+        members.push({
+          id: m.id,
+          userId: m.user_id,
+          name: usr?.full_name || usr?.email || 'Unknown',
+          email: usr?.email || '',
+          avatar: usr?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(usr?.full_name || 'U')}&background=1A7B74&color=fff`,
+          role: m.role as OrganizationRole,
+          joinedAt: m.created_at,
+          isActive: m.is_active,
+        });
+      }
+      return members;
+    },
+    enabled: !!orgId && canManage,
+  });
 
-  const pendingQuery = trpc.organizations.getJoinRequests.useQuery(
-    { organizationId: orgId, status: 'pending' },
-    { enabled: !!orgId && canManage }
-  );
+  const pendingQuery = useQuery({
+    queryKey: ['org-pending', orgId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('id, user_id, created_at')
+        .eq('organization_id', orgId)
+        .eq('is_active', false);
+      if (error) { console.log('Pending query error:', error.message); return []; }
+      const requests: { id: string; requesterName: string; requesterEmail: string; requesterAvatar: string }[] = [];
+      const rows = (data || []) as { id: string; user_id: string; created_at: string }[];
+      for (const m of rows) {
+        const { data: u } = await supabase.from('users').select('full_name, email, avatar_url').eq('id', m.user_id).single();
+        const usr = u as { full_name: string | null; email: string; avatar_url: string | null } | null;
+        requests.push({
+          id: m.id,
+          requesterName: usr?.full_name || usr?.email || 'Unknown',
+          requesterEmail: usr?.email || '',
+          requesterAvatar: usr?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(usr?.full_name || 'U')}&background=1A7B74&color=fff`,
+        });
+      }
+      return requests;
+    },
+    enabled: !!orgId && canManage,
+  });
 
-  const approveMutation = trpc.organizations.approveJoinRequest.useMutation({
+  const approveMutation = useMutation({
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const { error } = await (supabase as any)
+        .from('memberships')
+        .update({ is_active: true, role: 'member', updated_at: new Date().toISOString() })
+        .eq('id', requestId);
+      if (error) throw new Error(error.message);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      pendingQuery.refetch();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['org-pending', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['org-members', orgId] });
       Alert.alert('Success', 'Member request approved');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const rejectMutation = trpc.organizations.rejectJoinRequest.useMutation({
+  const rejectMutation = useMutation({
+    mutationFn: async ({ requestId }: { requestId: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', requestId);
+      if (error) throw new Error(error.message);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      pendingQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['org-pending', orgId] });
       Alert.alert('Success', 'Member request rejected');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const updateRoleMutation = trpc.organizations.updateMemberRole.useMutation({
+  const updateRoleMutation = useMutation({
+    mutationFn: async ({ membershipId, role }: { membershipId: string; role: string }) => {
+      const { error } = await (supabase as any)
+        .from('memberships')
+        .update({ role, updated_at: new Date().toISOString() })
+        .eq('id', membershipId);
+      if (error) throw new Error(error.message);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['org-members', orgId] });
       setShowRoleModal(false);
       setSelectedMember(null);
       Alert.alert('Success', 'Member role updated');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
 
-  const removeMutation = trpc.organizations.removeMember.useMutation({
+  const removeMutation = useMutation({
+    mutationFn: async ({ membershipId }: { membershipId: string }) => {
+      const { error } = await supabase
+        .from('memberships')
+        .delete()
+        .eq('id', membershipId);
+      if (error) throw new Error(error.message);
+    },
     onSuccess: () => {
-      queryClient.invalidateQueries();
-      membersQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ['org-members', orgId] });
       Alert.alert('Success', 'Member removed');
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       Alert.alert('Error', error.message);
     },
   });
@@ -378,7 +461,9 @@ export default function OrganizationAdminScreen() {
           ) : members.length === 0 ? (
             <Text style={styles.emptyText}>No members yet</Text>
           ) : (
-            members.map((member) => (
+            members.map((member) => {
+              const memberRole = (member.role in ROLE_COLORS ? member.role : 'member') as RoleType;
+              return (
               <View key={member.id} style={styles.memberCard}>
                 <Image
                   source={{ uri: member.avatar }}
@@ -388,19 +473,19 @@ export default function OrganizationAdminScreen() {
                 <View style={styles.memberInfo}>
                   <View style={styles.memberNameRow}>
                     <Text style={styles.memberName}>{member.name}</Text>
-                    {member.role === 'super_admin' && (
+                    {memberRole === 'super_admin' && (
                       <Crown size={14} color={Colors.warning} />
                     )}
                   </View>
                   <View style={styles.memberRoleRow}>
-                    <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[member.role] + '20' }]}>
-                      <Text style={[styles.roleText, { color: ROLE_COLORS[member.role] }]}>
-                        {ROLE_LABELS[member.role]}
+                    <View style={[styles.roleBadge, { backgroundColor: ROLE_COLORS[memberRole] + '20' }]}>
+                      <Text style={[styles.roleText, { color: ROLE_COLORS[memberRole] }]}>
+                        {ROLE_LABELS[memberRole]}
                       </Text>
                     </View>
                   </View>
                 </View>
-                {member.oderId !== user?.id && isSuperAdmin && (
+                {member.userId !== user?.id && isSuperAdmin && (
                   <View style={styles.memberActions}>
                     <TouchableOpacity
                       style={styles.memberActionButton}
@@ -417,7 +502,8 @@ export default function OrganizationAdminScreen() {
                   </View>
                 )}
               </View>
-            ))
+              );
+            })
           )}
         </View>
 

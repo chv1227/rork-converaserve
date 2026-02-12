@@ -17,6 +17,9 @@ import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Camera, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import { supabase } from '@/lib/supabase';
+import { Organization } from '@/types';
 
 const LOGO_OPTIONS = [
   'https://images.unsplash.com/photo-1438232992991-995b7058bbb3?w=200&h=200&fit=crop',
@@ -54,10 +57,23 @@ export default function EditOrganizationScreen() {
     }
   }, [currentOrganization]);
 
-  const membershipQuery = trpc.organizations.getMembership.useQuery(
-    { organizationId: currentOrganization?.id || '' },
-    { enabled: !!currentOrganization?.id }
-  );
+  const membershipQuery = useQuery({
+    queryKey: ['org-membership-edit', currentOrganization?.id],
+    queryFn: async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return null;
+      const { data, error } = await supabase
+        .from('memberships')
+        .select('*')
+        .eq('organization_id', currentOrganization!.id)
+        .eq('user_id', authUser.id)
+        .eq('is_active', true)
+        .single();
+      if (error) { console.log('Membership query error:', error.message); return null; }
+      return data as { id: string; role: string };
+    },
+    enabled: !!currentOrganization?.id,
+  });
 
   useEffect(() => {
     if (!currentOrganization) {
@@ -74,17 +90,48 @@ export default function EditOrganizationScreen() {
     setCheckingPermission(false);
   }, [currentOrganization, membershipQuery.data, membershipQuery.isLoading]);
 
-  const updateMutation = trpc.organizations.update.useMutation({
-    onSuccess: async (updatedOrg) => {
+  const updateMutation = useMutation({
+    mutationFn: async (params: { id: string; name: string; description: string; address?: string; phone?: string; email?: string; website?: string; logo?: string }) => {
+      const { data, error } = await (supabase as any)
+        .from('organizations')
+        .update({
+          name: params.name,
+          description: params.description,
+          address: params.address || null,
+          phone: params.phone || null,
+          email: params.email || null,
+          website: params.website || null,
+          logo: params.logo || null,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', params.id)
+        .select()
+        .single();
+      if (error) throw new Error(error.message);
+      return data;
+    },
+    onSuccess: async (updatedOrg: { id: string; name: string; description: string | null; logo: string | null; address: string | null; phone: string | null; email: string | null; website: string | null; created_at: string; updated_at: string }) => {
       console.log('Organization updated successfully:', updatedOrg?.name);
       if (updatedOrg) {
-        await setCurrentOrganization(updatedOrg, currentMembership);
+        const mapped: Organization = {
+          id: updatedOrg.id,
+          name: updatedOrg.name,
+          description: updatedOrg.description || '',
+          logo: updatedOrg.logo || undefined,
+          address: updatedOrg.address || undefined,
+          phone: updatedOrg.phone || undefined,
+          email: updatedOrg.email || undefined,
+          website: updatedOrg.website || undefined,
+          createdAt: updatedOrg.created_at,
+          updatedAt: updatedOrg.updated_at,
+        };
+        await setCurrentOrganization(mapped, currentMembership);
       }
       Alert.alert('Success', 'Church profile updated!', [
         { text: 'OK', onPress: () => router.back() },
       ]);
     },
-    onError: (error) => {
+    onError: (error: Error) => {
       console.error('Update organization error:', error.message);
       Alert.alert('Error', error.message || 'Failed to update church profile');
     },
