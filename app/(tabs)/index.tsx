@@ -2,7 +2,7 @@ import { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Calendar, Users, Heart, MessageCircle, Settings, ChevronRight, Megaphone, CreditCard, Sparkles } from "lucide-react-native";
+import { Bell, Calendar, Users, Heart, MessageCircle, Settings, ChevronRight, Megaphone, CreditCard, Sparkles, Building2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
@@ -87,7 +87,7 @@ function QuickActionCard({ icon, title, subtitle, colors, onPress, delay }: Quic
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, currentOrganization } = useAuth();
   const { 
     isLoading, 
     isRefreshing, 
@@ -163,6 +163,12 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.headerLeft}>
+            {currentOrganization && (
+              <View style={styles.orgBadge}>
+                <Building2 size={12} color="rgba(255,255,255,0.9)" />
+                <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
+              </View>
+            )}
             <Text style={styles.greetingSmall}>{greeting}</Text>
             <Text style={styles.userName}>{firstName}</Text>
           </View>
@@ -442,6 +448,23 @@ const styles = StyleSheet.create({
   },
   headerLeft: {
     flex: 1,
+  },
+  orgBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    alignSelf: "flex-start",
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginBottom: 6,
+  },
+  orgName: {
+    fontSize: 12,
+    fontWeight: "600" as const,
+    color: "rgba(255, 255, 255, 0.95)",
+    letterSpacing: 0.2,
   },
   greetingSmall: {
     fontSize: 14,
