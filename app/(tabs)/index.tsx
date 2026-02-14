@@ -151,7 +151,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryDark, '#C94444']}
+        colors={[Colors.primary, Colors.primaryDark, '#1D4ED8']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: insets.top }]}
@@ -199,7 +199,7 @@ export default function HomeScreen() {
               style={styles.avatarContainer}
             >
               <Image
-                source={{ uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=fff&color=FF6B6B` }}
+                source={{ uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=fff&color=3B82F6` }}
                 style={styles.avatar}
                 contentFit="cover"
               />
@@ -265,7 +265,7 @@ export default function HomeScreen() {
             icon={<MessageCircle size={22} color={Colors.textInverse} />}
             title="Messages"
             subtitle={totalUnread > 0 ? `${totalUnread} unread` : "Chat"}
-            colors={[Colors.tertiary, '#5B4ED1']}
+            colors={[Colors.tertiary, '#7C3AED']}
             onPress={() => router.push("/(tabs)/messages" as Href)}
             delay={100}
           />
@@ -273,7 +273,7 @@ export default function HomeScreen() {
             icon={<Heart size={22} color={Colors.textInverse} />}
             title="Giving"
             subtitle={givingStats.thisMonth > 0 ? `${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"}
-            colors={['#FF8E53', '#FF6B6B']}
+            colors={[Colors.coral, Colors.accent]}
             onPress={() => router.push("/giving" as Href)}
             delay={150}
           />
@@ -332,8 +332,8 @@ export default function HomeScreen() {
             onPress={() => {}}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: '#E91E63' + '15' }]}>
-              <Heart size={20} color="#E91E63" />
+            <View style={[styles.statIconContainer, { backgroundColor: '#EC4899' + '15' }]}>
+              <Heart size={20} color="#EC4899" />
             </View>
             <View style={styles.statContent}>
               <Text style={styles.statValue}>{prayerRequestsCount.active}</Text>
