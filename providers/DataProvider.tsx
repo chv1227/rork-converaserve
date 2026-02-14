@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState } from "react";
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
@@ -27,16 +27,19 @@ export const [DataProvider, useData] = createContextHook(() => {
         throw new Error(error.message || 'Failed to fetch ministries');
       }
       
-      return (data || []).map((m: { id: string; church_id: string; name: string; description: string | null; color: string; icon: string; member_count: number; image: string | null }) => ({
-        id: m.id,
-        organizationId: m.church_id,
-        name: m.name,
-        description: m.description || '',
-        color: m.color,
-        icon: m.icon,
-        memberCount: m.member_count,
-        image: m.image || '',
-      })) as Ministry[];
+      return (data || []).map((m: { id: string; church_id: string; name: string; description: string | null; color: string | null; icon: string | null; image_url: string | null }) => {
+        // Count members for this ministry
+        return {
+          id: m.id,
+          organizationId: m.church_id,
+          name: m.name,
+          description: m.description || '',
+          color: m.color || '#6366F1',
+          icon: m.icon || 'Users',
+          memberCount: 0, // Will be updated by member count query
+          image: m.image_url || 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=400&h=300&fit=crop',
+        };
+      }) as Ministry[];
     },
     enabled: !!organizationId,
     staleTime: 15_000,
@@ -281,8 +284,7 @@ export const [DataProvider, useData] = createContextHook(() => {
           description: ministry.description || null,
           color: ministry.color,
           icon: ministry.icon,
-          image: ministry.image || null,
-          member_count: 0,
+          image_url: ministry.image || null,
         })
         .select()
         .single();
@@ -297,16 +299,18 @@ export const [DataProvider, useData] = createContextHook(() => {
 
   const updateMinistryMutation = useMutation({
     mutationFn: async ({ id, ...updates }: { id: string; name?: string; description?: string; color?: string; icon?: string; image?: string }) => {
+      const updateData: Record<string, unknown> = {
+        updated_at: new Date().toISOString(),
+      };
+      if (updates.name !== undefined) updateData.name = updates.name;
+      if (updates.description !== undefined) updateData.description = updates.description;
+      if (updates.color !== undefined) updateData.color = updates.color;
+      if (updates.icon !== undefined) updateData.icon = updates.icon;
+      if (updates.image !== undefined) updateData.image_url = updates.image;
+      
       const { error } = await (supabase as any)
         .from('ministries')
-        .update({
-          name: updates.name,
-          description: updates.description,
-          color: updates.color,
-          icon: updates.icon,
-          image: updates.image,
-          updated_at: new Date().toISOString(),
-        })
+        .update(updateData)
         .eq('id', id);
       
       if (error) throw error;
@@ -520,13 +524,14 @@ export const [DataProvider, useData] = createContextHook(() => {
     }
   }, [queryClient, organizationId]);
 
+  const { mutateAsync: joinMinistryAsync } = joinMinistryMutation;
   const joinMinistry = useCallback(
     async (ministryId: string) => {
       if (!user || !isAuthenticated) return { success: false, message: "Not logged in" };
       if (!organizationId) return { success: false, message: "No church selected" };
 
       try {
-        const result = await joinMinistryMutation.mutateAsync({
+        const result = await joinMinistryAsync({
           ministryId,
           organizationId,
         });
@@ -536,30 +541,32 @@ export const [DataProvider, useData] = createContextHook(() => {
         return { success: false, message: msg };
       }
     },
-    [user, isAuthenticated, organizationId, joinMinistryMutation]
+    [user, isAuthenticated, organizationId, joinMinistryAsync]
   );
 
+  const { mutateAsync: leaveMinistryAsync } = leaveMinistryMutation;
   const leaveMinistry = useCallback(
     async (ministryId: string) => {
       if (!user || !isAuthenticated) return { success: false, message: "Not logged in" };
 
       try {
-        await leaveMinistryMutation.mutateAsync({ ministryId });
+        await leaveMinistryAsync({ ministryId });
         return { success: true };
       } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : "Failed to leave ministry" };
       }
     },
-    [user, isAuthenticated, leaveMinistryMutation]
+    [user, isAuthenticated, leaveMinistryAsync]
   );
 
+  const { mutateAsync: createMinistryAsync } = createMinistryMutation;
   const createMinistry = useCallback(
     async (ministry: Omit<Ministry, "id" | "memberCount">) => {
       if (!user || !isAuthenticated) return { success: false, ministry: null, message: "Not logged in" };
       if (!organizationId) return { success: false, ministry: null, message: "No church selected" };
 
       try {
-        const created = await createMinistryMutation.mutateAsync({
+        const created = await createMinistryAsync({
           name: ministry.name,
           description: ministry.description,
           color: ministry.color,
@@ -572,13 +579,14 @@ export const [DataProvider, useData] = createContextHook(() => {
         return { success: false, ministry: null, message: e instanceof Error ? e.message : "Failed to create ministry" };
       }
     },
-    [user, isAuthenticated, organizationId, createMinistryMutation]
+    [user, isAuthenticated, organizationId, createMinistryAsync]
   );
 
+  const { mutateAsync: updateMinistryAsync } = updateMinistryMutation;
   const updateMinistry = useCallback(
     async (id: string, updates: Partial<Ministry>) => {
       try {
-        await updateMinistryMutation.mutateAsync({
+        await updateMinistryAsync({
           id,
           name: updates.name,
           description: updates.description,
@@ -591,19 +599,20 @@ export const [DataProvider, useData] = createContextHook(() => {
         return { success: false, message: e instanceof Error ? e.message : "Failed to update ministry" };
       }
     },
-    [updateMinistryMutation]
+    [updateMinistryAsync]
   );
 
+  const { mutateAsync: deleteMinistryAsync } = deleteMinistryMutation;
   const deleteMinistry = useCallback(
     async (id: string) => {
       try {
-        await deleteMinistryMutation.mutateAsync(id);
+        await deleteMinistryAsync(id);
         return { success: true };
       } catch (e) {
         return { success: false, message: e instanceof Error ? e.message : "Failed to delete ministry" };
       }
     },
-    [deleteMinistryMutation]
+    [deleteMinistryAsync]
   );
 
   const isMinistryMember = useCallback(

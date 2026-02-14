@@ -105,6 +105,25 @@ export default function CreateOrganizationScreen() {
       if (membershipError) throw membershipError;
       const membershipData = membership as any;
 
+      // Create a profile for the user in this organization
+      const { data: userData } = await supabase.auth.getUser();
+      const userEmail = userData?.user?.email || '';
+      const userName = userData?.user?.user_metadata?.name || userEmail.split('@')[0] || 'User';
+      
+      const { error: profileError } = await (supabase
+        .from('profiles') as any)
+        .insert({
+          user_id: user.id,
+          church_id: orgData2.id,
+          profile_type: 'admin',
+          display_name: userName,
+        });
+
+      if (profileError) {
+        console.error('Profile creation error:', profileError.message || JSON.stringify(profileError));
+        // Don't throw - profile creation is not critical for org creation
+      }
+
       return {
         organization: {
           id: orgData2.id,

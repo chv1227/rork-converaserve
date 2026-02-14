@@ -101,6 +101,21 @@ export default function JoinOrganizationScreen() {
           is_active: false,
         });
       if (error) throw new Error(error.message);
+
+      // Also create a profile for this user in the organization (for future ministry access)
+      const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
+      const { error: profileError } = await (supabase
+        .from('profiles') as any)
+        .insert({
+          user_id: user.id,
+          church_id: organizationId,
+          profile_type: 'member',
+          display_name: userName,
+        });
+      
+      if (profileError) {
+        console.log('Profile creation during join (non-critical):', profileError.message);
+      }
     },
     onSuccess: () => {
       Alert.alert(
