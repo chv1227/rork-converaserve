@@ -1055,7 +1055,7 @@ export default function ChurchManagementScreen() {
         >
           <Edit3 size={18} color={activeTab === 'edit' ? Colors.primary : Colors.textSecondary} />
           <Text style={[styles.tabText, activeTab === 'edit' && styles.activeTabText]}>
-            Edit
+            Church Edit
           </Text>
         </TouchableOpacity>
       </View>
