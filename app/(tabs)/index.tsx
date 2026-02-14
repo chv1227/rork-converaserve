@@ -1,8 +1,8 @@
-import { useCallback, useState, useRef, useEffect, useMemo } from "react";
+import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Calendar, Users, Heart, MessageCircle, Settings, ChevronRight, Megaphone, CreditCard, Sparkles, Building2 } from "lucide-react-native";
+import { Bell, Calendar, Users, Heart, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
@@ -11,7 +11,6 @@ import { useData } from "@/providers/DataProvider";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EventCard from "@/components/EventCard";
 import { useScalePress } from "@/hooks/useAnimations";
-import React from "react";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -96,6 +95,10 @@ export default function HomeScreen() {
     getGeneralAnnouncements, 
     userMinistries,
     getTotalUnread,
+    prayerRequestsCount,
+    membersCount,
+    givingStats,
+    announcements: allAnnouncements,
   } = useData();
   const [localRefreshing, setLocalRefreshing] = useState(false);
 
@@ -245,7 +248,7 @@ export default function HomeScreen() {
           <QuickActionCard
             icon={<Megaphone size={22} color={Colors.textInverse} />}
             title="Announcements"
-            subtitle={announcements.length > 0 ? `${announcements.length} new` : "Stay updated"}
+            subtitle={allAnnouncements.length > 0 ? `${allAnnouncements.length} total` : "Stay updated"}
             colors={[Colors.primary, Colors.primaryDark]}
             onPress={() => router.push("/announcements" as Href)}
             delay={0}
@@ -269,7 +272,7 @@ export default function HomeScreen() {
           <QuickActionCard
             icon={<Heart size={22} color={Colors.textInverse} />}
             title="Giving"
-            subtitle="Tithes & Offerings"
+            subtitle={givingStats.thisMonth > 0 ? `${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"}
             colors={['#FF8E53', '#FF6B6B']}
             onPress={() => router.push("/giving" as Href)}
             delay={150}
@@ -310,6 +313,45 @@ export default function HomeScreen() {
             <View style={styles.statContent}>
               <Text style={styles.statValue}>{userMinistries.length}</Text>
               <Text style={styles.statLabel}>Your Ministries</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textTertiary} />
+          </TouchableOpacity>
+        </Animated.View>
+
+        <Animated.View 
+          style={[
+            styles.statsContainer,
+            {
+              opacity: contentAnim,
+              transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
+            }
+          ]}
+        >
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => {}}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIconContainer, { backgroundColor: '#E91E63' + '15' }]}>
+              <Heart size={20} color="#E91E63" />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{prayerRequestsCount.active}</Text>
+              <Text style={styles.statLabel}>Prayer Requests</Text>
+            </View>
+            <ChevronRight size={18} color={Colors.textTertiary} />
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={styles.statCard}
+            onPress={() => {}}
+            activeOpacity={0.7}
+          >
+            <View style={[styles.statIconContainer, { backgroundColor: Colors.tertiary + '15' }]}>
+              <Users size={20} color={Colors.tertiary} />
+            </View>
+            <View style={styles.statContent}>
+              <Text style={styles.statValue}>{membersCount}</Text>
+              <Text style={styles.statLabel}>Church Members</Text>
             </View>
             <ChevronRight size={18} color={Colors.textTertiary} />
           </TouchableOpacity>

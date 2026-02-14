@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useState, useEffect } from "react";
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
@@ -11,6 +11,91 @@ export const [DataProvider, useData] = createContextHook(() => {
   const queryClient = useQueryClient();
 
   const organizationId = currentOrganization?.id;
+
+  // Real-time subscriptions for live updates
+  useEffect(() => {
+    if (!organizationId) return;
+
+    const channels: ReturnType<typeof supabase.channel>[] = [];
+
+    // Subscribe to announcements changes
+    const announcementsChannel = supabase
+      .channel(`announcements-${organizationId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'announcements', filter: `church_id=eq.${organizationId}` },
+        () => {
+          console.log('Announcements updated - refreshing...');
+          queryClient.invalidateQueries({ queryKey: ['announcements', organizationId] });
+        }
+      )
+      .subscribe();
+    channels.push(announcementsChannel);
+
+    // Subscribe to events changes
+    const eventsChannel = supabase
+      .channel(`events-${organizationId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'events', filter: `church_id=eq.${organizationId}` },
+        () => {
+          console.log('Events updated - refreshing...');
+          queryClient.invalidateQueries({ queryKey: ['events', organizationId] });
+        }
+      )
+      .subscribe();
+    channels.push(eventsChannel);
+
+    // Subscribe to ministries changes
+    const ministriesChannel = supabase
+      .channel(`ministries-${organizationId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'ministries', filter: `church_id=eq.${organizationId}` },
+        () => {
+          console.log('Ministries updated - refreshing...');
+          queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+          queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+        }
+      )
+      .subscribe();
+    channels.push(ministriesChannel);
+
+    // Subscribe to messages for unread count
+    const messagesChannel = supabase
+      .channel(`messages-${organizationId}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'messages' },
+        () => {
+          console.log('New message - refreshing unread count...');
+          queryClient.invalidateQueries({ queryKey: ['totalUnread', organizationId] });
+          queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
+        }
+      )
+      .subscribe();
+    channels.push(messagesChannel);
+
+    // Subscribe to prayer requests changes
+    const prayerRequestsChannel = supabase
+      .channel(`prayer-requests-${organizationId}`)
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'prayer_requests', filter: `church_id=eq.${organizationId}` },
+        () => {
+          console.log('Prayer requests updated - refreshing...');
+          queryClient.invalidateQueries({ queryKey: ['prayerRequests', organizationId] });
+        }
+      )
+      .subscribe();
+    channels.push(prayerRequestsChannel);
+
+    return () => {
+      channels.forEach(channel => {
+        supabase.removeChannel(channel);
+      });
+    };
+  }, [organizationId, queryClient]);
 
   const ministriesQuery = useQuery({
     queryKey: ['ministries', organizationId],
@@ -269,7 +354,98 @@ export const [DataProvider, useData] = createContextHook(() => {
       return totalUnread;
     },
     enabled: !!organizationId && isAuthenticated && !!user?.id,
-    refetchInterval: 10000,
+    refetchInterval: 5000,
+  });
+
+  // Prayer requests count query
+  const prayerRequestsQuery = useQuery({
+    queryKey: ['prayerRequests', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return { total: 0, active: 0 };
+      
+      const { count: totalCount, error: totalError } = await (supabase as any)
+        .from('prayer_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('church_id', organizationId);
+      
+      if (totalError) {
+        console.error('Error fetching prayer requests count:', totalError);
+        return { total: 0, active: 0 };
+      }
+
+      const { count: activeCount, error: activeError } = await (supabase as any)
+        .from('prayer_requests')
+        .select('*', { count: 'exact', head: true })
+        .eq('church_id', organizationId)
+        .eq('status', 'active');
+      
+      if (activeError) {
+        console.error('Error fetching active prayer requests count:', activeError);
+      }
+
+      return { total: totalCount || 0, active: activeCount || 0 };
+    },
+    enabled: !!organizationId,
+    staleTime: 15_000,
+    refetchInterval: 30000,
+  });
+
+  // Organization members count query
+  const membersCountQuery = useQuery({
+    queryKey: ['membersCount', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return 0;
+      
+      const { count, error } = await (supabase as any)
+        .from('profiles')
+        .select('*', { count: 'exact', head: true })
+        .eq('church_id', organizationId);
+      
+      if (error) {
+        console.error('Error fetching members count:', error);
+        return 0;
+      }
+
+      return count || 0;
+    },
+    enabled: !!organizationId,
+    staleTime: 60_000,
+  });
+
+  // Giving/donations total query
+  const givingStatsQuery = useQuery({
+    queryKey: ['givingStats', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return { total: 0, thisMonth: 0, count: 0 };
+      
+      const now = new Date();
+      const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      
+      // Try to get donations
+      const { data: allDonations, error: allError } = await (supabase as any)
+        .from('donations')
+        .select('amount')
+        .eq('church_id', organizationId);
+      
+      if (allError) {
+        // Table might not exist, return zeros
+        console.log('Donations table not found or error:', allError);
+        return { total: 0, thisMonth: 0, count: 0 };
+      }
+
+      const { data: monthDonations, error: monthError } = await (supabase as any)
+        .from('donations')
+        .select('amount')
+        .eq('church_id', organizationId)
+        .gte('created_at', firstDayOfMonth);
+      
+      const total = (allDonations || []).reduce((sum: number, d: { amount: number }) => sum + (d.amount || 0), 0);
+      const thisMonth = monthError ? 0 : (monthDonations || []).reduce((sum: number, d: { amount: number }) => sum + (d.amount || 0), 0);
+      
+      return { total, thisMonth, count: (allDonations || []).length };
+    },
+    enabled: !!organizationId,
+    staleTime: 60_000,
   });
 
   const createMinistryMutation = useMutation({
@@ -508,6 +684,18 @@ export const [DataProvider, useData] = createContextHook(() => {
     return totalUnreadQuery.data ?? 0;
   }, [totalUnreadQuery.data]);
 
+  const prayerRequestsCount = useMemo(() => {
+    return prayerRequestsQuery.data ?? { total: 0, active: 0 };
+  }, [prayerRequestsQuery.data]);
+
+  const membersCount = useMemo(() => {
+    return membersCountQuery.data ?? 0;
+  }, [membersCountQuery.data]);
+
+  const givingStats = useMemo(() => {
+    return givingStatsQuery.data ?? { total: 0, thisMonth: 0, count: 0 };
+  }, [givingStatsQuery.data]);
+
   const refresh = useCallback(async () => {
     setIsRefreshing(true);
     try {
@@ -658,5 +846,8 @@ export const [DataProvider, useData] = createContextHook(() => {
     isMinistryMember,
     getMinistryRole,
     refetchConversations,
+    prayerRequestsCount,
+    membersCount,
+    givingStats,
   };
 });
