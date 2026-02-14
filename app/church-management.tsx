@@ -11,6 +11,7 @@ import {
   Modal,
   TextInput,
   Platform,
+  Dimensions,
 } from 'react-native';
 import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -1021,7 +1022,12 @@ export default function ChurchManagementScreen() {
         <View style={styles.placeholder} />
       </View>
 
-      <View style={styles.tabs}>
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false} 
+        style={styles.tabsContainer}
+        contentContainerStyle={styles.tabsContent}
+      >
         <TouchableOpacity
           style={[styles.tab, activeTab === 'members' && styles.activeTab]}
           onPress={() => setActiveTab('members')}
@@ -1055,10 +1061,10 @@ export default function ChurchManagementScreen() {
         >
           <Edit3 size={18} color={activeTab === 'edit' ? Colors.primary : Colors.textSecondary} />
           <Text style={[styles.tabText, activeTab === 'edit' && styles.activeTabText]}>
-            Church Edit
+            Edit
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
 
       <ScrollView
         style={styles.scrollView}
@@ -1173,12 +1179,15 @@ const styles = StyleSheet.create({
   placeholder: {
     width: 44,
   },
-  tabs: {
-    flexDirection: 'row',
+  tabsContainer: {
     backgroundColor: Colors.surface,
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
-    paddingHorizontal: 16,
+  },
+  tabsContent: {
+    flexDirection: 'row',
+    paddingHorizontal: 12,
+    minWidth: Dimensions.get('window').width,
   },
   tab: {
     flex: 1,
@@ -1186,9 +1195,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
+    paddingHorizontal: 12,
     gap: 6,
     borderBottomWidth: 2,
     borderBottomColor: 'transparent',
+    minWidth: 80,
   },
   activeTab: {
     borderBottomColor: Colors.primary,
