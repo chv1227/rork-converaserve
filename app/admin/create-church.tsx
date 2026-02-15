@@ -129,6 +129,7 @@ export default function AdminCreateChurchScreen() {
       const { data: userData } = await supabase.auth.getUser();
       if (!userData.user) throw new Error('Not authenticated');
       
+      console.log('CreateChurch: Inserting church into churches table...');
       const { data: church, error } = await (supabase
         .from('churches') as any)
         .insert({
@@ -149,21 +150,51 @@ export default function AdminCreateChurchScreen() {
         .select()
         .single();
       
-      if (error) throw error;
-      const org = church as { id: string; name: string; owner_user_id: string };
+      if (error) {
+        console.error('CreateChurch: Failed to insert church:', error.message);
+        throw error;
+      }
+      const org = church as { id: string; name: string; owner_user_id: string; created_at: string; updated_at: string };
+      console.log('CreateChurch: Church created with ID:', org.id);
       
-      await (supabase.from('user_church_roles') as any).insert({
-        user_id: userData.user.id,
-        church_id: org.id,
-        role: 'owner',
-        is_active: true,
-      });
+      console.log('CreateChurch: Creating user_church_roles entry...');
+      const { data: roleData, error: roleError } = await (supabase.from('user_church_roles') as any)
+        .insert({
+          user_id: userData.user.id,
+          church_id: org.id,
+          role: 'owner',
+          is_active: true,
+        })
+        .select()
+        .single();
+      
+      if (roleError) {
+        console.error('CreateChurch: Failed to create role:', roleError.message);
+        throw new Error('Church created but failed to assign your role: ' + roleError.message);
+      }
+      console.log('CreateChurch: Role created:', roleData?.id);
+
+      console.log('CreateChurch: Creating profile for user in new church...');
+      const { data: profileData, error: profileError } = await (supabase.from('profiles') as any)
+        .insert({
+          user_id: userData.user.id,
+          church_id: org.id,
+          profile_type: 'admin',
+          display_name: userData.user.user_metadata?.name || userData.user.email?.split('@')[0] || 'Admin',
+        })
+        .select()
+        .single();
+      
+      if (profileError) {
+        console.error('CreateChurch: Failed to create profile:', profileError.message);
+      } else {
+        console.log('CreateChurch: Profile created:', profileData?.id);
+      }
       
       return { 
         church: { 
-          ...org, 
-          name: org.name, 
           id: org.id, 
+          name: org.name, 
           createdBy: org.owner_user_id,
           description: data.description,
           logo: data.logo,
@@ -171,19 +202,18 @@ export default function AdminCreateChurchScreen() {
           phone: data.phone,
           website: data.website,
           address: data.address,
+          createdAt: org.created_at,
+          updatedAt: org.updated_at,
         }, 
-        settings: { id: org.id }, 
-        membership: { id: org.id } 
+        roleId: roleData?.id || org.id,
       };
     },
-    onSuccess: async (data: { church: { name: string; id: string; createdBy: string; description?: string; logo?: string; email?: string; phone?: string; website?: string; address?: string }; settings: { id: string }; membership: { id: string } }) => {
+    onSuccess: async (data) => {
       console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
       console.log('Church ID:', data.church.id);
-      console.log('Created by:', data.church.createdBy);
       console.log('================================');
       
-      // Set the newly created church as the current organization
       const newOrg = {
         id: data.church.id,
         name: data.church.name,
@@ -193,14 +223,23 @@ export default function AdminCreateChurchScreen() {
         phone: data.church.phone,
         website: data.church.website,
         address: data.church.address,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        createdAt: data.church.createdAt || new Date().toISOString(),
+        updatedAt: data.church.updatedAt || new Date().toISOString(),
+      };
+
+      const newMembership = {
+        id: data.roleId,
+        organizationId: data.church.id,
+        role: 'super_admin' as const,
+        joinedAt: new Date().toISOString(),
       };
       
-      await setCurrentOrganization(newOrg);
+      console.log('CreateChurch: Setting current organization with membership...');
+      await setCurrentOrganization(newOrg, newMembership);
+      
+      console.log('CreateChurch: Refreshing organizations list...');
       await refreshOrganizations();
       
-      // Invalidate all queries to refresh data with new organization
       queryClient.invalidateQueries();
       
       Alert.alert(

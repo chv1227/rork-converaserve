@@ -736,42 +736,46 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           updatedAt: church.updated_at,
           role: mapChurchRoleToOrgRole(m.role),
           joinedAt: m.created_at,
+          membershipId: m.id,
         };
       });
 
-      setState(prev => ({ ...prev, organizations: orgs }));
+      setState(prev => {
+        const newState = { ...prev, organizations: orgs };
 
-      // If no current organization but we have organizations, set the first one
-      if (!state.currentOrganization && orgs.length > 0) {
-        const firstOrg = orgs[0];
-        const orgToSet: Organization = {
-          id: firstOrg.id,
-          name: firstOrg.name,
-          description: firstOrg.description,
-          logo: firstOrg.logo,
-          email: firstOrg.email,
-          phone: firstOrg.phone,
-          website: firstOrg.website,
-          address: firstOrg.address,
-          createdAt: firstOrg.createdAt,
-          updatedAt: firstOrg.updatedAt,
-        };
-        const membershipToSet: Membership = {
-          id: firstOrg.id,
-          organizationId: firstOrg.id,
-          role: firstOrg.role,
-          joinedAt: firstOrg.joinedAt,
-        };
-        await setStoredOrganization(orgToSet);
-        setState(prev => ({ ...prev, currentOrganization: orgToSet, currentMembership: membershipToSet }));
-      }
+        if (!prev.currentOrganization && orgs.length > 0) {
+          const firstOrg = orgs[0];
+          newState.currentOrganization = {
+            id: firstOrg.id,
+            name: firstOrg.name,
+            description: firstOrg.description,
+            logo: firstOrg.logo,
+            email: firstOrg.email,
+            phone: firstOrg.phone,
+            website: firstOrg.website,
+            address: firstOrg.address,
+            createdAt: firstOrg.createdAt,
+            updatedAt: firstOrg.updatedAt,
+          };
+          newState.currentMembership = {
+            id: firstOrg.membershipId || firstOrg.id,
+            organizationId: firstOrg.id,
+            role: firstOrg.role,
+            joinedAt: firstOrg.joinedAt,
+          };
+          setStoredOrganization(newState.currentOrganization);
+          console.log("AuthProvider: Auto-selected organization:", firstOrg.name);
+        }
+
+        return newState;
+      });
 
       console.log("AuthProvider: Found", orgs.length, "organizations");
       return orgs;
     } catch (error) {
       console.error("AuthProvider: Failed to refresh organizations:", error);
     }
-  }, [state.session?.user, state.currentOrganization]);
+  }, [state.session?.user]);
 
   return {
     user: state.user,
