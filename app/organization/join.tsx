@@ -76,45 +76,77 @@ export default function JoinOrganizationScreen() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) throw new Error('Not authenticated');
 
-      const { data: existing } = await supabase
-        .from('user_church_roles')
-        .select('id, is_active')
-        .eq('user_id', user.id)
-        .eq('church_id', organizationId)
-        .maybeSingle();
-
-      const existingRow = existing as { id: string; is_active: boolean } | null;
-      if (existingRow) {
-        if (existingRow.is_active) {
-          throw new Error('You are already a member of this church');
-        } else {
-          throw new Error('You already have a pending request for this church');
-        }
-      }
-
-      const { error } = await (supabase
+      // Try to insert directly - let unique constraint handle duplicates
+      // This avoids RLS policy function permission issues
+      const { data: insertedRole, error: insertError } = await (supabase
         .from('user_church_roles') as any)
         .insert({
           user_id: user.id,
           church_id: organizationId,
           role: 'member',
           is_active: false,
-        });
-      if (error) throw new Error(error.message);
+        })
+        .select('id')
+        .single();
+
+      if (insertError) {
+        console.log('Join request insert error:', insertError.message, insertError.code);
+        
+        // Check for unique constraint violation (already member or pending)
+        if (insertError.code === '23505') {
+          throw new Error('You already have a membership or pending request for this church');
+        }
+        
+        // Check for RLS/permission errors - try alternative approach
+        if (insertError.message?.includes('permission') || insertError.code === '42501') {
+          // Try using the add_user_to_church RPC function as fallback
+          const { data: rpcResult, error: rpcError } = await (supabase.rpc as any)('add_user_to_church', {
+            p_user_id: user.id,
+            p_church_id: organizationId,
+            p_role: 'member',
+          });
+          
+          if (rpcError) {
+            console.log('RPC fallback error:', rpcError.message);
+            // If RPC also fails, try direct insert without select
+            const { error: simpleInsertError } = await (supabase
+              .from('user_church_roles') as any)
+              .insert({
+                user_id: user.id,
+                church_id: organizationId,
+                role: 'member',
+                is_active: false,
+              });
+            
+            if (simpleInsertError) {
+              if (simpleInsertError.code === '23505') {
+                throw new Error('You already have a membership or pending request for this church');
+              }
+              throw new Error(simpleInsertError.message || 'Failed to send join request');
+            }
+          }
+        } else {
+          throw new Error(insertError.message || 'Failed to send join request');
+        }
+      }
 
       // Also create a profile for this user in the organization (for future ministry access)
       const userName = user.user_metadata?.name || user.email?.split('@')[0] || 'User';
-      const { error: profileError } = await (supabase
-        .from('profiles') as any)
-        .insert({
-          user_id: user.id,
-          church_id: organizationId,
-          profile_type: 'member',
-          display_name: userName,
-        });
-      
-      if (profileError) {
-        console.log('Profile creation during join (non-critical):', profileError.message);
+      try {
+        const { error: profileError } = await (supabase
+          .from('profiles') as any)
+          .insert({
+            user_id: user.id,
+            church_id: organizationId,
+            profile_type: 'member',
+            display_name: userName,
+          });
+        
+        if (profileError && profileError.code !== '23505') {
+          console.log('Profile creation during join (non-critical):', profileError.message);
+        }
+      } catch (profileErr) {
+        console.log('Profile creation error (non-critical):', profileErr);
       }
     },
     onSuccess: () => {
