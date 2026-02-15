@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState, useEffect } from "react";
+import { useCallback, useMemo, useState, useEffect, useRef } from "react";
 import createContextHook from "@nkzw/create-context-hook";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/providers/AuthProvider";
@@ -11,6 +11,10 @@ export const [DataProvider, useData] = createContextHook(() => {
   const queryClient = useQueryClient();
 
   const organizationId = currentOrganization?.id;
+
+  useEffect(() => {
+    console.log('DataProvider: Organization changed:', organizationId, currentOrganization?.name || 'none');
+  }, [organizationId, currentOrganization?.name]);
 
   // Real-time subscriptions for live updates
   useEffect(() => {
@@ -448,28 +452,45 @@ export const [DataProvider, useData] = createContextHook(() => {
     staleTime: 60_000,
   });
 
+  const orgIdRef = useRef(organizationId);
+  useEffect(() => {
+    orgIdRef.current = organizationId;
+  }, [organizationId]);
+
   const createMinistryMutation = useMutation({
     mutationFn: async (ministry: { name: string; description?: string; color: string; icon: string; image?: string }) => {
-      if (!organizationId) throw new Error('No organization selected');
+      const orgId = orgIdRef.current || organizationId;
+      console.log('DataProvider: Creating ministry, orgId:', orgId);
+      if (!orgId) {
+        console.error('DataProvider: No organization selected for ministry creation. currentOrganization:', currentOrganization);
+        throw new Error('No organization selected. Please select a church first.');
+      }
       
       const { data, error } = await (supabase as any)
         .from('ministries')
         .insert({
-          church_id: organizationId,
+          church_id: orgId,
           name: ministry.name,
           description: ministry.description || null,
           color: ministry.color,
           icon: ministry.icon,
           image_url: ministry.image || null,
+          status: 'active',
         })
         .select()
         .single();
       
-      if (error) throw error;
+      if (error) {
+        console.error('DataProvider: Ministry creation error:', error.message || JSON.stringify(error));
+        throw error;
+      }
+      console.log('DataProvider: Ministry created successfully:', data?.id);
       return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      const orgId = orgIdRef.current || organizationId;
+      queryClient.invalidateQueries({ queryKey: ['ministries', orgId] });
+      queryClient.invalidateQueries({ queryKey: ['organization-ministries', orgId] });
     },
   });
 
@@ -751,7 +772,8 @@ export const [DataProvider, useData] = createContextHook(() => {
   const createMinistry = useCallback(
     async (ministry: Omit<Ministry, "id" | "memberCount">) => {
       if (!user || !isAuthenticated) return { success: false, ministry: null, message: "Not logged in" };
-      if (!organizationId) return { success: false, ministry: null, message: "No church selected" };
+      const orgId = orgIdRef.current || organizationId;
+      if (!orgId) return { success: false, ministry: null, message: "No church selected. Please go to Organizations and select a church." };
 
       try {
         const created = await createMinistryAsync({
@@ -764,7 +786,9 @@ export const [DataProvider, useData] = createContextHook(() => {
 
         return { success: true, ministry: created };
       } catch (e) {
-        return { success: false, ministry: null, message: e instanceof Error ? e.message : "Failed to create ministry" };
+        const msg = e instanceof Error ? e.message : "Failed to create ministry";
+        console.error('DataProvider: createMinistry error:', msg);
+        return { success: false, ministry: null, message: msg };
       }
     },
     [user, isAuthenticated, organizationId, createMinistryAsync]

@@ -125,6 +125,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   });
 
   const initRef = useRef(false);
+  const initDoneRef = useRef(false);
+  const manualOrgSetRef = useRef(false);
 
   useEffect(() => {
     if (initRef.current) return;
@@ -139,11 +141,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         if (error) {
           console.error("AuthProvider: Error getting session:", error);
           setState(prev => ({ ...prev, isLoading: false }));
+          initDoneRef.current = true;
           return;
         }
 
         if (session?.user) {
-          console.log("AuthProvider: Found existing session");
+          console.log("AuthProvider: Found existing session for user:", session.user.id);
           
           const { data: profile } = await supabase
             .from('users')
@@ -153,22 +156,48 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
           const user = createUserFromSupabase(session.user, profile || undefined);
           const storedOrg = await getStoredOrganization();
+          console.log("AuthProvider: Stored org:", storedOrg?.id, storedOrg?.name);
 
           let currentOrg = storedOrg;
           let initMembership: Membership | null = null;
 
-          const { data: initMembershipData } = await supabase
-            .from('user_church_roles')
-            .select('*, churches(*)')
-            .eq('user_id', session.user.id)
-            .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .maybeSingle();
+          if (currentOrg) {
+            const { data: specificMembership } = await supabase
+              .from('user_church_roles')
+              .select('*')
+              .eq('user_id', session.user.id)
+              .eq('church_id', currentOrg.id)
+              .eq('is_active', true)
+              .maybeSingle();
 
-          const membershipData = initMembershipData as any;
-          if (membershipData) {
-            if (!currentOrg && membershipData.churches) {
+            if (specificMembership) {
+              const sm = specificMembership as any;
+              initMembership = {
+                id: sm.id,
+                organizationId: sm.church_id,
+                role: mapChurchRoleToOrgRole(sm.role),
+                joinedAt: sm.created_at,
+              };
+              console.log('AuthProvider: Loaded stored org membership role:', initMembership.role);
+            } else {
+              console.log('AuthProvider: No membership found for stored org, clearing...');
+              currentOrg = null;
+              await setStoredOrganization(null);
+            }
+          }
+
+          if (!currentOrg) {
+            const { data: initMembershipData } = await supabase
+              .from('user_church_roles')
+              .select('*, churches(*)')
+              .eq('user_id', session.user.id)
+              .eq('is_active', true)
+              .order('created_at', { ascending: false })
+              .limit(1)
+              .maybeSingle();
+
+            const membershipData = initMembershipData as any;
+            if (membershipData?.churches) {
               const org = membershipData.churches as {
                 id: string;
                 name: string;
@@ -193,40 +222,18 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
                 createdAt: org.created_at,
                 updatedAt: org.updated_at,
               };
-              await setStoredOrganization(currentOrg);
-            }
-
-            if (currentOrg && membershipData.church_id === currentOrg.id) {
               initMembership = {
                 id: membershipData.id,
                 organizationId: membershipData.church_id,
                 role: mapChurchRoleToOrgRole(membershipData.role),
                 joinedAt: membershipData.created_at,
               };
-              console.log('AuthProvider: Loaded membership role:', initMembership.role, 'from DB role:', membershipData.role);
+              await setStoredOrganization(currentOrg);
+              console.log('AuthProvider: Auto-selected org:', currentOrg.name, 'role:', initMembership.role);
             }
           }
 
-          if (currentOrg && !initMembership) {
-            const { data: specificMembership } = await supabase
-              .from('user_church_roles')
-              .select('*')
-              .eq('user_id', session.user.id)
-              .eq('church_id', currentOrg.id)
-              .eq('is_active', true)
-              .maybeSingle();
-
-            if (specificMembership) {
-              const sm = specificMembership as any;
-              initMembership = {
-                id: sm.id,
-                organizationId: sm.church_id,
-                role: mapChurchRoleToOrgRole(sm.role),
-                joinedAt: sm.created_at,
-              };
-              console.log('AuthProvider: Loaded specific membership role:', initMembership.role);
-            }
-          }
+          console.log('AuthProvider: Init complete. Org:', currentOrg?.name || 'none', 'Membership:', initMembership?.role || 'none');
 
           setState({
             user,
@@ -245,6 +252,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       } catch (error) {
         console.error("AuthProvider: Init error:", error);
         setState(prev => ({ ...prev, isLoading: false }));
+      } finally {
+        initDoneRef.current = true;
       }
     };
 
@@ -255,6 +264,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
       if (event === 'SIGNED_OUT' || !session) {
         await setStoredOrganization(null);
+        manualOrgSetRef.current = false;
         setState({
           user: null,
           session: null,
@@ -268,6 +278,30 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return;
       }
 
+      if (event === 'INITIAL_SESSION' && !initDoneRef.current) {
+        console.log('AuthProvider: Skipping INITIAL_SESSION - init still running');
+        return;
+      }
+
+      if (event === 'TOKEN_REFRESHED') {
+        console.log('AuthProvider: Token refreshed, updating session only');
+        if (session?.user) {
+          const { data: profile } = await supabase
+            .from('users')
+            .select('*')
+            .eq('id', session.user.id)
+            .single();
+          const user = createUserFromSupabase(session.user, profile || undefined);
+          setState(prev => ({
+            ...prev,
+            user,
+            session,
+            isAuthenticated: true,
+          }));
+        }
+        return;
+      }
+
       if (session?.user) {
         const { data: profile } = await supabase
           .from('users')
@@ -277,41 +311,82 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
         const user = createUserFromSupabase(session.user, profile || undefined);
 
-        const { data: membershipOnChange } = await supabase
-          .from('user_church_roles')
-          .select('*, churches(*)')
-          .eq('user_id', session.user.id)
-          .eq('is_active', true)
-          .limit(1)
-          .maybeSingle();
+        if (manualOrgSetRef.current) {
+          console.log('AuthProvider: Org was manually set, preserving current org on auth change');
+          manualOrgSetRef.current = false;
+          setState(prev => ({
+            ...prev,
+            user,
+            session,
+            isLoading: false,
+            isAuthenticated: true,
+          }));
+          return;
+        }
 
-        let orgOnChange: Organization | null = null;
+        const storedOrg = await getStoredOrganization();
+        let orgOnChange: Organization | null = storedOrg;
         let changeMembership: Membership | null = null;
-        if (membershipOnChange) {
-          const md = membershipOnChange as any;
-          if (md?.churches) {
-            const o = md.churches as { id: string; name: string; description: string | null; logo_url: string | null; contact_email: string | null; contact_phone: string | null; website: string | null; address_line1: string | null; created_at: string; updated_at: string };
-            orgOnChange = {
-              id: o.id,
-              name: o.name,
-              description: o.description || '',
-              logo: o.logo_url || undefined,
-              email: o.contact_email || undefined,
-              phone: o.contact_phone || undefined,
-              website: o.website || undefined,
-              address: o.address_line1 || undefined,
-              createdAt: o.created_at,
-              updatedAt: o.updated_at,
+
+        if (storedOrg) {
+          const { data: storedMembership } = await supabase
+            .from('user_church_roles')
+            .select('*')
+            .eq('user_id', session.user.id)
+            .eq('church_id', storedOrg.id)
+            .eq('is_active', true)
+            .maybeSingle();
+
+          if (storedMembership) {
+            const sm = storedMembership as any;
+            changeMembership = {
+              id: sm.id,
+              organizationId: sm.church_id,
+              role: mapChurchRoleToOrgRole(sm.role),
+              joinedAt: sm.created_at,
             };
-            await setStoredOrganization(orgOnChange);
+            console.log('AuthProvider: Auth change - using stored org:', storedOrg.name, 'role:', changeMembership.role);
+          } else {
+            orgOnChange = null;
           }
-          changeMembership = {
-            id: md.id,
-            organizationId: md.church_id,
-            role: mapChurchRoleToOrgRole(md.role),
-            joinedAt: md.created_at,
-          };
-          console.log('AuthProvider: Auth change membership role:', changeMembership.role);
+        }
+
+        if (!orgOnChange) {
+          const { data: membershipOnChange } = await supabase
+            .from('user_church_roles')
+            .select('*, churches(*)')
+            .eq('user_id', session.user.id)
+            .eq('is_active', true)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .maybeSingle();
+
+          if (membershipOnChange) {
+            const md = membershipOnChange as any;
+            if (md?.churches) {
+              const o = md.churches as { id: string; name: string; description: string | null; logo_url: string | null; contact_email: string | null; contact_phone: string | null; website: string | null; address_line1: string | null; created_at: string; updated_at: string };
+              orgOnChange = {
+                id: o.id,
+                name: o.name,
+                description: o.description || '',
+                logo: o.logo_url || undefined,
+                email: o.contact_email || undefined,
+                phone: o.contact_phone || undefined,
+                website: o.website || undefined,
+                address: o.address_line1 || undefined,
+                createdAt: o.created_at,
+                updatedAt: o.updated_at,
+              };
+              await setStoredOrganization(orgOnChange);
+            }
+            changeMembership = {
+              id: md.id,
+              organizationId: md.church_id,
+              role: mapChurchRoleToOrgRole(md.role),
+              joinedAt: md.created_at,
+            };
+            console.log('AuthProvider: Auth change - auto-selected org:', orgOnChange?.name);
+          }
         }
 
         setState(prev => ({
@@ -641,6 +716,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, [state.session]);
 
   const setCurrentOrganization = useCallback(async (organization: Organization | null, membership?: Membership | null) => {
+    console.log('AuthProvider: setCurrentOrganization called:', organization?.id, organization?.name, 'role:', membership?.role);
+    manualOrgSetRef.current = !!organization;
     await setStoredOrganization(organization);
 
     setState(prev => ({

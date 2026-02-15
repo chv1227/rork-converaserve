@@ -249,20 +249,29 @@ export default function AdminMinistriesScreen() {
 
   const createMutation = useMutation({
     mutationFn: async (data: { name: string; description?: string; color: string; icon: string; image?: string }) => {
-      if (!currentOrganization?.id) throw new Error('No organization selected');
-      const { error } = await (supabase.from('ministries') as any).insert({
-        church_id: currentOrganization.id,
+      const orgId = currentOrganization?.id;
+      console.log('AdminMinistries: Creating ministry, orgId:', orgId);
+      if (!orgId) throw new Error('No organization selected. Please go back and select a church first.');
+      const { data: result, error } = await (supabase.from('ministries') as any).insert({
+        church_id: orgId,
         name: data.name,
         description: data.description,
         color: data.color,
         icon: data.icon,
         image_url: data.image,
-      });
-      if (error) throw error;
+        status: 'active',
+      }).select().single();
+      if (error) {
+        console.error('AdminMinistries: Insert error:', error.message || JSON.stringify(error));
+        throw error;
+      }
+      console.log('AdminMinistries: Ministry created:', result?.id);
+      return result;
     },
     onSuccess: () => {
       console.log("Ministry created successfully");
       queryClient.invalidateQueries({ queryKey: ['ministries'] });
+      queryClient.invalidateQueries({ queryKey: ['organization-ministries'] });
       resetForm();
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Ministry created successfully");
@@ -432,13 +441,18 @@ export default function AdminMinistriesScreen() {
       });
     } else {
       if (!currentOrganization?.id) {
+        console.error('AdminMinistries: No org selected. currentOrganization:', currentOrganization);
         if (Platform.OS === "web") {
-          alert("No organization selected");
+          alert("No organization selected. Please go back and select a church first.");
         } else {
-          Alert.alert("Error", "No organization selected");
+          Alert.alert("No Organization", "Please go back and select a church organization first.", [
+            { text: "Select Church", onPress: () => router.push('/organization' as any) },
+            { text: "Cancel", style: "cancel" },
+          ]);
         }
         return;
       }
+      console.log('AdminMinistries: Creating ministry for org:', currentOrganization.id, currentOrganization.name);
       createMutation.mutate({
         name: formData.name.trim(),
         description: formData.description.trim(),
@@ -495,6 +509,24 @@ export default function AdminMinistriesScreen() {
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
         <Text style={styles.errorText}>Access denied</Text>
+      </View>
+    );
+  }
+
+  if (!currentOrganization?.id) {
+    return (
+      <View style={[styles.container, styles.centered]}>
+        <Stack.Screen options={{ headerShown: false }} />
+        <Users size={48} color={Colors.textTertiary} />
+        <Text style={[styles.emptyTitle, { marginTop: 16 }]}>No Church Selected</Text>
+        <Text style={styles.emptySubtitle}>Please select a church organization first</Text>
+        <TouchableOpacity
+          style={styles.createFirstButton}
+          onPress={() => router.push('/organization' as any)}
+          activeOpacity={0.7}
+        >
+          <Text style={styles.createFirstButtonText}>Select Church</Text>
+        </TouchableOpacity>
       </View>
     );
   }

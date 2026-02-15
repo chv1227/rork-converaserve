@@ -68,6 +68,7 @@ export default function CreateOrganizationScreen() {
         .insert({
           name: orgData.name,
           description: orgData.description,
+          status: 'active',
           address_line1: orgData.address || null,
           contact_phone: orgData.phone || null,
           contact_email: orgData.email || null,

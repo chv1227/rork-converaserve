@@ -135,6 +135,7 @@ export default function AdminCreateChurchScreen() {
         .insert({
           name: data.name,
           description: data.description,
+          status: 'active',
           address_line1: data.address,
           contact_email: data.email,
           contact_phone: data.phone,
@@ -238,9 +239,18 @@ export default function AdminCreateChurchScreen() {
       await setCurrentOrganization(newOrg, newMembership);
       
       console.log('CreateChurch: Refreshing organizations list...');
-      await refreshOrganizations();
+      try {
+        await refreshOrganizations();
+      } catch (e) {
+        console.log('CreateChurch: refreshOrganizations warning:', e);
+      }
       
-      queryClient.invalidateQueries();
+      await queryClient.invalidateQueries({ queryKey: ['ministries'] });
+      await queryClient.invalidateQueries({ queryKey: ['user-churches'] });
+      await queryClient.invalidateQueries({ queryKey: ['organization-members'] });
+      await queryClient.invalidateQueries({ queryKey: ['organization-ministries'] });
+      
+      console.log('CreateChurch: Organization set successfully, ID:', newOrg.id);
       
       Alert.alert(
         'Success!', 

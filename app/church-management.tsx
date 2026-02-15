@@ -179,13 +179,18 @@ export default function ChurchManagementScreen() {
     queryKey: ['organization-ministries', orgId],
     queryFn: async () => {
       if (!orgId) return [];
+      console.log('ChurchManagement: Fetching ministries for org:', orgId);
       const { data, error } = await supabase
         .from('ministries')
         .select('*, ministry_members(id)')
         .eq('church_id', orgId)
-        .eq('status', 'active');
+        .in('status', ['active', 'inactive']);
       
-      if (error) throw error;
+      if (error) {
+        console.error('ChurchManagement: Error fetching ministries:', error.message);
+        throw error;
+      }
+      console.log('ChurchManagement: Found', (data || []).length, 'ministries');
       return (data || []).map((m: { id: string; name: string; description: string | null; color: string | null; icon: string | null; image_url: string | null; ministry_members: { id: string }[] | null }) => ({
         id: m.id,
         name: m.name,
@@ -281,11 +286,13 @@ export default function ChurchManagementScreen() {
 
   const updateChurchMutation = useMutation({
     mutationFn: async (data: { id: string; name: string; description: string; address?: string; phone?: string; email?: string; website?: string; logo?: string }) => {
+      console.log('ChurchManagement: Updating church:', data.id, data.name);
       const { data: updatedOrg, error } = await (supabase
         .from('churches') as any)
         .update({
           name: data.name,
           description: data.description,
+          status: 'active',
           address_line1: data.address || null,
           contact_phone: data.phone || null,
           contact_email: data.email || null,
@@ -296,7 +303,10 @@ export default function ChurchManagementScreen() {
         .eq('id', data.id)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error('ChurchManagement: Update error:', error.message);
+        throw error;
+      }
       const org = updatedOrg as any;
       return {
         id: org.id,
