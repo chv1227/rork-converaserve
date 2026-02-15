@@ -41,7 +41,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 export default function ChurchSettingsScreen() {
   const router = useRouter();
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, isSuperAdmin: isSystemSuperAdmin } = useAuth();
   const currentUserId = user?.id;
 
   const [activeTab, setActiveTab] = useState<'profile' | 'modules' | 'notifications' | 'members'>('profile');
@@ -146,7 +146,7 @@ export default function ChurchSettingsScreen() {
         },
       };
     },
-    enabled: !!id && isAuthenticated && (membershipQuery.data?.role === 'super_admin' || membershipQuery.data?.role === 'admin'),
+    enabled: !!id && isAuthenticated,
   });
 
   const membersQuery = useQuery({
@@ -271,8 +271,9 @@ export default function ChurchSettingsScreen() {
     }
   }, [settingsQuery.data]);
 
-  const isAdmin = membershipQuery.data?.role === 'super_admin' || membershipQuery.data?.role === 'admin';
-  const isSuperAdmin = membershipQuery.data?.role === 'super_admin';
+  const isChurchAdmin = membershipQuery.data?.role === 'super_admin' || membershipQuery.data?.role === 'admin';
+  const isAdmin = isChurchAdmin || isSystemSuperAdmin;
+  const isSuperAdmin = membershipQuery.data?.role === 'super_admin' || isSystemSuperAdmin;
 
   const handleSaveProfile = useCallback(() => {
     if (!id) return;
