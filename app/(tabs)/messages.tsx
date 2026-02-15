@@ -48,15 +48,41 @@ export default function MessagesScreen() {
   const [groupName, setGroupName] = useState("");
   const [memberSearch, setMemberSearch] = useState("");
 
-  const conversationsQuery = useQuery({
-    queryKey: ['conversations', currentOrganization?.id, user?.id],
+  const profileQuery = useQuery({
+    queryKey: ['userProfile', currentOrganization?.id, user?.id],
     queryFn: async () => {
-      if (!currentOrganization?.id || !user?.id) return [];
+      if (!currentOrganization?.id || !user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', currentOrganization.id)
+        .maybeSingle();
+      if (error) {
+        console.log('Profile query error:', error.message);
+        return null;
+      }
+      return data as { id: string } | null;
+    },
+    enabled: !!currentOrganization?.id && !!user?.id,
+  });
+
+  const profileId = profileQuery.data?.id;
+
+  const conversationsQuery = useQuery({
+    queryKey: ['conversations', currentOrganization?.id, profileId],
+    queryFn: async () => {
+      if (!currentOrganization?.id || !profileId) return [];
       
-      const { data: participantData } = await supabase
+      const { data: participantData, error: participantError } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
-        .eq('user_id', user.id);
+        .eq('profile_id', profileId);
+      
+      if (participantError) {
+        console.log('Error fetching conversation participants:', participantError.message);
+        return [];
+      }
       
       const conversationIds = (participantData || []).map((p: { conversation_id: string }) => p.conversation_id);
       if (conversationIds.length === 0) return [];
@@ -87,29 +113,28 @@ export default function MessagesScreen() {
         isArchived: c.is_archived,
       })) as Conversation[];
     },
-    enabled: !!currentOrganization?.id && !!user?.id,
+    enabled: !!currentOrganization?.id && !!profileId,
     refetchInterval: 3000,
   });
 
   const membersQuery = useQuery({
-    queryKey: ['orgMembers', currentOrganization?.id],
+    queryKey: ['orgMembers', currentOrganization?.id, profileId],
     queryFn: async () => {
       if (!currentOrganization?.id) return [];
       const { data } = await supabase
-        .from('user_church_roles')
-        .select('user_id, users(id, full_name, email, avatar_url)')
+        .from('profiles')
+        .select('id, user_id, full_name, email, avatar_url')
         .eq('church_id', currentOrganization.id)
         .eq('is_active', true);
       
       const members: OrgMember[] = [];
-      for (const m of (data || []) as { user_id: string; users: { id: string; full_name: string | null; email: string; avatar_url: string | null } | null }[]) {
-        const userData = m.users;
-        if (userData && userData.id !== user?.id) {
+      for (const m of (data || []) as { id: string; user_id: string; full_name: string | null; email: string; avatar_url: string | null }[]) {
+        if (m.id !== profileId) {
           members.push({
-            id: userData.id,
-            name: userData.full_name || '',
-            email: userData.email || '',
-            avatar: userData.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(userData.full_name || 'User')}&background=1A7B74&color=fff`,
+            id: m.id,
+            name: m.full_name || '',
+            email: m.email || '',
+            avatar: m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name || 'User')}&background=1A7B74&color=fff`,
           });
         }
       }
@@ -120,12 +145,12 @@ export default function MessagesScreen() {
 
   const createDMmutation = useMutation({
     mutationFn: async (data: { recipientId: string; recipientName: string; recipientAvatar: string; organizationId: string }) => {
-      if (!user?.id) throw new Error('Not logged in');
+      if (!profileId) throw new Error('Profile not found');
       
       const { data: existingParticipants } = await supabase
         .from('conversation_participants')
         .select('conversation_id')
-        .eq('user_id', user.id);
+        .eq('profile_id', profileId);
       
       const myConvoIds = (existingParticipants || []).map((p: { conversation_id: string }) => p.conversation_id);
       
@@ -133,7 +158,7 @@ export default function MessagesScreen() {
         const { data: recipientParticipants } = await supabase
           .from('conversation_participants')
           .select('conversation_id')
-          .eq('user_id', data.recipientId)
+          .eq('profile_id', data.recipientId)
           .in('conversation_id', myConvoIds);
         
         const sharedConvoIds = (recipientParticipants || []).map((p: { conversation_id: string }) => p.conversation_id);
@@ -158,7 +183,7 @@ export default function MessagesScreen() {
           name: data.recipientName,
           avatar: data.recipientAvatar,
           type: 'direct',
-          created_by: user.id,
+          created_by: profileId,
         })
         .select()
         .single();
@@ -167,8 +192,8 @@ export default function MessagesScreen() {
       const convo = newConvo as { id: string };
       
       await (supabase.from('conversation_participants') as any).insert([
-        { conversation_id: convo.id, user_id: user.id },
-        { conversation_id: convo.id, user_id: data.recipientId },
+        { conversation_id: convo.id, profile_id: profileId },
+        { conversation_id: convo.id, profile_id: data.recipientId },
       ]);
       
       return { id: convo.id };
@@ -184,7 +209,7 @@ export default function MessagesScreen() {
 
   const createGroupMutation = useMutation({
     mutationFn: async (data: { name: string; memberIds: string[]; organizationId: string }) => {
-      if (!user?.id) throw new Error('Not logged in');
+      if (!profileId) throw new Error('Profile not found');
       
       const { data: newConvo, error } = await (supabase
         .from('conversations') as any)
@@ -192,7 +217,7 @@ export default function MessagesScreen() {
           organization_id: data.organizationId,
           name: data.name,
           type: 'group',
-          created_by: user.id,
+          created_by: profileId,
         })
         .select()
         .single();
@@ -200,9 +225,9 @@ export default function MessagesScreen() {
       if (error) throw error;
       const convo = newConvo as { id: string };
       
-      const participants = [user.id, ...data.memberIds].map(userId => ({
+      const participants = [profileId, ...data.memberIds].map(memberId => ({
         conversation_id: convo.id,
-        user_id: userId,
+        profile_id: memberId,
       }));
       
       await (supabase.from('conversation_participants') as any).insert(participants);
