@@ -145,7 +145,7 @@ export default function CreateOrganizationScreen() {
       await setCurrentOrganization(data.organization, {
         id: data.membership.id,
         organizationId: data.organization.id,
-        role: 'organization_admin',
+        role: 'super_admin',
         joinedAt: data.membership.joinedAt,
       });
       Alert.alert('Success', 'Your church has been created!', [

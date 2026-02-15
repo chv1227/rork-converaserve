@@ -95,7 +95,7 @@ const LOGO_OPTIONS = [
 export default function ChurchManagementScreen() {
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { currentOrganization, user, isSuperAdmin, isOrganizationSuperAdmin, setCurrentOrganization, currentMembership } = useAuth();
+  const { currentOrganization, user, isSuperAdmin, isOrganizationSuperAdmin, isOrganizationAdmin, isAdmin, setCurrentOrganization, currentMembership } = useAuth();
 
   const [activeTab, setActiveTab] = useState<TabType>('members');
   const [searchQuery, setSearchQuery] = useState('');
@@ -125,7 +125,7 @@ export default function ChurchManagementScreen() {
   }, [currentOrganization]);
 
   const orgId = currentOrganization?.id || '';
-  const canManage = isSuperAdmin || isOrganizationSuperAdmin;
+  const canManage = isSuperAdmin || isOrganizationSuperAdmin || isOrganizationAdmin || isAdmin;
 
   const membersQuery = useQuery({
     queryKey: ['organization-members', orgId],
