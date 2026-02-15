@@ -324,7 +324,7 @@ export default function AdminCreateChurchScreen() {
     if (!isAuthenticated) {
       Alert.alert('Sign In Required', 'Please sign in to create a church', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => router.push('/login') },
+        { text: 'Sign In', onPress: () => router.push('/login' as any) },
       ]);
       return;
     }

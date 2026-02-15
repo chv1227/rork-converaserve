@@ -482,7 +482,7 @@ export default function MinistryPageScreen() {
 
   const handleJoin = useCallback(async () => {
     if (!user) {
-      router.push("/login");
+      router.push("/login" as any);
       return;
     }
     if (!id) return;

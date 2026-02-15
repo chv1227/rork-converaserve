@@ -203,7 +203,7 @@ export default function CreateChurchScreen() {
     if (!isAuthenticated) {
       Alert.alert('Sign In Required', 'Please sign in to create a church', [
         { text: 'Cancel', style: 'cancel' },
-        { text: 'Sign In', onPress: () => router.push('/login') },
+        { text: 'Sign In', onPress: () => router.push('/login' as any) },
       ]);
       return;
     }
@@ -261,7 +261,7 @@ export default function CreateChurchScreen() {
           </Text>
           <TouchableOpacity
             style={styles.backHomeButton}
-            onPress={() => router.push('/login')}
+            onPress={() => router.push('/login' as any)}
           >
             <Text style={styles.backHomeButtonText}>Sign In</Text>
           </TouchableOpacity>

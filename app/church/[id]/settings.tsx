@@ -348,7 +348,7 @@ export default function ChurchSettingsScreen() {
           <Shield size={48} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Sign In Required</Text>
           <Text style={styles.errorText}>Please sign in to access church settings</Text>
-          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/login')}>
+          <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/login' as any)}>
             <Text style={styles.primaryButtonText}>Sign In</Text>
           </TouchableOpacity>
         </View>

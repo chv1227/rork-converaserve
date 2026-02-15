@@ -322,7 +322,7 @@ export default function ChurchesManagementScreen() {
         {isSuperAdmin && (
           <TouchableOpacity
             style={styles.addButton}
-            onPress={() => router.push('/admin/create-church')}
+            onPress={() => router.push('/admin/create-church' as any)}
             activeOpacity={0.7}
           >
             <Plus size={20} color="#FFF" />
@@ -357,7 +357,7 @@ export default function ChurchesManagementScreen() {
             {isSuperAdmin && (
               <TouchableOpacity
                 style={styles.createButton}
-                onPress={() => router.push('/admin/create-church')}
+                onPress={() => router.push('/admin/create-church' as any)}
                 activeOpacity={0.7}
               >
                 <Plus size={18} color="#FFF" />
@@ -433,7 +433,7 @@ export default function ChurchesManagementScreen() {
                     {canEdit && (
                       <TouchableOpacity
                         style={styles.actionButton}
-                        onPress={() => router.push(`/church/${church.id}/settings`)}
+                        onPress={() => router.push(`/church/${church.id}/settings` as any)}
                         activeOpacity={0.7}
                       >
                         <Settings size={16} color={Colors.primary} />
