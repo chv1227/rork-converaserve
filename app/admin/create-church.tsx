@@ -33,7 +33,7 @@ import {
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
-import { useMutation } from '@tanstack/react-query';
+import { useMutation, useQueryClient } from '@tanstack/react-query';
 
 const DENOMINATIONS = [
   'Non-Denominational',
@@ -69,7 +69,8 @@ const COUNTRIES = [
 export default function AdminCreateChurchScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { isAuthenticated, isAdmin } = useAuth();
+  const queryClient = useQueryClient();
+  const { isAuthenticated, isAdmin, setCurrentOrganization, refreshOrganizations } = useAuth();
   
   const [name, setName] = useState('');
   const [denomination, setDenomination] = useState('');
@@ -158,18 +159,54 @@ export default function AdminCreateChurchScreen() {
         is_active: true,
       });
       
-      return { church: { ...org, name: org.name, id: org.id, createdBy: org.owner_user_id }, settings: { id: org.id }, membership: { id: org.id } };
+      return { 
+        church: { 
+          ...org, 
+          name: org.name, 
+          id: org.id, 
+          createdBy: org.owner_user_id,
+          description: data.description,
+          logo: data.logo,
+          email: data.email,
+          phone: data.phone,
+          website: data.website,
+          address: data.address,
+        }, 
+        settings: { id: org.id }, 
+        membership: { id: org.id } 
+      };
     },
-    onSuccess: (data: { church: { name: string; id: string; createdBy: string }; settings: { id: string }; membership: { id: string } }) => {
+    onSuccess: async (data: { church: { name: string; id: string; createdBy: string; description?: string; logo?: string; email?: string; phone?: string; website?: string; address?: string }; settings: { id: string }; membership: { id: string } }) => {
       console.log('=== Church Creation Success ===' );
       console.log('Church created successfully:', data.church.name);
       console.log('Church ID:', data.church.id);
       console.log('Created by:', data.church.createdBy);
       console.log('================================');
+      
+      // Set the newly created church as the current organization
+      const newOrg = {
+        id: data.church.id,
+        name: data.church.name,
+        description: data.church.description || '',
+        logo: data.church.logo,
+        email: data.church.email,
+        phone: data.church.phone,
+        website: data.church.website,
+        address: data.church.address,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      
+      await setCurrentOrganization(newOrg);
+      await refreshOrganizations();
+      
+      // Invalidate all queries to refresh data with new organization
+      queryClient.invalidateQueries();
+      
       Alert.alert(
         'Success!', 
         `${data.church.name} has been created successfully. You are now the administrator.`,
-        [{ text: 'OK', onPress: () => router.back() }]
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
       );
     },
     onError: (error: Error) => {

@@ -629,6 +629,80 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     return state.currentOrganization !== null;
   }, [state.currentOrganization]);
 
+  const refreshOrganizations = useCallback(async () => {
+    if (!state.session?.user) return;
+
+    try {
+      console.log("AuthProvider: Refreshing organizations...");
+      
+      const { data: memberships, error } = await supabase
+        .from('user_church_roles')
+        .select('*, churches(*)')
+        .eq('user_id', state.session.user.id)
+        .eq('is_active', true);
+
+      if (error) {
+        console.error("AuthProvider: Error fetching organizations:", error);
+        return;
+      }
+
+      const orgs = (memberships || []).map((m: any) => {
+        const church = m.churches as {
+          id: string;
+          name: string;
+          description: string | null;
+          logo_url: string | null;
+          contact_email: string | null;
+          contact_phone: string | null;
+          website: string | null;
+          address_line1: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        return {
+          id: church.id,
+          name: church.name,
+          description: church.description || '',
+          logo: church.logo_url || undefined,
+          email: church.contact_email || undefined,
+          phone: church.contact_phone || undefined,
+          website: church.website || undefined,
+          address: church.address_line1 || undefined,
+          createdAt: church.created_at,
+          updatedAt: church.updated_at,
+          role: m.role as OrganizationRole,
+          joinedAt: m.created_at,
+        };
+      });
+
+      setState(prev => ({ ...prev, organizations: orgs }));
+
+      // If no current organization but we have organizations, set the first one
+      if (!state.currentOrganization && orgs.length > 0) {
+        const firstOrg = orgs[0];
+        const orgToSet: Organization = {
+          id: firstOrg.id,
+          name: firstOrg.name,
+          description: firstOrg.description,
+          logo: firstOrg.logo,
+          email: firstOrg.email,
+          phone: firstOrg.phone,
+          website: firstOrg.website,
+          address: firstOrg.address,
+          createdAt: firstOrg.createdAt,
+          updatedAt: firstOrg.updatedAt,
+        };
+        await setStoredOrganization(orgToSet);
+        setState(prev => ({ ...prev, currentOrganization: orgToSet }));
+      }
+
+      console.log("AuthProvider: Found", orgs.length, "organizations");
+      return orgs;
+    } catch (error) {
+      console.error("AuthProvider: Failed to refresh organizations:", error);
+    }
+  }, [state.session?.user, state.currentOrganization]);
+
   return {
     user: state.user,
     token: state.session?.access_token || null,
@@ -655,5 +729,6 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isOrganizationAdmin,
     isOrganizationSuperAdmin,
     hasOrganization,
+    refreshOrganizations,
   };
 });
