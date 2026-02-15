@@ -258,15 +258,36 @@ export const [DataProvider, useData] = createContextHook(() => {
     staleTime: 15_000,
   });
 
-  const conversationsQuery = useQuery({
-    queryKey: ['conversations', organizationId, user?.id],
+  const profileQuery = useQuery({
+    queryKey: ['dataProviderProfile', organizationId, user?.id],
     queryFn: async () => {
-      if (!organizationId || !user?.id) return [];
+      if (!organizationId || !user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', organizationId)
+        .maybeSingle();
+      if (error) {
+        console.log('DataProvider profile query error:', error.message);
+        return null;
+      }
+      return data as { id: string } | null;
+    },
+    enabled: !!organizationId && !!user?.id,
+  });
+
+  const profileId = profileQuery.data?.id;
+
+  const conversationsQuery = useQuery({
+    queryKey: ['conversations', organizationId, profileId],
+    queryFn: async () => {
+      if (!organizationId || !profileId) return [];
       
       const { data: participantData, error: participantError } = await (supabase as any)
         .from('conversation_participants')
         .select('conversation_id')
-        .eq('user_id', user.id);
+        .eq('profile_id', profileId);
       
       if (participantError) {
         console.error('Error fetching conversation participants:', participantError.message || JSON.stringify(participantError));
@@ -302,7 +323,7 @@ export const [DataProvider, useData] = createContextHook(() => {
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('conversation_id', c.id)
-          .neq('sender_id', user.id)
+          .neq('sender_id', user?.id || '')
           .gt('created_at', c.updated_at);
         
         return {
@@ -327,19 +348,19 @@ export const [DataProvider, useData] = createContextHook(() => {
       
       return conversationsWithMessages as Conversation[];
     },
-    enabled: !!organizationId && isAuthenticated && !!user?.id,
+    enabled: !!organizationId && isAuthenticated && !!profileId,
     refetchInterval: 10000,
   });
 
   const totalUnreadQuery = useQuery({
-    queryKey: ['totalUnread', organizationId, user?.id],
+    queryKey: ['totalUnread', organizationId, profileId],
     queryFn: async () => {
-      if (!organizationId || !user?.id) return 0;
+      if (!organizationId || !profileId) return 0;
       
       const { data: participantData } = await (supabase as any)
         .from('conversation_participants')
         .select('conversation_id, last_read_at')
-        .eq('user_id', user.id);
+        .eq('profile_id', profileId);
       
       if (!participantData || participantData.length === 0) return 0;
       
@@ -349,7 +370,7 @@ export const [DataProvider, useData] = createContextHook(() => {
           .from('messages')
           .select('*', { count: 'exact', head: true })
           .eq('conversation_id', participant.conversation_id)
-          .neq('sender_id', user.id)
+          .neq('sender_id', user?.id || '')
           .gt('created_at', participant.last_read_at || '1970-01-01');
         
         totalUnread += count || 0;
@@ -357,7 +378,7 @@ export const [DataProvider, useData] = createContextHook(() => {
       
       return totalUnread;
     },
-    enabled: !!organizationId && isAuthenticated && !!user?.id,
+    enabled: !!organizationId && isAuthenticated && !!profileId,
     refetchInterval: 5000,
   });
 
