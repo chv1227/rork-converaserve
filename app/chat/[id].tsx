@@ -26,11 +26,32 @@ export default function ChatScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useAuth();
+  const { user, currentOrganization } = useAuth();
   const queryClient = useQueryClient();
   const flatListRef = useRef<FlatList>(null);
   const [messageText, setMessageText] = useState("");
   const [isAtBottom, setIsAtBottom] = useState(true);
+
+  const profileQuery = useQuery({
+    queryKey: ['userProfile', currentOrganization?.id, user?.id],
+    queryFn: async () => {
+      if (!currentOrganization?.id || !user?.id) return null;
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('church_id', currentOrganization.id)
+        .maybeSingle();
+      if (error) {
+        console.log('Profile query error:', error.message);
+        return null;
+      }
+      return data as { id: string } | null;
+    },
+    enabled: !!currentOrganization?.id && !!user?.id,
+  });
+
+  const profileId = profileQuery.data?.id;
 
   const conversationQuery = useQuery({
     queryKey: ['conversation', id],
@@ -49,10 +70,10 @@ export default function ChatScreen() {
       
       const { data: participants } = await supabase
         .from('conversation_participants')
-        .select('user_id')
+        .select('profile_id')
         .eq('conversation_id', id);
       
-      const participantIds = (participants || []).map((p: { user_id: string }) => p.user_id);
+      const participantIds = (participants || []).map((p: { profile_id: string }) => p.profile_id);
       
       return {
         id: convData.id,
@@ -156,20 +177,20 @@ export default function ChatScreen() {
   });
 
   const markReadMutation = useMutation({
-    mutationFn: async (data: { conversationId: string }) => {
-      if (!user?.id) return;
+    mutationFn: async (data: { conversationId: string; profileId: string }) => {
+      if (!data.profileId) return;
       await supabase.from('conversation_participants').update({
         last_read_at: new Date().toISOString(),
-      } as never).eq('conversation_id', data.conversationId).eq('user_id', user.id);
+      } as never).eq('conversation_id', data.conversationId).eq('profile_id', data.profileId);
     },
   });
 
   useEffect(() => {
-    if (id && conversationQuery.data?.unreadCount) {
-      markReadMutation.mutate({ conversationId: id });
+    if (id && profileId && conversationQuery.data?.unreadCount) {
+      markReadMutation.mutate({ conversationId: id, profileId });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, conversationQuery.data?.unreadCount]);
+  }, [id, profileId, conversationQuery.data?.unreadCount]);
 
   const conversation = conversationQuery.data;
   const messages = useMemo(() => messagesQuery.data || [], [messagesQuery.data]);
