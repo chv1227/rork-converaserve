@@ -114,7 +114,7 @@ export default function OrganizationSelectScreen() {
       role: org.role,
       joinedAt: org.joinedAt,
     });
-    router.replace('/(tabs)');
+    router.back();
   };
 
   const handleRefresh = useCallback(async () => {
