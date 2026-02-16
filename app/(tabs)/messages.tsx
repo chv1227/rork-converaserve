@@ -123,18 +123,19 @@ export default function MessagesScreen() {
       if (!currentOrganization?.id) return [];
       const { data } = await supabase
         .from('profiles')
-        .select('id, user_id, full_name, email, avatar_url')
-        .eq('church_id', currentOrganization.id)
-        .eq('is_active', true);
+        .select('id, user_id, display_name, avatar_url, users!user_id(email)')
+        .eq('church_id', currentOrganization.id);
       
       const members: OrgMember[] = [];
-      for (const m of (data || []) as { id: string; user_id: string; full_name: string | null; email: string; avatar_url: string | null }[]) {
+      for (const m of (data || []) as { id: string; user_id: string; display_name: string | null; avatar_url: string | null; users: { email: string } | null }[]) {
         if (m.id !== profileId) {
+          const displayName = m.display_name || 'User';
+          const userEmail = m.users?.email || '';
           members.push({
             id: m.id,
-            name: m.full_name || '',
-            email: m.email || '',
-            avatar: m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(m.full_name || 'User')}&background=1A7B74&color=fff`,
+            name: displayName,
+            email: userEmail,
+            avatar: m.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`,
           });
         }
       }

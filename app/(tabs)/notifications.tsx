@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -22,14 +22,19 @@ import {
   AlertCircle,
   UserPlus,
   Settings,
+  Heart,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { supabase } from "@/lib/supabase";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
+
+type NotificationType = "join_request" | "event" | "message" | "announcement" | "ministry" | "prayer" | "system" | "invitation" | "reminder" | "info" | "success" | "warning" | "error" | "other";
 
 interface Notification {
   id: string;
-  type: "join_request" | "event" | "message" | "announcement" | "ministry" | "system";
+  type: NotificationType;
   title: string;
   message: string;
   isRead: boolean;
@@ -37,53 +42,6 @@ interface Notification {
   actionUrl?: string;
   data?: Record<string, string>;
 }
-
-const MOCK_NOTIFICATIONS: Notification[] = [
-  {
-    id: "1",
-    type: "join_request",
-    title: "New Member Request",
-    message: "John Smith requested to join Youth Ministry",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-    actionUrl: "/admin/requests",
-  },
-  {
-    id: "2",
-    type: "event",
-    title: "Upcoming Event",
-    message: "Sunday Service starts in 2 hours",
-    isRead: false,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(),
-    actionUrl: "/calendar",
-  },
-  {
-    id: "3",
-    type: "message",
-    title: "New Message",
-    message: "You have a new message from Worship Team",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 5).toISOString(),
-    actionUrl: "/messages",
-  },
-  {
-    id: "4",
-    type: "announcement",
-    title: "New Announcement",
-    message: "Important update from Pastor regarding next week's schedule",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
-  },
-  {
-    id: "5",
-    type: "ministry",
-    title: "Ministry Update",
-    message: "You've been added to the Worship Team ministry",
-    isRead: true,
-    createdAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
-    actionUrl: "/groups",
-  },
-];
 
 function NotificationCard({ 
   notification, 
@@ -185,46 +143,152 @@ function NotificationCard({
   );
 }
 
+function mapDbType(dbType: string): NotificationType {
+  const typeMap: Record<string, NotificationType> = {
+    info: 'system',
+    success: 'system',
+    warning: 'system',
+    error: 'system',
+    invitation: 'join_request',
+    reminder: 'event',
+    announcement: 'announcement',
+    message: 'message',
+    prayer: 'prayer',
+    event: 'event',
+    other: 'system',
+  };
+  return typeMap[dbType] || 'system';
+}
+
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  useAuth();
-  const [notifications, setNotifications] = useState<Notification[]>(MOCK_NOTIFICATIONS);
-  const [isLoading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const { user, currentOrganization } = useAuth();
+  const queryClient = useQueryClient();
+
+  const notificationsQuery = useQuery({
+    queryKey: ['notifications', user?.id, currentOrganization?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      console.log('Fetching notifications for user:', user.id);
+      const query = supabase
+        .from('system_notifications')
+        .select('*')
+        .eq('user_id', user.id)
+        .is('dismissed_at', null)
+        .order('created_at', { ascending: false })
+        .limit(50);
+
+      if (currentOrganization?.id) {
+        (query as any).or(`church_id.eq.${currentOrganization.id},church_id.is.null`);
+      }
+
+      const { data, error } = await query;
+      if (error) {
+        console.error('Error fetching notifications:', error.message);
+        return [];
+      }
+      return (data || []).map((n: { id: string; type: string; title: string; message: string; read_at: string | null; created_at: string; action_url: string | null; metadata: Record<string, unknown> }) => ({
+        id: n.id,
+        type: mapDbType(n.type),
+        title: n.title,
+        message: n.message,
+        isRead: !!n.read_at,
+        createdAt: n.created_at,
+        actionUrl: n.action_url || undefined,
+        data: (n.metadata || {}) as Record<string, string>,
+      })) as Notification[];
+    },
+    enabled: !!user?.id,
+    refetchInterval: 15000,
+  });
+
+  const notifications = useMemo(() => notificationsQuery.data || [], [notificationsQuery.data]);
+  const isLoading = notificationsQuery.isLoading;
+  const isRefreshing = notificationsQuery.isRefetching;
 
   const unreadCount = useMemo(() => {
     return notifications.filter((n) => !n.isRead).length;
   }, [notifications]);
 
-  const onRefresh = useCallback(async () => {
-    console.log("Refreshing notifications...");
-    setIsRefreshing(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsRefreshing(false);
-  }, []);
+  const onRefresh = useCallback(() => {
+    console.log('Refreshing notifications...');
+    notificationsQuery.refetch();
+  }, [notificationsQuery]);
+
+  const markReadMutation = useMutation({
+    mutationFn: async (notifId: string) => {
+      const { error } = await (supabase.from('system_notifications') as any)
+        .update({ read_at: new Date().toISOString() })
+        .eq('id', notifId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const markAllReadMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      const unreadIds = notifications.filter(n => !n.isRead).map(n => n.id);
+      if (unreadIds.length === 0) return;
+      const { error } = await (supabase.from('system_notifications') as any)
+        .update({ read_at: new Date().toISOString() })
+        .in('id', unreadIds);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const dismissMutation = useMutation({
+    mutationFn: async (notifId: string) => {
+      const { error } = await (supabase.from('system_notifications') as any)
+        .update({ dismissed_at: new Date().toISOString() })
+        .eq('id', notifId);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
+
+  const dismissAllMutation = useMutation({
+    mutationFn: async () => {
+      if (!user?.id) return;
+      const ids = notifications.map(n => n.id);
+      if (ids.length === 0) return;
+      const { error } = await (supabase.from('system_notifications') as any)
+        .update({ dismissed_at: new Date().toISOString() })
+        .in('id', ids);
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+    },
+  });
 
   const markAsRead = useCallback((id: string) => {
-    console.log("Marking notification as read:", id);
-    setNotifications((prev) =>
-      prev.map((n) => (n.id === id ? { ...n, isRead: true } : n))
-    );
-  }, []);
+    console.log('Marking notification as read:', id);
+    markReadMutation.mutate(id);
+  }, [markReadMutation]);
 
   const markAllAsRead = useCallback(() => {
-    console.log("Marking all notifications as read");
-    setNotifications((prev) => prev.map((n) => ({ ...n, isRead: true })));
-  }, []);
+    console.log('Marking all notifications as read');
+    markAllReadMutation.mutate();
+  }, [markAllReadMutation]);
 
   const deleteNotification = useCallback((id: string) => {
-    console.log("Deleting notification:", id);
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  }, []);
+    console.log('Dismissing notification:', id);
+    dismissMutation.mutate(id);
+  }, [dismissMutation]);
 
   const clearAll = useCallback(() => {
-    console.log("Clearing all notifications");
-    setNotifications([]);
-  }, []);
+    console.log('Clearing all notifications');
+    dismissAllMutation.mutate();
+  }, [dismissAllMutation]);
 
   const handleNotificationPress = useCallback(
     (notification: Notification) => {
@@ -238,11 +302,13 @@ export default function NotificationsScreen() {
     [markAsRead, router]
   );
 
-  const getNotificationIcon = (type: Notification["type"]) => {
+  const getNotificationIcon = (type: NotificationType) => {
     switch (type) {
       case "join_request":
+      case "invitation":
         return <UserPlus size={20} color={Colors.tertiary} />;
       case "event":
+      case "reminder":
         return <Calendar size={20} color={Colors.secondary} />;
       case "message":
         return <MessageCircle size={20} color={Colors.primary} />;
@@ -250,7 +316,14 @@ export default function NotificationsScreen() {
         return <AlertCircle size={20} color={Colors.warning} />;
       case "ministry":
         return <Users size={20} color={Colors.success} />;
+      case "prayer":
+        return <Heart size={20} color="#EC4899" />;
       case "system":
+      case "info":
+      case "success":
+      case "warning":
+      case "error":
+      case "other":
         return <Settings size={20} color={Colors.textSecondary} />;
       default:
         return <Bell size={20} color={Colors.textSecondary} />;

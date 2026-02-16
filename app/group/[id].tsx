@@ -42,6 +42,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useData } from "@/providers/DataProvider";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
 import DiscussionCard from "@/components/DiscussionCard";
@@ -56,6 +57,7 @@ export default function GroupDetailScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, currentOrganization } = useAuth();
+  const { isMinistryMember } = useData();
   const queryClient = useQueryClient();
 
   const [activeTab, setActiveTab] = useState<TabType>('about');
@@ -231,7 +233,7 @@ export default function GroupDetailScreen() {
           is_pinned,
           created_at,
           created_by_profile_id,
-          profiles:created_by_profile_id (full_name, avatar_url)
+          profiles:created_by_profile_id (display_name, avatar_url)
         `)
         .eq('church_id', organizationId)
         .eq('ministry_id', id)
@@ -246,7 +248,7 @@ export default function GroupDetailScreen() {
         priority: a.priority || 'normal',
         isPinned: a.is_pinned || false,
         date: a.created_at,
-        author: a.profiles?.full_name || 'Unknown',
+        author: a.profiles?.display_name || 'Unknown',
         authorRole: 'leader',
         authorAvatar: a.profiles?.avatar_url || '',
         ministryId: id,
@@ -315,8 +317,8 @@ export default function GroupDetailScreen() {
   const leaders = useMemo(() => members.filter(m => m.role === 'leader' || m.role === 'admin'), [members]);
 
   const isMember = useMemo(
-    () => user?.ministries.includes(id || "") ?? false,
-    [user?.ministries, id]
+    () => isMinistryMember(id || ""),
+    [isMinistryMember, id]
   );
 
   const joinMutation = useMutation({

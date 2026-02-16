@@ -563,10 +563,10 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         .upsert({
           id: data.user.id,
           email: data.user.email || email.toLowerCase().trim(),
-          name: name.trim(),
+          full_name: name.trim(),
           phone: phone?.trim() || null,
-          avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1A7B74&color=fff`,
-          role: 'member',
+          avatar_url: `https://ui-avatars.com/api/?name=${encodeURIComponent(name.trim())}&background=1A7B74&color=fff`,
+          status: 'active',
           created_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         } as any);

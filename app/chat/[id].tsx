@@ -96,18 +96,18 @@ export default function ChatScreen() {
       if (!id) return [];
       const { data, error } = await supabase
         .from('messages')
-        .select('*, users(name, avatar)')
+        .select('*, users!sender_id(full_name, avatar_url)')
         .eq('conversation_id', id)
         .order('created_at', { ascending: true });
       
       if (error) throw error;
-      return (data || []).map((m: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users: { name: string; avatar: string | null } | null }) => ({
+      return (data || []).map((m: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users: { full_name: string | null; avatar_url: string | null } | null }) => ({
         id: m.id,
         conversationId: m.conversation_id,
         content: m.content,
         senderId: m.sender_id,
-        senderName: m.users?.name || '',
-        senderAvatar: m.users?.avatar || '',
+        senderName: m.users?.full_name || 'Unknown',
+        senderAvatar: m.users?.avatar_url || '',
         timestamp: m.created_at,
         isRead: true,
         readBy: [],

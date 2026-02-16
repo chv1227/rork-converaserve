@@ -48,6 +48,7 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useData } from "@/providers/DataProvider";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Ministry } from "@/types";
@@ -311,6 +312,7 @@ export default function MinistryPageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAdmin, currentOrganization } = useAuth();
+  const { isMinistryMember } = useData();
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const [settingsVisible, setSettingsVisible] = useState(false);
@@ -533,7 +535,7 @@ export default function MinistryPageScreen() {
   const IconComponent = iconMap[ministry.icon || ""] || Users;
   const coverImage = ministry.image || `https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop`;
 
-  const isMember = user?.ministries?.includes(ministry.id);
+  const isMember = isMinistryMember(ministry.id);
 
   return (
     <View style={styles.container}>

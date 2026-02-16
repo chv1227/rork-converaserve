@@ -26,11 +26,9 @@ import {
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
-import { supabase } from "@/lib/supabase";
-import { useQuery } from "@tanstack/react-query";
+import { useData } from "@/providers/DataProvider";
 import React, { useState } from "react";
 import { MinistryLegend, MinistryDots } from "@/components/MinistryIndicators";
-import { Ministry } from "@/types";
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -62,6 +60,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin, changePassword } = useAuth();
+  const { ministries, userMinistries } = useData();
   
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
@@ -74,34 +73,7 @@ export default function ProfileScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
 
-  const ministriesQuery = useQuery({
-    queryKey: ['ministries', currentOrganization?.id],
-    queryFn: async () => {
-      if (!currentOrganization?.id) return [];
-      const { data, error } = await supabase
-        .from('ministries')
-        .select('*')
-        .eq('church_id', currentOrganization.id)
-        .order('name');
-      
-      if (error) throw error;
-      
-      return (data || []).map((m: { id: string; church_id: string; name: string; description: string | null; color: string | null; icon: string | null; image_url: string | null }) => ({
-        id: m.id,
-        organizationId: m.church_id,
-        name: m.name,
-        description: m.description || '',
-        color: m.color || '#1A7B74',
-        icon: m.icon || 'Users',
-        memberCount: 0,
-        image: m.image_url || '',
-      })) as Ministry[];
-    },
-    enabled: !!currentOrganization?.id,
-  });
-  const ministries = ministriesQuery.data || [];
 
-  const userMinistries = ministries.filter((m: Ministry) => user?.ministries.includes(m.id));
 
   const handleLogout = () => {
     if (Platform.OS === "web") {

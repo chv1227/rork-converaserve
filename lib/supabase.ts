@@ -1176,14 +1176,14 @@ export type Database = {
         Row: {
           id: string;
           conversation_id: string;
-          user_id: string;
+          profile_id: string;
           last_read_at: string | null;
           created_at: string;
         };
         Insert: {
           id?: string;
           conversation_id: string;
-          user_id: string;
+          profile_id: string;
           last_read_at?: string | null;
           created_at?: string;
         };
