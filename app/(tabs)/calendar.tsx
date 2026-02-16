@@ -1,16 +1,18 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Animated, Easing } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ChevronLeft, ChevronRight } from "lucide-react-native";
+import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import EventCard from "@/components/EventCard";
+import { useRouter, Href } from "expo-router";
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
-  const { currentOrganization } = useAuth();
+  const router = useRouter();
+  const { currentOrganization, isAdmin } = useAuth();
   const { events, isLoading, isRefreshing, refresh } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
   const [localRefreshing, setLocalRefreshing] = useState(false);
@@ -112,7 +114,19 @@ export default function CalendarScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.title}>Calendar</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Calendar</Text>
+          {isAdmin && currentOrganization && (
+            <TouchableOpacity
+              style={styles.createButtonHeader}
+              onPress={() => router.push("/admin" as Href)}
+              activeOpacity={0.7}
+              testID="calendar-create-button"
+            >
+              <Plus size={20} color="#fff" />
+            </TouchableOpacity>
+          )}
+        </View>
       </View>
 
       <ScrollView
@@ -223,10 +237,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
     color: Colors.text,
+  },
+  createButtonHeader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,

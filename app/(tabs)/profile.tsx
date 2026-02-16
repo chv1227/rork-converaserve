@@ -22,6 +22,7 @@ import {
   Building2,
   Cog,
   Church,
+  Pencil,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -114,7 +115,17 @@ export default function ProfileScreen() {
   return (
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-        <Text style={styles.title}>Profile</Text>
+        <View style={styles.headerTop}>
+          <Text style={styles.title}>Profile</Text>
+          <TouchableOpacity
+            style={styles.headerEditButton}
+            onPress={() => router.push("/edit-profile" as any)}
+            activeOpacity={0.7}
+            testID="profile-edit-button"
+          >
+            <Pencil size={18} color={Colors.primary} />
+          </TouchableOpacity>
+        </View>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
@@ -754,10 +765,23 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: Colors.borderLight,
   },
+  headerTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
     color: Colors.text,
+  },
+  headerEditButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.primaryLight,
+    alignItems: "center",
+    justifyContent: "center",
   },
   content: {
     flex: 1,

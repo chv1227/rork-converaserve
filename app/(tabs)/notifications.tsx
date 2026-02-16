@@ -23,6 +23,7 @@ import {
   UserPlus,
   Settings,
   Heart,
+  Plus,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
@@ -349,12 +350,22 @@ export default function NotificationsScreen() {
     <View style={styles.container}>
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Notifications</Text>
-          {unreadCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{unreadCount}</Text>
-            </View>
-          )}
+          <View style={styles.headerTitleRow}>
+            <Text style={styles.title}>Notifications</Text>
+            {unreadCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{unreadCount}</Text>
+              </View>
+            )}
+          </View>
+          <TouchableOpacity
+            style={styles.createButtonHeader}
+            onPress={() => router.push("/settings" as Href)}
+            activeOpacity={0.7}
+            testID="notifications-settings-button"
+          >
+            <Settings size={20} color={Colors.text} />
+          </TouchableOpacity>
         </View>
         {notifications.length > 0 && (
           <View style={styles.headerActions}>
@@ -462,8 +473,21 @@ const styles = StyleSheet.create({
   },
   headerTop: {
     flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  headerTitleRow: {
+    flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  createButtonHeader: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: Colors.surfaceSecondary,
+    alignItems: "center",
+    justifyContent: "center",
   },
   title: {
     fontSize: 28,

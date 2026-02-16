@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef, useEffect, useMemo } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Calendar, Users, Heart, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2 } from "lucide-react-native";
+import { Bell, Calendar, Users, Heart, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2, Plus } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
@@ -176,6 +176,14 @@ export default function HomeScreen() {
             <Text style={styles.userName}>{firstName}</Text>
           </View>
           <View style={styles.headerRight}>
+            <TouchableOpacity 
+              style={styles.createButton}
+              onPress={() => router.push("/announcements" as Href)}
+              activeOpacity={0.7}
+              testID="home-create-button"
+            >
+              <Plus size={20} color={Colors.textInverse} />
+            </TouchableOpacity>
             <TouchableOpacity 
               style={styles.notificationButton}
               onPress={() => router.push("/(tabs)/notifications" as Href)}
@@ -525,6 +533,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
+  },
+  createButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255, 255, 255, 0.25)",
+    alignItems: "center",
+    justifyContent: "center",
   },
   notificationButton: {
     width: 44,
