@@ -370,6 +370,15 @@ export default function AnnouncementsScreen() {
         </View>
       ) : filteredAnnouncements.length === 0 ? (
         <View style={styles.emptyContainer}>
+          {canCreateAnnouncement && (
+            <TouchableOpacity
+              style={styles.emptyCreateButton}
+              onPress={() => setShowCreateModal(true)}
+              activeOpacity={0.7}
+            >
+              <Plus size={28} color={Colors.textInverse} />
+            </TouchableOpacity>
+          )}
           <View style={styles.emptyIconContainer}>
             <Megaphone size={48} color={Colors.textTertiary} />
           </View>
@@ -377,7 +386,9 @@ export default function AnnouncementsScreen() {
           <Text style={styles.emptySubtitle}>
             {searchQuery || filterType !== 'all'
               ? 'Try adjusting your search or filters'
-              : 'Stay tuned for updates from your organization'}
+              : canCreateAnnouncement
+                ? 'Tap the button above to create one'
+                : 'Stay tuned for updates from your organization'}
           </Text>
         </View>
       ) : (
@@ -711,6 +722,29 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: 40,
+  },
+  emptyCreateButton: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: Colors.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 24,
+    ...Platform.select({
+      ios: {
+        shadowColor: Colors.primary,
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 6,
+      },
+      web: {
+        boxShadow: `0 4px 8px ${Colors.primary}4D`,
+      },
+    }),
   },
   emptyIconContainer: {
     width: 100,
