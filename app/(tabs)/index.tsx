@@ -10,6 +10,7 @@ import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EventCard from "@/components/EventCard";
+import PendingApprovalBanner from "@/components/PendingApprovalBanner";
 import { useScalePress } from "@/hooks/useAnimations";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
@@ -86,7 +87,7 @@ function QuickActionCard({ icon, title, subtitle, colors, onPress, delay }: Quic
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, currentOrganization } = useAuth();
+  const { user, currentOrganization, isChurchPending, churchStatus } = useAuth();
   const { 
     isLoading, 
     isRefreshing, 
@@ -166,12 +167,17 @@ export default function HomeScreen() {
           ]}
         >
           <View style={styles.headerLeft}>
-            {currentOrganization && (
-              <View style={styles.orgBadge}>
-                <Building2 size={12} color="rgba(255,255,255,0.9)" />
-                <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
+            <View style={styles.badgeRow}>
+              {currentOrganization && (
+                <View style={styles.orgBadge}>
+                  <Building2 size={12} color="rgba(255,255,255,0.9)" />
+                  <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
+                </View>
+              )}
+              <View style={styles.betaBadge}>
+                <Text style={styles.betaBadgeText}>BETA</Text>
               </View>
-            )}
+            </View>
             <Text style={styles.greetingSmall}>{greeting}</Text>
             <Text style={styles.userName}>{firstName}</Text>
           </View>
@@ -244,6 +250,9 @@ export default function HomeScreen() {
           />
         }
       >
+        {isChurchPending && <PendingApprovalBanner type="pending" />}
+        {churchStatus === 'suspended' && <PendingApprovalBanner type="suspended" />}
+
         <View style={styles.quickActionsGrid}>
           <QuickActionCard
             icon={<Megaphone size={22} color={Colors.textInverse} />}
@@ -507,6 +516,24 @@ const styles = StyleSheet.create({
     fontWeight: "600" as const,
     color: "rgba(255, 255, 255, 0.95)",
     letterSpacing: 0.2,
+  },
+  badgeRow: {
+    flexDirection: "row" as const,
+    alignItems: "center" as const,
+    gap: 8,
+    marginBottom: 6,
+  },
+  betaBadge: {
+    backgroundColor: "rgba(251, 191, 36, 0.9)",
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  betaBadgeText: {
+    fontSize: 10,
+    fontWeight: "800" as const,
+    color: "#78350F",
+    letterSpacing: 1,
   },
   greetingSmall: {
     fontSize: 14,

@@ -68,7 +68,7 @@ export default function CreateOrganizationScreen() {
         .insert({
           name: orgData.name,
           description: orgData.description,
-          status: 'active',
+          status: 'pending',
           address_line1: orgData.address || null,
           contact_phone: orgData.phone || null,
           contact_email: orgData.email || null,
@@ -149,9 +149,11 @@ export default function CreateOrganizationScreen() {
         role: 'super_admin',
         joinedAt: data.membership.joinedAt,
       });
-      Alert.alert('Success', 'Your church has been created!', [
-        { text: 'OK', onPress: () => router.replace('/(tabs)') },
-      ]);
+      Alert.alert(
+        'Registration Submitted',
+        'Your church registration has been submitted for review. You will be notified once it is approved by our admin team. In the meantime, you can set up your profile and explore the app.',
+        [{ text: 'OK', onPress: () => router.replace('/(tabs)') }]
+      );
     },
     onError: (error: Error) => {
       console.error('Create organization error:', error.message);

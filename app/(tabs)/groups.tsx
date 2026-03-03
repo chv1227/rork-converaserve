@@ -322,7 +322,7 @@ function CompactMinistryCard({
 export default function GroupsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
-  const { currentOrganization, isAdmin } = useAuth();
+  const { currentOrganization, isAdmin, isChurchApproved } = useAuth();
   const {
     ministries,
     isLoading,
@@ -410,6 +410,10 @@ export default function GroupsScreen() {
     }
     if (!currentOrganization) {
       Alert.alert("Error", "Please set up your church first");
+      return;
+    }
+    if (!isChurchApproved) {
+      Alert.alert("Not Available", "Ministry creation is only available for approved churches. Your church registration is still pending review.");
       return;
     }
 

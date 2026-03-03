@@ -6,7 +6,7 @@ import { Announcement, Conversation, Event, Ministry } from "@/types";
 import { supabase } from "@/lib/supabase";
 
 export const [DataProvider, useData] = createContextHook(() => {
-  const { currentOrganization, user, isAuthenticated } = useAuth();
+  const { currentOrganization, user, isAuthenticated, isChurchApproved } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const queryClient = useQueryClient();
 
@@ -485,6 +485,9 @@ export const [DataProvider, useData] = createContextHook(() => {
       if (!orgId) {
         console.error('DataProvider: No organization selected for ministry creation. currentOrganization:', currentOrganization);
         throw new Error('No organization selected. Please select a church first.');
+      }
+      if (!isChurchApproved) {
+        throw new Error('Ministry creation is only available for approved churches. Your church registration is still pending review.');
       }
       
       const { data, error } = await (supabase as any)

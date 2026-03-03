@@ -43,7 +43,7 @@ const FREQUENCY_OPTIONS: { value: GivingFrequency; label: string; description: s
 
 export default function GivingScreen() {
   const queryClient = useQueryClient();
-  const { user, currentOrganization } = useAuth();
+  const { user, currentOrganization, isChurchApproved } = useAuth();
 
   const [activeTab, setActiveTab] = useState<Tab>("give");
   const [givingType, setGivingType] = useState<GivingType>("tithe");
@@ -53,30 +53,109 @@ export default function GivingScreen() {
   const [note, setNote] = useState("");
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
+  const [selectedMinistryId, setSelectedMinistryId] = useState<string | null>(null);
 
-  const organizationId = currentOrganization?.id || "org1";
+  const organizationId = currentOrganization?.id || "";
+
+  const ministriesQuery = useQuery({
+    queryKey: ['giving-ministries', organizationId],
+    queryFn: async () => {
+      if (!organizationId) return [];
+      const { data, error } = await supabase
+        .from('ministries')
+        .select('id, name, color')
+        .eq('church_id', organizationId)
+        .eq('status', 'active')
+        .order('name');
+      if (error) { console.log('Ministries query error:', error); return []; }
+      return (data || []) as { id: string; name: string; color: string | null }[];
+    },
+    enabled: !!organizationId,
+  });
 
   const statsQuery = useQuery({
-    queryKey: ['giving', 'stats', organizationId],
-    queryFn: async () => ({ thisMonthTotal: 0, thisYearTotal: 0, donationCount: 0 }),
-    enabled: !!user,
+    queryKey: ['giving', 'stats', organizationId, user?.id],
+    queryFn: async () => {
+      if (!organizationId || !user?.id) return { thisMonthTotal: 0, thisYearTotal: 0, donationCount: 0 };
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+      const startOfYear = new Date(now.getFullYear(), 0, 1).toISOString();
+
+      const { data: allDonations, error: allErr } = await (supabase as any)
+        .from('donations')
+        .select('amount, created_at')
+        .eq('church_id', organizationId)
+        .eq('user_id', user.id);
+      if (allErr) { console.log('Giving stats error:', allErr); return { thisMonthTotal: 0, thisYearTotal: 0, donationCount: 0 }; }
+
+      const donations = (allDonations || []) as { amount: number; created_at: string }[];
+      const thisMonthTotal = donations.filter(d => d.created_at >= startOfMonth).reduce((s, d) => s + (d.amount || 0), 0);
+      const thisYearTotal = donations.filter(d => d.created_at >= startOfYear).reduce((s, d) => s + (d.amount || 0), 0);
+      return { thisMonthTotal, thisYearTotal, donationCount: donations.length };
+    },
+    enabled: !!user && !!organizationId,
   });
 
   const historyQuery = useQuery({
-    queryKey: ['giving', 'history', organizationId],
-    queryFn: async () => [] as Donation[],
-    enabled: !!user && activeTab === "history",
+    queryKey: ['giving', 'history', organizationId, user?.id],
+    queryFn: async () => {
+      if (!organizationId || !user?.id) return [] as Donation[];
+      const { data, error } = await (supabase as any)
+        .from('donations')
+        .select('*')
+        .eq('church_id', organizationId)
+        .eq('user_id', user.id)
+        .order('created_at', { ascending: false })
+        .limit(50);
+      if (error) { console.log('Donation history error:', error); return [] as Donation[]; }
+      return (data || []).map((d: any) => ({
+        id: d.id,
+        userId: d.user_id,
+        organizationId: d.church_id,
+        type: d.donation_type || 'offering',
+        amount: d.amount || 0,
+        currency: d.currency || 'USD',
+        frequency: d.frequency || 'one_time',
+        note: d.note || undefined,
+        status: d.status || 'completed',
+        paymentMethod: d.payment_method || 'card',
+        createdAt: d.created_at,
+        updatedAt: d.updated_at || d.created_at,
+      })) as Donation[];
+    },
+    enabled: !!user && !!organizationId && activeTab === "history",
   });
 
   const recurringQuery = useQuery({
-    queryKey: ['giving', 'recurring', organizationId],
+    queryKey: ['giving', 'recurring', organizationId, user?.id],
     queryFn: async () => [] as RecurringGiving[],
     enabled: !!user && activeTab === "recurring",
   });
 
   const donateMutation = useMutation({
-    mutationFn: async (data: { organizationId: string; type: GivingType; amount: number; frequency: GivingFrequency; note?: string; paymentMethod: string }) => {
-      console.log('Donation:', data);
+    mutationFn: async (data: { organizationId: string; type: GivingType; amount: number; frequency: GivingFrequency; note?: string; paymentMethod: string; ministryId?: string | null }) => {
+      if (!user?.id) throw new Error('Not authenticated');
+      if (!isChurchApproved) throw new Error('Giving is not available until your church is approved');
+
+      console.log('Processing donation:', data);
+      const { error } = await (supabase as any)
+        .from('donations')
+        .insert({
+          church_id: data.organizationId,
+          user_id: user.id,
+          donation_type: data.type,
+          amount: data.amount,
+          currency: 'USD',
+          frequency: data.frequency,
+          note: data.note || null,
+          payment_method: data.paymentMethod,
+          ministry_id: data.ministryId || null,
+          status: 'completed',
+        });
+      if (error) {
+        console.error('Donation insert error:', error);
+        throw new Error(error.message || 'Failed to process donation');
+      }
     },
     onSuccess: () => {
       console.log("Donation successful");
@@ -112,6 +191,7 @@ export default function GivingScreen() {
     setFrequency("one_time");
     setNote("");
     setGivingType("tithe");
+    setSelectedMinistryId(null);
   }, []);
 
   const handleAmountSelect = (value: number) => {
@@ -126,6 +206,10 @@ export default function GivingScreen() {
   };
 
   const handleSubmit = () => {
+    if (!isChurchApproved) {
+      Alert.alert('Not Available', 'Giving is not available until your church registration is approved.');
+      return;
+    }
     const numAmount = parseFloat(amount);
     if (isNaN(numAmount) || numAmount <= 0) {
       Alert.alert("Invalid Amount", "Please enter a valid donation amount.");
@@ -135,6 +219,10 @@ export default function GivingScreen() {
   };
 
   const confirmDonation = () => {
+    if (!isChurchApproved) {
+      Alert.alert('Not Available', 'Giving is not available until your church registration is approved.');
+      return;
+    }
     const numAmount = parseFloat(amount);
     donateMutation.mutate({
       organizationId,
@@ -143,6 +231,7 @@ export default function GivingScreen() {
       frequency,
       note: note.trim() || undefined,
       paymentMethod: "card",
+      ministryId: selectedMinistryId,
     });
   };
 
@@ -365,6 +454,56 @@ export default function GivingScreen() {
           ))}
         </View>
       </View>
+
+      {(ministriesQuery.data || []).length > 0 && (
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Direct To (Optional)</Text>
+          <View style={styles.frequencyOptions}>
+            <TouchableOpacity
+              style={[
+                styles.frequencyOption,
+                !selectedMinistryId && styles.frequencyOptionActive,
+              ]}
+              onPress={() => setSelectedMinistryId(null)}
+            >
+              <View style={styles.frequencyOptionContent}>
+                <View>
+                  <Text style={[
+                    styles.frequencyLabel,
+                    !selectedMinistryId && styles.frequencyLabelActive,
+                  ]}>General Fund</Text>
+                  <Text style={[
+                    styles.frequencyDescription,
+                    !selectedMinistryId && styles.frequencyDescriptionActive,
+                  ]}>Church general fund</Text>
+                </View>
+              </View>
+              {!selectedMinistryId && <Check size={20} color={Colors.textInverse} />}
+            </TouchableOpacity>
+            {(ministriesQuery.data || []).map((m) => (
+              <TouchableOpacity
+                key={m.id}
+                style={[
+                  styles.frequencyOption,
+                  selectedMinistryId === m.id && styles.frequencyOptionActive,
+                ]}
+                onPress={() => setSelectedMinistryId(m.id)}
+              >
+                <View style={styles.frequencyOptionContent}>
+                  <View style={[styles.ministryDot, { backgroundColor: m.color || Colors.primary }]} />
+                  <View>
+                    <Text style={[
+                      styles.frequencyLabel,
+                      selectedMinistryId === m.id && styles.frequencyLabelActive,
+                    ]}>{m.name}</Text>
+                  </View>
+                </View>
+                {selectedMinistryId === m.id && <Check size={20} color={Colors.textInverse} />}
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+      )}
 
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Note (Optional)</Text>
@@ -1268,5 +1407,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.textInverse,
+  },
+  ministryDot: {
+    width: 10,
+    height: 10,
+    borderRadius: 5,
+    marginRight: 8,
   },
 });

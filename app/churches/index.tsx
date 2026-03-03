@@ -25,6 +25,9 @@ import {
   ChevronRight,
   Crown,
   Trash2,
+  CheckCircle,
+  Clock,
+  XCircle,
 } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
@@ -112,7 +115,7 @@ export default function ChurchesManagementScreen() {
     enabled: !!user?.id,
   });
 
-  const allChurchesQuery = useQuery<ChurchType[]>({
+  const allChurchesQuery = useQuery<(ChurchType & { status?: string })[]>({
     queryKey: ['churches', 'all'],
     queryFn: async () => {
       const { data, error } = await supabase
@@ -126,21 +129,41 @@ export default function ChurchesManagementScreen() {
         name: c.name,
         denomination: c.denomination || '',
         description: c.description || '',
-        address: c.address || '',
+        address: c.address_line1 || c.address || '',
         city: c.city || '',
         state: c.state || '',
-        zip: c.zip_code || '',
+        zip: c.zip_code || c.postal_code || '',
         country: c.country || '',
-        email: c.email || '',
-        phone: c.phone || '',
+        email: c.contact_email || c.email || '',
+        phone: c.contact_phone || c.phone || '',
         website: c.website || '',
-        logo: c.logo || '',
-        createdBy: c.created_by,
+        logo: c.logo_url || c.logo || '',
+        createdBy: c.owner_user_id || c.created_by,
         createdAt: c.created_at,
         updatedAt: c.updated_at || c.created_at,
+        status: c.status || 'active',
       }));
     },
     enabled: !!user?.id && isSuperAdmin,
+  });
+
+  const approveChurchMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: string }) => {
+      const { error } = await (supabase as any)
+        .from('churches')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', id);
+      if (error) throw error;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['churches'] });
+      allChurchesQuery.refetch();
+      const action = variables.status === 'active' ? 'approved' : 'rejected';
+      Alert.alert('Success', `Church has been ${action}.`);
+    },
+    onError: (error: Error) => {
+      Alert.alert('Error', error.message || 'Failed to update church status');
+    },
   });
 
   const userChurchesData = userChurchesQuery.data || [];
@@ -258,7 +281,7 @@ export default function ChurchesManagementScreen() {
         ]
       );
     }
-  }, [deleteChurchMutation]);
+  }, [deleteChurchMutation.mutate]);
 
   const getRoleBadge = (membership?: ChurchMembership) => {
     if (!membership) return null;
@@ -428,6 +451,40 @@ export default function ChurchesManagementScreen() {
                       </View>
                     )}
                   </View>
+
+                  {(church as any).status === 'pending' && isSuperAdmin && (
+                    <View style={styles.approvalActions}>
+                      <View style={styles.pendingBadgeRow}>
+                        <Clock size={14} color="#D97706" />
+                        <Text style={styles.pendingBadgeText}>Pending Approval</Text>
+                      </View>
+                      <View style={styles.approvalButtonsRow}>
+                        <TouchableOpacity
+                          style={styles.approveButton}
+                          onPress={() => approveChurchMutation.mutate({ id: church.id, status: 'active' })}
+                          activeOpacity={0.7}
+                          disabled={approveChurchMutation.isPending}
+                        >
+                          <CheckCircle size={16} color="#FFF" />
+                          <Text style={styles.approveButtonText}>Approve</Text>
+                        </TouchableOpacity>
+                        <TouchableOpacity
+                          style={styles.rejectButton}
+                          onPress={() => {
+                            Alert.alert('Reject Church', `Reject "${church.name}"?`, [
+                              { text: 'Cancel', style: 'cancel' },
+                              { text: 'Reject', style: 'destructive', onPress: () => approveChurchMutation.mutate({ id: church.id, status: 'suspended' }) },
+                            ]);
+                          }}
+                          activeOpacity={0.7}
+                          disabled={approveChurchMutation.isPending}
+                        >
+                          <XCircle size={16} color={Colors.error} />
+                          <Text style={styles.rejectButtonText}>Reject</Text>
+                        </TouchableOpacity>
+                      </View>
+                    </View>
+                  )}
 
                   <View style={styles.churchActions}>
                     {canEdit && (
@@ -670,6 +727,59 @@ const styles = StyleSheet.create({
     flex: 0.6,
   },
   deleteButtonText: {
+    color: Colors.error,
+  },
+  approvalActions: {
+    marginBottom: 12,
+    backgroundColor: '#FFFBEB',
+    borderRadius: 10,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#FDE68A',
+  },
+  pendingBadgeRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    marginBottom: 10,
+  },
+  pendingBadgeText: {
+    fontSize: 13,
+    fontWeight: '600' as const,
+    color: '#92400E',
+  },
+  approvalButtonsRow: {
+    flexDirection: 'row',
+    gap: 10,
+  },
+  approveButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#10B981',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  approveButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
+    color: '#FFF',
+  },
+  rejectButton: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: Colors.error + '15',
+    paddingVertical: 10,
+    borderRadius: 10,
+    gap: 6,
+  },
+  rejectButtonText: {
+    fontSize: 14,
+    fontWeight: '600' as const,
     color: Colors.error,
   },
 });

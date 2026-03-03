@@ -34,6 +34,8 @@ export interface Membership {
   organization?: Organization;
 }
 
+export type ChurchApprovalStatus = 'active' | 'pending' | 'suspended' | 'inactive' | 'archived';
+
 interface AuthState {
   user: User | null;
   session: Session | null;
@@ -41,6 +43,7 @@ interface AuthState {
   isAuthenticated: boolean;
   currentOrganization: Organization | null;
   currentMembership: Membership | null;
+  churchStatus: ChurchApprovalStatus | null;
   organizations: (Organization & { role: OrganizationRole; joinedAt: string })[];
   error: string | null;
 }
@@ -120,6 +123,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: false,
     currentOrganization: null,
     currentMembership: null,
+    churchStatus: null,
     organizations: [],
     error: null,
   });
@@ -235,6 +239,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
 
           console.log('AuthProvider: Init complete. Org:', currentOrg?.name || 'none', 'Membership:', initMembership?.role || 'none');
 
+          let churchStatus: ChurchApprovalStatus | null = null;
+          if (currentOrg) {
+            const { data: churchData } = await supabase
+              .from('churches')
+              .select('status')
+              .eq('id', currentOrg.id)
+              .single();
+            churchStatus = (churchData as any)?.status || 'active';
+          }
+
           setState({
             user,
             session,
@@ -242,6 +256,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             isAuthenticated: true,
             currentOrganization: currentOrg,
             currentMembership: initMembership,
+            churchStatus,
             organizations: [],
             error: null,
           });
@@ -272,6 +287,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isAuthenticated: false,
           currentOrganization: null,
           currentMembership: null,
+          churchStatus: null,
           organizations: [],
           error: null,
         });
@@ -495,6 +511,16 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         console.log('AuthProvider: Login membership role:', loginMembership.role, 'from DB role:', membershipData2.role);
       }
 
+      let loginChurchStatus: ChurchApprovalStatus | null = null;
+      if (currentOrg) {
+        const { data: churchData } = await supabase
+          .from('churches')
+          .select('status')
+          .eq('id', currentOrg.id)
+          .single();
+        loginChurchStatus = (churchData as any)?.status || 'active';
+      }
+
       setState({
         user,
         session: data.session,
@@ -502,6 +528,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         isAuthenticated: true,
         currentOrganization: currentOrg,
         currentMembership: loginMembership,
+        churchStatus: loginChurchStatus,
         organizations: [],
         error: null,
       });
@@ -585,6 +612,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           isAuthenticated: true,
           currentOrganization: null,
           currentMembership: null,
+          churchStatus: null,
           organizations: [],
           error: null,
         });
@@ -639,6 +667,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       isAuthenticated: false,
       currentOrganization: null,
       currentMembership: null,
+      churchStatus: null,
       organizations: [],
       error: null,
     });
@@ -720,10 +749,21 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     manualOrgSetRef.current = !!organization;
     await setStoredOrganization(organization);
 
+    let newChurchStatus: ChurchApprovalStatus | null = null;
+    if (organization) {
+      const { data: churchData } = await supabase
+        .from('churches')
+        .select('status')
+        .eq('id', organization.id)
+        .single();
+      newChurchStatus = (churchData as any)?.status || 'active';
+    }
+
     setState(prev => ({
       ...prev,
       currentOrganization: organization,
       currentMembership: membership || null,
+      churchStatus: newChurchStatus,
     }));
   }, []);
 
@@ -769,6 +809,14 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   const hasOrganization = useMemo(() => {
     return state.currentOrganization !== null;
   }, [state.currentOrganization]);
+
+  const isChurchApproved = useMemo(() => {
+    return state.churchStatus === 'active';
+  }, [state.churchStatus]);
+
+  const isChurchPending = useMemo(() => {
+    return state.churchStatus === 'pending';
+  }, [state.churchStatus]);
 
   const refreshOrganizations = useCallback(async () => {
     if (!state.session?.user) return;
@@ -861,6 +909,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isAuthenticated: state.isAuthenticated,
     currentOrganization: state.currentOrganization,
     currentMembership: state.currentMembership,
+    churchStatus: state.churchStatus,
     organizations: state.organizations,
     error: state.error,
     login,
@@ -880,6 +929,8 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isOrganizationAdmin,
     isOrganizationSuperAdmin,
     hasOrganization,
+    isChurchApproved,
+    isChurchPending,
     refreshOrganizations,
   };
 });
