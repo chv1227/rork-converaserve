@@ -701,7 +701,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -903,7 +903,7 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   activeTab: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary + '15',
   },
   tabText: {
     fontSize: 14,
@@ -937,7 +937,7 @@ const styles = StyleSheet.create({
   selectedMemberChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary + '15',
     borderRadius: 16,
     paddingVertical: 4,
     paddingLeft: 4,
@@ -992,7 +992,7 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.surface,
   },
   memberItemSelected: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary + '10',
   },
   memberAvatar: {
     width: 44,

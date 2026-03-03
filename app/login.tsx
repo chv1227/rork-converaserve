@@ -221,7 +221,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#FF6B6B', '#FF8E53', '#FEC89A']}
+        colors={['#1B3A5C', '#0F2440', '#162D48']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={StyleSheet.absoluteFillObject}
@@ -242,10 +242,10 @@ export default function LoginScreen() {
         >
           <Animated.View style={[styles.logoContainer, { opacity: logoOpacity, transform: [{ scale: logoScale }] }]}>
             <View style={styles.logoIconContainer}>
-              <Sparkles size={32} color={Colors.textInverse} />
+              <Sparkles size={32} color="#D4A843" />
             </View>
             <Text style={styles.logo}>Church Connect</Text>
-            <Text style={styles.tagline}>Building community, together</Text>
+            <Text style={styles.tagline}>United in faith, connected in love</Text>
           </Animated.View>
 
           <Animated.View 
@@ -258,8 +258,8 @@ export default function LoginScreen() {
             ]}
           >
             <View style={styles.cardHeader}>
-              <Text style={styles.welcomeText}>Let's Get You Connected</Text>
-              <Text style={styles.subtitle}>Sign in to stay connected with your church family and never miss a moment</Text>
+              <Text style={styles.welcomeText}>Welcome Back</Text>
+              <Text style={styles.subtitle}>Sign in to stay connected with your church family and community</Text>
             </View>
 
             {error ? (
@@ -390,7 +390,7 @@ export default function LoginScreen() {
                 activeOpacity={1}
               >
                 <Animated.View style={[styles.createOrgButtonInner, { transform: [{ scale: createOrgButtonAnim.scale }] }]}>
-                  <Building2 size={18} color={Colors.secondary} />
+                  <Building2 size={18} color={Colors.accent} />
                   <Text style={styles.createOrgButtonText}>Create a New Church</Text>
                 </Animated.View>
               </TouchableOpacity>
@@ -589,7 +589,7 @@ const styles = StyleSheet.create({
     width: 300,
     height: 300,
     borderRadius: 150,
-    backgroundColor: "rgba(255, 255, 255, 0.1)",
+    backgroundColor: "rgba(212, 168, 67, 0.08)",
   },
   decorativeCircle2: {
     position: "absolute",
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 100,
-    backgroundColor: "rgba(255, 255, 255, 0.08)",
+    backgroundColor: "rgba(255, 255, 255, 0.04)",
   },
   decorativeCircle3: {
     position: "absolute",
@@ -607,7 +607,7 @@ const styles = StyleSheet.create({
     width: 150,
     height: 150,
     borderRadius: 75,
-    backgroundColor: "rgba(255, 255, 255, 0.06)",
+    backgroundColor: "rgba(212, 168, 67, 0.05)",
   },
   keyboardView: {
     flex: 1,
@@ -622,10 +622,12 @@ const styles = StyleSheet.create({
     marginBottom: 32,
   },
   logoIconContainer: {
-    width: 64,
-    height: 64,
-    borderRadius: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    width: 68,
+    height: 68,
+    borderRadius: 22,
+    backgroundColor: "rgba(212, 168, 67, 0.15)",
+    borderWidth: 1,
+    borderColor: "rgba(212, 168, 67, 0.25)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -720,7 +722,7 @@ const styles = StyleSheet.create({
   },
   forgotPasswordText: {
     fontSize: 14,
-    color: Colors.primary,
+    color: Colors.secondary,
     fontWeight: "600" as const,
   },
   loginButton: {

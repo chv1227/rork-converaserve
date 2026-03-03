@@ -185,7 +185,7 @@ const styles = StyleSheet.create({
     borderRadius: 16,
   },
   iconContainerActive: {
-    backgroundColor: Colors.primaryLight + '20',
+    backgroundColor: Colors.primary + '12',
   },
   labelRow: {
     flexDirection: 'row',
@@ -218,16 +218,16 @@ const styles = StyleSheet.create({
     maxWidth: 300,
     ...Platform.select({
       ios: {
-        shadowColor: '#000',
+        shadowColor: '#0F1E30',
         shadowOffset: { width: 0, height: 8 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.12,
         shadowRadius: 24,
       },
       android: {
         elevation: 12,
       },
       web: {
-        boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+        boxShadow: '0 8px 24px rgba(15, 30, 48, 0.12)',
       },
     }),
   },

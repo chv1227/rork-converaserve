@@ -152,7 +152,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, Colors.primaryDark, '#1D4ED8']}
+        colors={['#1B3A5C', '#162D48', '#0F2440']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: insets.top }]}
@@ -170,7 +170,7 @@ export default function HomeScreen() {
             <View style={styles.badgeRow}>
               {currentOrganization && (
                 <View style={styles.orgBadge}>
-                  <Building2 size={12} color="rgba(255,255,255,0.9)" />
+                  <Building2 size={12} color="rgba(212,168,67,0.9)" />
                   <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
                 </View>
               )}
@@ -205,7 +205,7 @@ export default function HomeScreen() {
               style={styles.avatarContainer}
             >
               <Image
-                source={{ uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=fff&color=3B82F6` }}
+                source={{ uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=fff&color=1B3A5C` }}
                 style={styles.avatar}
                 contentFit="cover"
               />
@@ -224,7 +224,7 @@ export default function HomeScreen() {
         >
           <View style={styles.heroContent}>
             <View style={styles.heroIconContainer}>
-              <Sparkles size={20} color={Colors.accent} />
+              <Sparkles size={20} color="#D4A843" />
             </View>
             <Text style={styles.heroTitle}>Stay Connected</Text>
             <Text style={styles.heroSubtitle}>
@@ -258,7 +258,7 @@ export default function HomeScreen() {
             icon={<Megaphone size={22} color={Colors.textInverse} />}
             title="Announcements"
             subtitle={allAnnouncements.length > 0 ? `${allAnnouncements.length} total` : "Stay updated"}
-            colors={[Colors.primary, Colors.primaryDark]}
+            colors={['#1B3A5C', '#2D5F8A']}
             onPress={() => router.push("/announcements" as Href)}
             delay={0}
           />
@@ -266,7 +266,7 @@ export default function HomeScreen() {
             icon={<Calendar size={22} color={Colors.textInverse} />}
             title="Events"
             subtitle={`${upcomingEvents.length} upcoming`}
-            colors={[Colors.secondary, Colors.secondaryDark]}
+            colors={['#5A8F8F', '#4A7A7A']}
             onPress={() => router.push("/(tabs)/calendar" as Href)}
             delay={50}
           />
@@ -274,7 +274,7 @@ export default function HomeScreen() {
             icon={<MessageCircle size={22} color={Colors.textInverse} />}
             title="Messages"
             subtitle={totalUnread > 0 ? `${totalUnread} unread` : "Chat"}
-            colors={[Colors.tertiary, '#7C3AED']}
+            colors={['#6B8F71', '#5A7D60']}
             onPress={() => router.push("/(tabs)/messages" as Href)}
             delay={100}
           />
@@ -282,7 +282,7 @@ export default function HomeScreen() {
             icon={<Heart size={22} color={Colors.textInverse} />}
             title="Giving"
             subtitle={givingStats.thisMonth > 0 ? `${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"}
-            colors={[Colors.coral, Colors.accent]}
+            colors={['#C8943E', '#A67A2E']}
             onPress={() => router.push("/giving" as Href)}
             delay={150}
           />
@@ -341,8 +341,8 @@ export default function HomeScreen() {
             onPress={() => {}}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: '#EC4899' + '15' }]}>
-              <Heart size={20} color="#EC4899" />
+            <View style={[styles.statIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
+              <Heart size={20} color={Colors.secondary} />
             </View>
             <View style={styles.statContent}>
               <Text style={styles.statValue}>{prayerRequestsCount.active}</Text>
@@ -504,7 +504,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 5,
-    backgroundColor: "rgba(255, 255, 255, 0.18)",
+    backgroundColor: "rgba(212, 168, 67, 0.15)",
     alignSelf: "flex-start",
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -524,7 +524,7 @@ const styles = StyleSheet.create({
     marginBottom: 6,
   },
   betaBadge: {
-    backgroundColor: "rgba(251, 191, 36, 0.9)",
+    backgroundColor: "rgba(212, 168, 67, 0.85)",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 8,
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   betaBadgeText: {
     fontSize: 10,
     fontWeight: "800" as const,
-    color: "#78350F",
+    color: "#1B3A5C",
     letterSpacing: 1,
   },
   greetingSmall: {
@@ -557,7 +557,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.1)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -565,19 +565,19 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -2,
     right: -2,
-    backgroundColor: Colors.accent,
+    backgroundColor: '#D4A843',
     minWidth: 18,
     height: 18,
     borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: '#1B3A5C',
   },
   notificationCount: {
     fontSize: 10,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: '#1B3A5C',
   },
   avatarContainer: {
     borderWidth: 2,
@@ -594,15 +594,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   heroContent: {
-    backgroundColor: "rgba(255, 255, 255, 0.15)",
+    backgroundColor: "rgba(212, 168, 67, 0.08)",
     borderRadius: 20,
     padding: 20,
+    borderWidth: 1,
+    borderColor: "rgba(212, 168, 67, 0.12)",
   },
   heroIconContainer: {
     width: 36,
     height: 36,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "rgba(212, 168, 67, 0.2)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,
@@ -648,7 +650,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
+    backgroundColor: "rgba(255, 255, 255, 0.15)",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 12,

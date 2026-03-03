@@ -110,8 +110,8 @@ const styles = StyleSheet.create({
   },
   pinnedContainer: {
     borderWidth: 1,
-    borderColor: Colors.primaryLight,
-    backgroundColor: '#F0FDFA',
+    borderColor: Colors.secondary + '40',
+    backgroundColor: '#FBF8F2',
   },
   pinnedBadge: {
     flexDirection: 'row',

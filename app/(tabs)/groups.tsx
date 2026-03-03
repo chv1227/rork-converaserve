@@ -63,14 +63,14 @@ const iconMap: Record<string, IconComponentType> = {
 };
 
 const MINISTRY_COLORS = [
-  "#3B82F6",
-  "#8B5CF6",
-  "#10B981",
-  "#F59E0B",
-  "#EC4899",
-  "#6366F1",
-  "#14B8A6",
-  "#F97316",
+  "#1B3A5C",
+  "#6B8F71",
+  "#5A8F8F",
+  "#C8943E",
+  "#C76F54",
+  "#4A8BAF",
+  "#7A6B8F",
+  "#D4956A",
 ];
 
 const MINISTRY_ICONS = [

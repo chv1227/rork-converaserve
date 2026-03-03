@@ -5,27 +5,27 @@ export interface MinistryColorConfig {
 }
 
 export const MINISTRY_COLORS: Record<string, string> = {
-  youth: '#3B82F6',
-  worship: '#8B5CF6',
-  outreach: '#10B981',
-  prayer: '#F59E0B',
-  children: '#EC4899',
-  women: '#F472B6',
-  men: '#6366F1',
-  missions: '#14B8A6',
-  hospitality: '#F97316',
-  media: '#06B6D4',
-  deacon: '#EF4444',
-  education: '#84CC16',
-  senior: '#A855F7',
-  music: '#8B5CF6',
-  singles: '#0EA5E9',
-  couples: '#E11D48',
-  recovery: '#22C55E',
-  discipleship: '#7C3AED',
+  youth: '#4A8BAF',
+  worship: '#6B8F71',
+  outreach: '#5A8F8F',
+  prayer: '#C8943E',
+  children: '#C76F54',
+  women: '#B07A9E',
+  men: '#1B3A5C',
+  missions: '#5A8F8F',
+  hospitality: '#D4956A',
+  media: '#4A7FAF',
+  deacon: '#8B5E5E',
+  education: '#6B8F71',
+  senior: '#7A6B8F',
+  music: '#6B7F8F',
+  singles: '#4A8BAF',
+  couples: '#A67A6B',
+  recovery: '#5A8F6B',
+  discipleship: '#5C6B8F',
 };
 
-export const DEFAULT_MINISTRY_COLOR = '#9CA3AF';
+export const DEFAULT_MINISTRY_COLOR = '#8C919A';
 
 export function getMinistryColor(ministryName: string, ministryId?: string): string {
   const nameLower = ministryName.toLowerCase();

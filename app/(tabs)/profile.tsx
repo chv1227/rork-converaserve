@@ -96,7 +96,7 @@ export default function ProfileScreen() {
   };
 
   const getRoleBadge = () => {
-    if (isSuperAdmin) return { label: "Super Admin", color: "#7C3AED" };
+    if (isSuperAdmin) return { label: "Super Admin", color: Colors.secondary };
     if (isAdmin) return { label: "Admin", color: Colors.primary };
     if (user?.role === "leader") return { label: "Leader", color: Colors.secondary };
     return null;
@@ -193,7 +193,7 @@ export default function ProfileScreen() {
                   <View style={styles.organizationInfo}>
                     <Text style={styles.organizationName}>{currentOrganization.name}</Text>
                     <View style={styles.superAdminBadge}>
-                      <Crown size={10} color="#7C3AED" />
+                      <Crown size={10} color={Colors.secondary} />
                       <Text style={styles.superAdminBadgeText}>Super Admin</Text>
                     </View>
                   </View>
@@ -1183,7 +1183,7 @@ const styles = StyleSheet.create({
   superAdminBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#7C3AED" + "15",
+    backgroundColor: Colors.secondary + "18",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -1194,7 +1194,7 @@ const styles = StyleSheet.create({
   superAdminBadgeText: {
     fontSize: 10,
     fontWeight: "600" as const,
-    color: "#7C3AED",
+    color: Colors.secondary,
   },
   managementActions: {
     marginTop: 12,

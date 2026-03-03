@@ -354,12 +354,12 @@ const styles = StyleSheet.create({
     color: Colors.textSecondary,
   },
   setupBanner: {
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: Colors.primary + '10',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: Colors.primary + '30',
   },
   setupBannerContent: {
     flexDirection: "row",

@@ -97,7 +97,7 @@ function RootLayoutNav() {
           headerShown: true,
           headerTitle: "Details",
           headerStyle: { backgroundColor: Colors.surface },
-          headerTintColor: Colors.text,
+          headerTintColor: Colors.textSecondary,
         }} 
       />
       <Stack.Screen 

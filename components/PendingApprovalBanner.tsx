@@ -14,7 +14,7 @@ export default function PendingApprovalBanner({ type = "pending" }: PendingAppro
     <View style={[styles.container, isPending ? styles.pendingContainer : styles.suspendedContainer]}>
       <View style={[styles.iconContainer, isPending ? styles.pendingIcon : styles.suspendedIcon]}>
         {isPending ? (
-          <Clock size={18} color="#D97706" />
+          <Clock size={18} color="#A67A2E" />
         ) : (
           <ShieldAlert size={18} color="#DC2626" />
         )}
@@ -55,9 +55,9 @@ const styles = StyleSheet.create({
     }),
   },
   pendingContainer: {
-    backgroundColor: "#FFFBEB",
+    backgroundColor: "#FBF8F0",
     borderWidth: 1,
-    borderColor: "#FDE68A",
+    borderColor: "#E8D5A8",
   },
   suspendedContainer: {
     backgroundColor: "#FEF2F2",
@@ -72,7 +72,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   pendingIcon: {
-    backgroundColor: "#FEF3C7",
+    backgroundColor: "#F5EDDA",
   },
   suspendedIcon: {
     backgroundColor: "#FEE2E2",
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     marginBottom: 3,
   },
   pendingTitle: {
-    color: "#92400E",
+    color: "#7A5D1E",
   },
   suspendedTitle: {
     color: "#991B1B",
