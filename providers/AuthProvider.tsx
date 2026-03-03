@@ -85,17 +85,29 @@ async function setStoredOrganization(org: Organization | null): Promise<void> {
   }
 }
 
-function createUserFromSupabase(supabaseUser: SupabaseUser, profile?: { name?: string; avatar?: string; phone?: string; role?: string }): User {
+interface DBProfile {
+  full_name?: string | null;
+  avatar_url?: string | null;
+  phone?: string | null;
+  role?: string | null;
+  name?: string;
+  avatar?: string;
+}
+
+function createUserFromSupabase(supabaseUser: SupabaseUser, profile?: DBProfile | null): User {
   const now = new Date().toISOString();
   const userEmail = (supabaseUser.email || "").toLowerCase();
   const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
-  const displayName = profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split("@")[0] || "User";
+  const displayName = profile?.full_name || profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split("@")[0] || "User";
+  const avatarUrl = profile?.avatar_url || profile?.avatar || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`;
+
+  console.log("createUserFromSupabase: avatar_url from DB:", profile?.avatar_url, "final:", avatarUrl);
 
   return {
     id: supabaseUser.id,
     email: supabaseUser.email || "",
     name: displayName,
-    avatar: profile?.avatar || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`,
+    avatar: avatarUrl,
     role: isSuperAdmin ? "super_admin" : (profile?.role as UserRole) || "member",
     ministries: [],
     phone: profile?.phone || supabaseUser.user_metadata?.phone,

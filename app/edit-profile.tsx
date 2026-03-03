@@ -26,6 +26,7 @@ import {
   pickImageFromCamera,
   pickImageFromGallery,
   showImagePickerOptions,
+  uploadAvatarToSupabase,
   PickedImage,
 } from "@/lib/image-picker";
 
@@ -192,26 +193,39 @@ export default function EditProfileScreen() {
   const handleConfirmImage = async () => {
     if (!pendingImage || !user) return;
 
-    console.log("Setting profile image...");
+    console.log("Uploading profile image to storage...");
     setIsUploading(true);
 
     try {
-      setAvatar(pendingImage.uri);
+      const uploadResult = await uploadAvatarToSupabase(user.id, pendingImage);
+
+      if (!uploadResult.success || !uploadResult.url) {
+        console.error("Upload failed:", uploadResult.error);
+        if (Platform.OS === "web") {
+          alert(uploadResult.error || "Failed to upload image. Please try again.");
+        } else {
+          Alert.alert("Error", uploadResult.error || "Failed to upload image. Please try again.");
+        }
+        return;
+      }
+
+      console.log("Upload successful, setting avatar URL:", uploadResult.url);
+      setAvatar(uploadResult.url);
       setPendingImage(null);
       setShowPreviewModal(false);
       setShowAvatarPicker(false);
 
       if (Platform.OS === "web") {
-        alert("Photo updated successfully!");
+        alert("Photo uploaded successfully! Press Save to update your profile.");
       } else {
-        Alert.alert("Success", "Photo updated successfully!");
+        Alert.alert("Success", "Photo uploaded successfully! Press Save to update your profile.");
       }
     } catch (error) {
-      console.error("Image error:", error);
+      console.error("Image upload error:", error);
       if (Platform.OS === "web") {
-        alert("Failed to set image. Please try again.");
+        alert("Failed to upload image. Please try again.");
       } else {
-        Alert.alert("Error", "Failed to set image. Please try again.");
+        Alert.alert("Error", "Failed to upload image. Please try again.");
       }
     } finally {
       setIsUploading(false);

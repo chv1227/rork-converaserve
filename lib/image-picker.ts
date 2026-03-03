@@ -1,5 +1,7 @@
 import * as ImagePicker from "expo-image-picker";
 import { Platform, Alert, Linking } from "react-native";
+import { supabase } from "@/lib/supabase";
+import { decode } from 'base64-arraybuffer';
 
 export interface PickedImage {
   uri: string;
@@ -196,6 +198,76 @@ export async function pickImageFromGallery(): Promise<ImagePickerResult> {
     return {
       success: false,
       error: error instanceof Error ? error.message : "Failed to select image",
+    };
+  }
+}
+
+export async function uploadAvatarToSupabase(
+  userId: string,
+  image: PickedImage
+): Promise<{ success: boolean; url?: string; error?: string }> {
+  try {
+    console.log("ImageUpload: Starting avatar upload for user:", userId);
+
+    let base64Data = image.base64;
+
+    if (!base64Data && Platform.OS === 'web') {
+      try {
+        const response = await fetch(image.uri);
+        const blob = await response.blob();
+        const reader = new FileReader();
+        base64Data = await new Promise<string>((resolve, reject) => {
+          reader.onloadend = () => {
+            const result = reader.result as string;
+            const base64 = result.split(',')[1];
+            resolve(base64);
+          };
+          reader.onerror = reject;
+          reader.readAsDataURL(blob);
+        });
+      } catch (fetchError) {
+        console.error("ImageUpload: Failed to fetch image on web:", fetchError);
+        return { success: false, error: "Failed to process image" };
+      }
+    }
+
+    if (!base64Data) {
+      return { success: false, error: "No image data available" };
+    }
+
+    const mimeType = image.mimeType || 'image/jpeg';
+    const ext = mimeType === 'image/png' ? 'png' : 'jpg';
+    const filePath = `avatars/${userId}_${Date.now()}.${ext}`;
+
+    console.log("ImageUpload: Uploading to path:", filePath);
+
+    const { data, error } = await supabase.storage
+      .from('avatars')
+      .upload(filePath, decode(base64Data), {
+        contentType: mimeType,
+        upsert: true,
+      });
+
+    if (error) {
+      console.error("ImageUpload: Storage upload error:", error);
+      return { success: false, error: error.message || "Failed to upload image" };
+    }
+
+    console.log("ImageUpload: Upload successful, getting public URL");
+
+    const { data: urlData } = supabase.storage
+      .from('avatars')
+      .getPublicUrl(data.path);
+
+    const publicUrl = urlData.publicUrl + `?t=${Date.now()}`;
+    console.log("ImageUpload: Public URL:", publicUrl);
+
+    return { success: true, url: publicUrl };
+  } catch (error) {
+    console.error("ImageUpload: Unexpected error:", error);
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to upload image",
     };
   }
 }
