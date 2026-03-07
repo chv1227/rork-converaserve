@@ -23,6 +23,7 @@ import {
   Gift,
   Repeat,
   History,
+  AlertCircle,
 } from "lucide-react-native";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import Colors from "@/constants/colors";
@@ -159,7 +160,7 @@ export default function GivingScreen() {
     },
     onSuccess: () => {
       console.log("Donation successful");
-      queryClient.invalidateQueries({ queryKey: ["giving"] });
+      void queryClient.invalidateQueries({ queryKey: ["giving"] });
       setShowConfirmModal(false);
       setShowSuccessModal(true);
       resetForm();
@@ -176,7 +177,7 @@ export default function GivingScreen() {
     },
     onSuccess: () => {
       console.log("Recurring giving cancelled");
-      queryClient.invalidateQueries({ queryKey: ["giving", "recurring"] });
+      void queryClient.invalidateQueries({ queryKey: ["giving", "recurring"] });
       Alert.alert("Success", "Recurring giving has been cancelled.");
     },
     onError: (error: Error) => {
@@ -266,7 +267,7 @@ export default function GivingScreen() {
   };
 
   const onRefresh = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ["giving"] });
+    void queryClient.invalidateQueries({ queryKey: ["giving"] });
   }, [queryClient]);
 
   const renderGiveTab = () => (
@@ -532,10 +533,17 @@ export default function GivingScreen() {
         </Text>
       </TouchableOpacity>
 
+      <View style={styles.betaNotice}>
+        <AlertCircle size={16} color={Colors.warning} />
+        <Text style={styles.betaNoticeText}>
+          Beta: Donations are recorded but payment processing is not yet active. Integration with a payment provider is coming soon.
+        </Text>
+      </View>
+
       <View style={styles.securityNote}>
         <CreditCard size={16} color={Colors.textSecondary} />
         <Text style={styles.securityText}>
-          Secure payment processing. Your information is protected.
+          Secure payment processing will be available at launch.
         </Text>
       </View>
 
@@ -1113,6 +1121,25 @@ const styles = StyleSheet.create({
   securityText: {
     fontSize: 12,
     color: Colors.textSecondary,
+  },
+  betaNotice: {
+    flexDirection: "row" as const,
+    alignItems: "flex-start" as const,
+    gap: 8,
+    marginHorizontal: 16,
+    marginTop: 16,
+    padding: 12,
+    backgroundColor: Colors.warningLight,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: Colors.warning + '30',
+  },
+  betaNoticeText: {
+    flex: 1,
+    fontSize: 12,
+    color: Colors.warning,
+    lineHeight: 18,
+    fontWeight: "500" as const,
   },
   loadingContainer: {
     flex: 1,

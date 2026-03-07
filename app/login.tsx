@@ -26,6 +26,12 @@ import { supabase } from "@/lib/supabase";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+const MAX_LOGIN_ATTEMPTS = 5;
+const LOCKOUT_DURATION_MS = 60 * 1000;
+
+let loginAttempts = 0;
+let lockoutUntil: number | null = null;
+
 export default function LoginScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -119,14 +125,37 @@ export default function LoginScreen() {
       return;
     }
 
+    if (lockoutUntil && Date.now() < lockoutUntil) {
+      const remainingSec = Math.ceil((lockoutUntil - Date.now()) / 1000);
+      setError(`Too many failed attempts. Please wait ${remainingSec} seconds.`);
+      return;
+    }
+
+    if (lockoutUntil && Date.now() >= lockoutUntil) {
+      lockoutUntil = null;
+      loginAttempts = 0;
+    }
+
     setIsLoading(true);
     setError("");
 
     const result = await login(email.trim(), password);
 
     if (result.success) {
+      loginAttempts = 0;
+      lockoutUntil = null;
       router.replace("/(tabs)");
     } else {
+      loginAttempts += 1;
+      console.log(`Login attempt ${loginAttempts}/${MAX_LOGIN_ATTEMPTS}`);
+
+      if (loginAttempts >= MAX_LOGIN_ATTEMPTS) {
+        lockoutUntil = Date.now() + LOCKOUT_DURATION_MS;
+        setError(`Too many failed attempts. Please wait 60 seconds before trying again.`);
+        setIsLoading(false);
+        return;
+      }
+
       const errorMsg = result.error || "Login failed";
       
       if (errorMsg.toLowerCase().includes("verify") || errorMsg.toLowerCase().includes("email not confirmed")) {
@@ -135,7 +164,8 @@ export default function LoginScreen() {
         setVerificationSent(false);
         setShowVerifyModal(true);
       } else {
-        setError(errorMsg);
+        const attemptsLeft = MAX_LOGIN_ATTEMPTS - loginAttempts;
+        setError(`${errorMsg}${attemptsLeft <= 2 ? ` (${attemptsLeft} attempt${attemptsLeft === 1 ? '' : 's'} remaining)` : ''}`);
         if (Platform.OS !== "web") {
           Alert.alert("Login Failed", errorMsg);
         }

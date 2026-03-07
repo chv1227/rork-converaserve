@@ -7,10 +7,41 @@ import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 export type UserRole = "member" | "leader" | "admin" | "super_admin";
 
-const SUPER_ADMIN_EMAILS = [
+const FALLBACK_SUPER_ADMIN_EMAILS = [
   "chv1227@gmail.com",
   "coreytmoss@gmail.com",
 ];
+
+let cachedSuperAdminEmails: string[] | null = null;
+let superAdminCacheTime = 0;
+const SUPER_ADMIN_CACHE_TTL = 5 * 60 * 1000;
+
+async function getSuperAdminEmails(): Promise<string[]> {
+  if (cachedSuperAdminEmails && Date.now() - superAdminCacheTime < SUPER_ADMIN_CACHE_TTL) {
+    return cachedSuperAdminEmails;
+  }
+  try {
+    const { data, error } = await (supabase
+      .from('system_settings') as any)
+      .select('value')
+      .eq('key', 'super_admin_emails')
+      .maybeSingle();
+    if (!error && data?.value) {
+      const val = data.value as { emails?: string[] };
+      if (Array.isArray(val.emails) && val.emails.length > 0) {
+        cachedSuperAdminEmails = val.emails.map((e: string) => e.toLowerCase());
+        superAdminCacheTime = Date.now();
+        console.log('AuthProvider: Loaded super admin emails from DB:', cachedSuperAdminEmails.length);
+        return cachedSuperAdminEmails;
+      }
+    }
+  } catch {
+    console.log('AuthProvider: Failed to fetch super admin emails from DB, using fallback');
+  }
+  cachedSuperAdminEmails = FALLBACK_SUPER_ADMIN_EMAILS.map(e => e.toLowerCase());
+  superAdminCacheTime = Date.now();
+  return cachedSuperAdminEmails;
+}
 
 export interface User {
   id: string;
@@ -94,10 +125,11 @@ interface DBProfile {
   avatar?: string;
 }
 
-function createUserFromSupabase(supabaseUser: SupabaseUser, profile?: DBProfile | null): User {
+function createUserFromSupabase(supabaseUser: SupabaseUser, profile?: DBProfile | null, superAdminEmails?: string[]): User {
   const now = new Date().toISOString();
   const userEmail = (supabaseUser.email || "").toLowerCase();
-  const isSuperAdmin = SUPER_ADMIN_EMAILS.some(email => email.toLowerCase() === userEmail);
+  const adminList = superAdminEmails || cachedSuperAdminEmails || FALLBACK_SUPER_ADMIN_EMAILS.map(e => e.toLowerCase());
+  const isSuperAdmin = adminList.some(email => email === userEmail);
   const displayName = profile?.full_name || profile?.name || supabaseUser.user_metadata?.name || supabaseUser.email?.split("@")[0] || "User";
   const avatarUrl = profile?.avatar_url || profile?.avatar || supabaseUser.user_metadata?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(displayName)}&background=1A7B74&color=fff`;
 
@@ -164,13 +196,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         if (session?.user) {
           console.log("AuthProvider: Found existing session for user:", session.user.id);
           
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
+          const [{ data: profile }, adminEmails] = await Promise.all([
+            supabase.from('users').select('*').eq('id', session.user.id).single(),
+            getSuperAdminEmails(),
+          ]);
 
-          const user = createUserFromSupabase(session.user, profile || undefined);
+          const user = createUserFromSupabase(session.user, profile || undefined, adminEmails);
           const storedOrg = await getStoredOrganization();
           console.log("AuthProvider: Stored org:", storedOrg?.id, storedOrg?.name);
 
@@ -284,7 +315,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
     };
 
-    initializeAuth();
+    void initializeAuth();
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
       console.log("AuthProvider: Auth state changed:", event);
@@ -314,12 +345,11 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (event === 'TOKEN_REFRESHED') {
         console.log('AuthProvider: Token refreshed, updating session only');
         if (session?.user) {
-          const { data: profile } = await supabase
-            .from('users')
-            .select('*')
-            .eq('id', session.user.id)
-            .single();
-          const user = createUserFromSupabase(session.user, profile || undefined);
+          const [{ data: profile }, adminEmails] = await Promise.all([
+            supabase.from('users').select('*').eq('id', session.user.id).single(),
+            getSuperAdminEmails(),
+          ]);
+          const user = createUserFromSupabase(session.user, profile || undefined, adminEmails);
           setState(prev => ({
             ...prev,
             user,
@@ -331,13 +361,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       }
 
       if (session?.user) {
-        const { data: profile } = await supabase
-          .from('users')
-          .select('*')
-          .eq('id', session.user.id)
-          .single();
+        const [{ data: profile }, adminEmails] = await Promise.all([
+          supabase.from('users').select('*').eq('id', session.user.id).single(),
+          getSuperAdminEmails(),
+        ]);
 
-        const user = createUserFromSupabase(session.user, profile || undefined);
+        const user = createUserFromSupabase(session.user, profile || undefined, adminEmails);
 
         if (manualOrgSetRef.current) {
           console.log('AuthProvider: Org was manually set, preserving current org on auth change');
@@ -467,13 +496,12 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         return { success: false, error: "Login failed. Please try again." };
       }
 
-      const { data: profile } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', data.user.id)
-        .single();
+      const [{ data: profile }, adminEmails] = await Promise.all([
+        supabase.from('users').select('*').eq('id', data.user.id).single(),
+        getSuperAdminEmails(),
+      ]);
 
-      const user = createUserFromSupabase(data.user, profile || undefined);
+      const user = createUserFromSupabase(data.user, profile || undefined, adminEmails);
 
       const { data: membership } = await supabase
         .from('user_church_roles')
@@ -900,7 +928,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             role: firstOrg.role,
             joinedAt: firstOrg.joinedAt,
           };
-          setStoredOrganization(newState.currentOrganization);
+          void setStoredOrganization(newState.currentOrganization);
           console.log("AuthProvider: Auto-selected organization:", firstOrg.name);
         }
 
@@ -914,7 +942,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [state.session?.user]);
 
-  return {
+  return useMemo(() => ({
     user: state.user,
     token: state.session?.access_token || null,
     isLoading: state.isLoading,
@@ -944,5 +972,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     isChurchApproved,
     isChurchPending,
     refreshOrganizations,
-  };
+  }), [
+    state.user, state.session?.access_token, state.isLoading, state.isAuthenticated,
+    state.currentOrganization, state.currentMembership, state.churchStatus,
+    state.organizations, state.error,
+    login, register, logout, updateUser, refreshUser, sendPasswordResetEmail,
+    changePassword, getIdToken, setCurrentOrganization, setOrganizations, clearError,
+    isAdmin, isSuperAdmin, isLeader, isOrganizationAdmin, isOrganizationSuperAdmin,
+    hasOrganization, isChurchApproved, isChurchPending, refreshOrganizations,
+  ]);
 });

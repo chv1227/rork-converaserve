@@ -76,7 +76,7 @@ export default function MessagesScreen() {
       
       const { data: participantData, error: participantError } = await supabase
         .from('conversation_participants')
-        .select('conversation_id')
+        .select('conversation_id, last_read_at')
         .eq('profile_id', profileId);
       
       if (participantError) {
@@ -84,7 +84,11 @@ export default function MessagesScreen() {
         return [];
       }
       
-      const conversationIds = (participantData || []).map((p: { conversation_id: string }) => p.conversation_id);
+      const participantMap = new Map<string, string | null>();
+      for (const p of (participantData || []) as { conversation_id: string; last_read_at: string | null }[]) {
+        participantMap.set(p.conversation_id, p.last_read_at);
+      }
+      const conversationIds = Array.from(participantMap.keys());
       if (conversationIds.length === 0) return [];
       
       const { data } = await supabase
@@ -95,26 +99,65 @@ export default function MessagesScreen() {
         .eq('is_archived', false)
         .order('updated_at', { ascending: false });
       
-      return (data || []).map((c: { id: string; organization_id: string; name: string; avatar: string | null; type: string; ministry_id: string | null; created_by: string; is_archived: boolean; created_at: string; updated_at: string; ministries: { color: string } | null }) => ({
-        id: c.id,
-        organizationId: c.organization_id,
-        name: c.name,
-        avatar: c.avatar || '',
-        lastMessage: '',
-        lastMessageTime: c.updated_at,
-        unreadCount: 0,
-        isGroup: c.type !== 'direct',
-        type: c.type as 'direct' | 'group' | 'ministry',
-        ministryId: c.ministry_id || undefined,
-        ministryColor: c.ministries?.color || undefined,
-        createdBy: c.created_by,
-        createdAt: c.created_at,
-        updatedAt: c.updated_at,
-        isArchived: c.is_archived,
-      })) as Conversation[];
+      const convoIds = (data || []).map((c: { id: string }) => c.id);
+      
+      let lastMessagesMap = new Map<string, { content: string; created_at: string }>();
+      let unreadCountsMap = new Map<string, number>();
+      
+      if (convoIds.length > 0) {
+        const { data: lastMsgs } = await supabase
+          .from('messages')
+          .select('conversation_id, content, created_at')
+          .in('conversation_id', convoIds)
+          .order('created_at', { ascending: false });
+        
+        for (const msg of (lastMsgs || []) as { conversation_id: string; content: string; created_at: string }[]) {
+          if (!lastMessagesMap.has(msg.conversation_id)) {
+            lastMessagesMap.set(msg.conversation_id, { content: msg.content, created_at: msg.created_at });
+          }
+        }
+        
+        for (const convoId of convoIds) {
+          const lastReadAt = participantMap.get(convoId);
+          if (lastReadAt) {
+            const unreadMsgs = (lastMsgs || []).filter(
+              (m: { conversation_id: string; created_at: string }) => 
+                m.conversation_id === convoId && m.created_at > lastReadAt
+            );
+            unreadCountsMap.set(convoId, unreadMsgs.length);
+          } else {
+            const allMsgs = (lastMsgs || []).filter(
+              (m: { conversation_id: string }) => m.conversation_id === convoId
+            );
+            unreadCountsMap.set(convoId, allMsgs.length);
+          }
+        }
+      }
+      
+      return (data || []).map((c: { id: string; organization_id: string; name: string; avatar: string | null; type: string; ministry_id: string | null; created_by: string; is_archived: boolean; created_at: string; updated_at: string; ministries: { color: string } | null }) => {
+        const lastMsg = lastMessagesMap.get(c.id);
+        const unread = unreadCountsMap.get(c.id) || 0;
+        return {
+          id: c.id,
+          organizationId: c.organization_id,
+          name: c.name,
+          avatar: c.avatar || '',
+          lastMessage: lastMsg?.content || '',
+          lastMessageTime: lastMsg?.created_at || c.updated_at,
+          unreadCount: unread,
+          isGroup: c.type !== 'direct',
+          type: c.type as 'direct' | 'group' | 'ministry',
+          ministryId: c.ministry_id || undefined,
+          ministryColor: c.ministries?.color || undefined,
+          createdBy: c.created_by,
+          createdAt: c.created_at,
+          updatedAt: c.updated_at,
+          isArchived: c.is_archived,
+        };
+      }) as Conversation[];
     },
     enabled: !!currentOrganization?.id && !!profileId,
-    refetchInterval: 3000,
+    refetchInterval: 5000,
   });
 
   const membersQuery = useQuery({
@@ -201,7 +244,7 @@ export default function MessagesScreen() {
     },
     onSuccess: (conversation) => {
       console.log("DM created/found:", conversation.id);
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setShowNewChatModal(false);
       setSelectedMembers([]);
       router.push(`/chat/${conversation.id}` as Href);
@@ -237,7 +280,7 @@ export default function MessagesScreen() {
     },
     onSuccess: (conversation) => {
       console.log("Group created:", conversation.id);
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setShowNewChatModal(false);
       setSelectedMembers([]);
       setGroupName("");
@@ -273,7 +316,7 @@ export default function MessagesScreen() {
   const { refetch: refetchConversations } = conversationsQuery;
   
   const onRefresh = useCallback(() => {
-    refetchConversations();
+    void refetchConversations();
   }, [refetchConversations]);
 
   const handleStartDM = (member: OrgMember) => {
