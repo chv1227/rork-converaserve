@@ -55,12 +55,13 @@ export default function ChatScreen() {
 
   const conversationQuery = useQuery({
     queryKey: ['conversation', id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!id) return null;
       const { data, error } = await supabase
         .from('conversations')
         .select('*, ministries(color)')
         .eq('id', id)
+        .abortSignal(signal)
         .single();
       
       if (error) throw error;
@@ -71,7 +72,8 @@ export default function ChatScreen() {
       const { data: participants } = await supabase
         .from('conversation_participants')
         .select('profile_id')
-        .eq('conversation_id', id);
+        .eq('conversation_id', id)
+        .abortSignal(signal);
       
       const participantIds = (participants || []).map((p: { profile_id: string }) => p.profile_id);
       
@@ -92,7 +94,7 @@ export default function ChatScreen() {
 
   const messagesQuery = useQuery({
     queryKey: ['messages', id],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!id) return [];
 
       let messagesData: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users?: { full_name: string | null; avatar_url: string | null } | null }[] = [];
@@ -101,7 +103,8 @@ export default function ChatScreen() {
         .from('messages')
         .select('*, users!sender_id(full_name, avatar_url)')
         .eq('conversation_id', id)
-        .order('created_at', { ascending: true });
+        .order('created_at', { ascending: true })
+        .abortSignal(signal);
 
       if (joinError) {
         console.log('Chat: FK join failed, falling back to plain query:', joinError.message);
@@ -109,7 +112,8 @@ export default function ChatScreen() {
           .from('messages')
           .select('*')
           .eq('conversation_id', id)
-          .order('created_at', { ascending: true });
+          .order('created_at', { ascending: true })
+          .abortSignal(signal);
         if (plainError) throw plainError;
         messagesData = (plain || []) as typeof messagesData;
       } else {
@@ -124,7 +128,8 @@ export default function ChatScreen() {
         const { data: usersData } = await supabase
           .from('users')
           .select('id, full_name, avatar_url')
-          .in('id', senderIds);
+          .in('id', senderIds)
+          .abortSignal(signal);
         for (const u of (usersData || []) as { id: string; full_name: string | null; avatar_url: string | null }[]) {
           usersMap.set(u.id, { full_name: u.full_name, avatar_url: u.avatar_url });
         }

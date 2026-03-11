@@ -184,13 +184,14 @@ export default function MessagesScreen() {
 
   const conversationsQuery = useQuery({
     queryKey: ['conversations', currentOrganization?.id, profileId],
-    queryFn: async () => {
+    queryFn: async ({ signal }) => {
       if (!currentOrganization?.id || !profileId) return [];
       
       const { data: participantData, error: participantError } = await supabase
         .from('conversation_participants')
         .select('conversation_id, last_read_at')
-        .eq('profile_id', profileId);
+        .eq('profile_id', profileId)
+        .abortSignal(signal);
       
       if (participantError) {
         console.log('Error fetching conversation participants:', participantError.message);
@@ -210,7 +211,8 @@ export default function MessagesScreen() {
         .in('id', conversationIds)
         .eq('organization_id', currentOrganization.id)
         .eq('is_archived', false)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .abortSignal(signal);
       
       const convoIds = (data || []).map((c: { id: string }) => c.id);
       
@@ -222,7 +224,8 @@ export default function MessagesScreen() {
           .from('messages')
           .select('conversation_id, content, created_at')
           .in('conversation_id', convoIds)
-          .order('created_at', { ascending: false });
+          .order('created_at', { ascending: false })
+          .abortSignal(signal);
         
         for (const msg of (lastMsgs || []) as { conversation_id: string; content: string; created_at: string }[]) {
           if (!lastMessagesMap.has(msg.conversation_id)) {
