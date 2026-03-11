@@ -23,10 +23,10 @@ import {
   UserPlus,
   Settings,
   Heart,
-  Plus,
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import React from "react";
@@ -164,6 +164,7 @@ function mapDbType(dbType: string): NotificationType {
 export default function NotificationsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { user, currentOrganization } = useAuth();
   const queryClient = useQueryClient();
 
@@ -214,7 +215,7 @@ export default function NotificationsScreen() {
 
   const onRefresh = useCallback(() => {
     console.log('Refreshing notifications...');
-    notificationsQuery.refetch();
+    void notificationsQuery.refetch();
   }, [notificationsQuery]);
 
   const markReadMutation = useMutation({
@@ -225,7 +226,7 @@ export default function NotificationsScreen() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -240,7 +241,7 @@ export default function NotificationsScreen() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -252,7 +253,7 @@ export default function NotificationsScreen() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -267,7 +268,7 @@ export default function NotificationsScreen() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['notifications'] });
+      void queryClient.invalidateQueries({ queryKey: ['notifications'] });
     },
   });
 
@@ -347,11 +348,11 @@ export default function NotificationsScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
         <View style={styles.headerTop}>
           <View style={styles.headerTitleRow}>
-            <Text style={styles.title}>Notifications</Text>
+            <Text style={[styles.title, { color: themeColors.text }]}>Notifications</Text>
             {unreadCount > 0 && (
               <View style={styles.badge}>
                 <Text style={styles.badgeText}>{unreadCount}</Text>
@@ -364,7 +365,7 @@ export default function NotificationsScreen() {
             activeOpacity={0.7}
             testID="notifications-settings-button"
           >
-            <Settings size={20} color={Colors.text} />
+            <Settings size={20} color={themeColors.text} />
           </TouchableOpacity>
         </View>
         {notifications.length > 0 && (
@@ -374,13 +375,13 @@ export default function NotificationsScreen() {
                 style={styles.headerButton}
                 onPress={markAllAsRead}
               >
-                <CheckCheck size={16} color={Colors.primary} />
-                <Text style={styles.headerButtonText}>Mark all read</Text>
+                <CheckCheck size={16} color={themeColors.primary} />
+                <Text style={[styles.headerButtonText, { color: themeColors.primary }]}>Mark all read</Text>
               </TouchableOpacity>
             )}
             <TouchableOpacity style={styles.headerButton} onPress={clearAll}>
-              <Trash2 size={16} color={Colors.textSecondary} />
-              <Text style={[styles.headerButtonText, { color: Colors.textSecondary }]}>
+              <Trash2 size={16} color={themeColors.textSecondary} />
+              <Text style={[styles.headerButtonText, { color: themeColors.textSecondary }]}>
                 Clear all
               </Text>
             </TouchableOpacity>

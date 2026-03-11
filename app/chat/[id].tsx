@@ -94,25 +94,60 @@ export default function ChatScreen() {
     queryKey: ['messages', id],
     queryFn: async () => {
       if (!id) return [];
-      const { data, error } = await supabase
+
+      let messagesData: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users?: { full_name: string | null; avatar_url: string | null } | null }[] = [];
+
+      const { data: withJoin, error: joinError } = await (supabase as any)
         .from('messages')
         .select('*, users!sender_id(full_name, avatar_url)')
         .eq('conversation_id', id)
         .order('created_at', { ascending: true });
-      
-      if (error) throw error;
-      return (data || []).map((m: { id: string; conversation_id: string; content: string; sender_id: string; created_at: string; message_type: string; users: { full_name: string | null; avatar_url: string | null } | null }) => ({
-        id: m.id,
-        conversationId: m.conversation_id,
-        content: m.content,
-        senderId: m.sender_id,
-        senderName: m.users?.full_name || 'Unknown',
-        senderAvatar: m.users?.avatar_url || '',
-        timestamp: m.created_at,
-        isRead: true,
-        readBy: [],
-        messageType: m.message_type as 'text' | 'image' | 'system',
-      })) as Message[];
+
+      if (joinError) {
+        console.log('Chat: FK join failed, falling back to plain query:', joinError.message);
+        const { data: plain, error: plainError } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('conversation_id', id)
+          .order('created_at', { ascending: true });
+        if (plainError) throw plainError;
+        messagesData = (plain || []) as typeof messagesData;
+      } else {
+        messagesData = (withJoin || []) as typeof messagesData;
+      }
+
+      const senderIds = [...new Set(messagesData.map(m => m.sender_id))];
+      const sendersMissing = messagesData.some(m => !m.users?.full_name);
+
+      let usersMap = new Map<string, { full_name: string | null; avatar_url: string | null }>();
+      if (sendersMissing && senderIds.length > 0) {
+        const { data: usersData } = await supabase
+          .from('users')
+          .select('id, full_name, avatar_url')
+          .in('id', senderIds);
+        for (const u of (usersData || []) as { id: string; full_name: string | null; avatar_url: string | null }[]) {
+          usersMap.set(u.id, { full_name: u.full_name, avatar_url: u.avatar_url });
+        }
+      }
+
+      return messagesData.map((m) => {
+        const joinedUser = m.users;
+        const fallbackUser = usersMap.get(m.sender_id);
+        const senderName = joinedUser?.full_name || fallbackUser?.full_name || 'Unknown';
+        const senderAvatar = joinedUser?.avatar_url || fallbackUser?.avatar_url || '';
+        return {
+          id: m.id,
+          conversationId: m.conversation_id,
+          content: m.content,
+          senderId: m.sender_id,
+          senderName,
+          senderAvatar,
+          timestamp: m.created_at,
+          isRead: true,
+          readBy: [],
+          messageType: m.message_type as 'text' | 'image' | 'system',
+        };
+      }) as Message[];
     },
     enabled: !!id,
     refetchInterval: 2000,
@@ -161,9 +196,9 @@ export default function ChatScreen() {
     onSuccess: () => {
       console.log("Message sent successfully");
       setMessageText("");
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      queryClient.invalidateQueries({ queryKey: ['messages', id] });
-      queryClient.invalidateQueries({ queryKey: ['conversations'] });
+      void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+      void queryClient.invalidateQueries({ queryKey: ['messages', id] });
+      void queryClient.invalidateQueries({ queryKey: ['conversations'] });
       setTimeout(() => {
         flatListRef.current?.scrollToEnd({ animated: true });
       }, 100);
@@ -198,7 +233,7 @@ export default function ChatScreen() {
   const { refetch: refetchMessages } = messagesQuery;
 
   const onRefresh = useCallback(() => {
-    refetchMessages();
+    void refetchMessages();
   }, [refetchMessages]);
 
   const handleSend = useCallback(() => {

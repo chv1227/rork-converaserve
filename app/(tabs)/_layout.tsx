@@ -1,6 +1,7 @@
 import { Tabs } from "expo-router";
 import { Home, User, MessageCircle } from "lucide-react-native";
 import React from "react";
+import { Platform } from "react-native";
 
 import { useTheme } from "@/providers/ThemeProvider";
 import TabBarDropdown from "@/components/TabBarDropdown";
@@ -18,8 +19,7 @@ export default function TabLayout() {
           backgroundColor: colors.surface,
           borderTopColor: colors.borderLight,
           borderTopWidth: 0.5,
-          paddingTop: 8,
-          height: 88,
+          ...(Platform.OS === 'web' ? { height: 64 } : {}),
         },
         tabBarLabelStyle: {
           fontSize: 11,

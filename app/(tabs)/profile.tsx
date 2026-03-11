@@ -28,8 +28,19 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import React, { useState } from "react";
 import { MinistryLegend, MinistryDots } from "@/components/MinistryIndicators";
+
+function formatJoinDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    if (isNaN(date.getTime())) return dateStr;
+    return date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: 'numeric' });
+  } catch {
+    return dateStr;
+  }
+}
 
 interface MenuItemProps {
   icon: React.ReactNode;
@@ -60,6 +71,7 @@ function MenuItem({ icon, title, subtitle, onPress, showBorder = true, danger = 
 export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin, changePassword } = useAuth();
   const { ministries, userMinistries } = useData();
   
@@ -78,7 +90,7 @@ export default function ProfileScreen() {
 
   const handleLogout = () => {
     if (Platform.OS === "web") {
-      logout();
+      void logout();
       router.replace("/login" as any);
     } else {
       Alert.alert("Sign Out", "Are you sure you want to sign out?", [
@@ -113,23 +125,23 @@ export default function ProfileScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Profile</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>Profile</Text>
           <TouchableOpacity
-            style={styles.headerEditButton}
+            style={[styles.headerEditButton, { backgroundColor: themeColors.primaryLight + '25' }]}
             onPress={() => router.push("/edit-profile" as any)}
             activeOpacity={0.7}
             testID="profile-edit-button"
           >
-            <Pencil size={18} color={Colors.primary} />
+            <Pencil size={18} color={themeColors.primary} />
           </TouchableOpacity>
         </View>
       </View>
 
       <ScrollView style={styles.content} contentContainerStyle={styles.contentContainer} showsVerticalScrollIndicator={false}>
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: themeColors.surface }]}>
           <View style={styles.avatarWrapper}>
             <Image source={{ uri: user.avatar }} style={styles.avatar} contentFit="cover" />
             {userMinistries.length > 0 && (
@@ -139,7 +151,7 @@ export default function ProfileScreen() {
             )}
           </View>
           <View style={styles.nameRow}>
-            <Text style={styles.userName}>{user.name}</Text>
+            <Text style={[styles.userName, { color: themeColors.text }]}>{user.name}</Text>
             {roleBadge && (
               <View style={[styles.roleBadge, { backgroundColor: roleBadge.color + "20" }]}>
                 <Crown size={12} color={roleBadge.color} />
@@ -147,7 +159,7 @@ export default function ProfileScreen() {
               </View>
             )}
           </View>
-          <Text style={styles.userRole}>{user.role.replace("_", " ").toUpperCase()}</Text>
+          <Text style={[styles.userRole, { color: themeColors.textSecondary }]}>{user.role.replace("_", " ").toUpperCase()}</Text>
 
           <TouchableOpacity 
             style={styles.editButton}
@@ -171,7 +183,7 @@ export default function ProfileScreen() {
           )}
           <View style={styles.infoItem}>
             <Calendar size={18} color={Colors.textSecondary} />
-            <Text style={styles.infoText}>Joined {user.joinedDate}</Text>
+            <Text style={styles.infoText}>Joined {formatJoinDate(user.joinedDate)}</Text>
           </View>
           <View style={styles.infoItem}>
             <Users size={18} color={Colors.textSecondary} />
@@ -508,7 +520,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                Linking.openURL("https://churchconnect.org/privacy");
+                void Linking.openURL("https://churchconnect.org/privacy");
               }}
             >
               <FileText size={20} color={Colors.primary} />
@@ -552,7 +564,7 @@ export default function ProfileScreen() {
               style={styles.privacyItem}
               onPress={() => {
                 if (Platform.OS !== "web") {
-                  Linking.openURL("mailto:support@churchconnect.org");
+                  void Linking.openURL("mailto:support@churchconnect.org");
                 }
               }}
             >
@@ -567,7 +579,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                Linking.openURL("https://churchconnect.org/faq");
+                void Linking.openURL("https://churchconnect.org/faq");
               }}
             >
               <MessageCircle size={20} color={Colors.primary} />
@@ -581,7 +593,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                Linking.openURL("https://churchconnect.org/terms");
+                void Linking.openURL("https://churchconnect.org/terms");
               }}
             >
               <FileText size={20} color={Colors.primary} />

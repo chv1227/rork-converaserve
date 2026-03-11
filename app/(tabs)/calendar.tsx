@@ -6,12 +6,14 @@ import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import EventCard from "@/components/EventCard";
 import { useRouter, Href } from "expo-router";
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { currentOrganization, isAdmin } = useAuth();
   const { events, isLoading, isRefreshing, refresh } = useData();
   const [selectedDate, setSelectedDate] = useState(new Date());
@@ -112,10 +114,10 @@ export default function CalendarScreen() {
   const isSelected = (day: number) => day === selectedDate.getDate();
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Calendar</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>Calendar</Text>
           {isAdmin && currentOrganization && (
             <TouchableOpacity
               style={styles.createButtonHeader}
@@ -171,8 +173,8 @@ export default function CalendarScreen() {
                 key={index}
                 style={[
                   styles.dayCell,
-                  day && isSelected(day) && styles.selectedDay,
-                  day && isToday(day) && !isSelected(day) && styles.todayDay,
+                  day ? (isSelected(day) ? styles.selectedDay : undefined) : undefined,
+                  day ? (isToday(day) && !isSelected(day) ? styles.todayDay : undefined) : undefined,
                 ]}
                 onPress={() => day && selectDay(day)}
                 disabled={!day}

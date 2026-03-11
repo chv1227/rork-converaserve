@@ -43,10 +43,11 @@ import {
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import { Ministry } from "@/types";
 import React from "react";
 
-const { width: SCREEN_WIDTH } = Dimensions.get("window");
+const { width: _SCREEN_WIDTH } = Dimensions.get("window");
 
 type IconComponentType = React.ComponentType<{ size: number; color: string }>;
 
@@ -322,6 +323,7 @@ function CompactMinistryCard({
 export default function GroupsScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
+  const { colors: themeColors } = useTheme();
   const { currentOrganization, isAdmin, isChurchApproved } = useAuth();
   const {
     ministries,
@@ -492,11 +494,13 @@ export default function GroupsScreen() {
   const hasNoResults = filteredMinistries.length === 0 && searchQuery.trim() && !isLoading;
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
       <Animated.View
         style={[
           styles.header,
           {
+            backgroundColor: themeColors.surface,
+            borderBottomColor: themeColors.borderLight,
             paddingTop: insets.top + 8,
             opacity: headerAnim,
             transform: [
@@ -512,8 +516,8 @@ export default function GroupsScreen() {
       >
         <View style={styles.headerTop}>
           <View>
-            <Text style={styles.title}>Ministries</Text>
-            <Text style={styles.subtitle}>
+            <Text style={[styles.title, { color: themeColors.text }]}>Ministries</Text>
+            <Text style={[styles.subtitle, { color: themeColors.textSecondary }]}>
               {ministries.length > 0
                 ? `${ministries.length} active ${ministries.length === 1 ? "ministry" : "ministries"}`
                 : "Connect and serve together"}
@@ -526,7 +530,7 @@ export default function GroupsScreen() {
                 onPress={() => router.push("/admin/ministries" as Href)}
                 activeOpacity={0.7}
               >
-                <Settings size={20} color={Colors.text} />
+                <Settings size={20} color={themeColors.text} />
               </TouchableOpacity>
             )}
             {currentOrganization && isAdmin && (
@@ -541,12 +545,12 @@ export default function GroupsScreen() {
           </View>
         </View>
 
-        <View style={styles.searchContainer}>
-          <Search size={18} color={Colors.textTertiary} />
+        <View style={[styles.searchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
+          <Search size={18} color={themeColors.textTertiary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeColors.text }]}
             placeholder="Search ministries..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={themeColors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />

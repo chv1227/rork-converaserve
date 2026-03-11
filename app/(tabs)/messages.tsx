@@ -25,9 +25,121 @@ import {
 } from "lucide-react-native";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import { supabase } from "@/lib/supabase";
 import { Conversation } from "@/types";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import React from "react";
+
+function formatConversationTime(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffMins = Math.floor(diffMs / (1000 * 60));
+    const diffHours = Math.floor(diffMs / (1000 * 60 * 60));
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+
+    if (diffMins < 1) return "now";
+    if (diffMins < 60) return `${diffMins}m`;
+    if (diffHours < 24) return `${diffHours}h`;
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d`;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
+const ConversationListItem = React.memo(function ConversationListItem({
+  item,
+  onPress,
+}: {
+  item: Conversation;
+  onPress: (id: string) => void;
+}) {
+  const isUnread = item.unreadCount > 0;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const handlePressIn = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 0.98,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  const handlePressOut = useCallback(() => {
+    Animated.spring(scaleAnim, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 50,
+      bounciness: 4,
+    }).start();
+  }, [scaleAnim]);
+
+  return (
+    <TouchableOpacity
+      onPress={() => onPress(item.id)}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+      activeOpacity={1}
+      testID={`conversation-${item.id}`}
+    >
+      <Animated.View style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}>
+        <View style={styles.avatarContainer}>
+          <Image source={{ uri: item.avatar }} style={styles.avatar} />
+          {item.type === "ministry" && item.ministryColor && (
+            <View
+              style={[
+                styles.ministryBadge,
+                { backgroundColor: item.ministryColor },
+              ]}
+            />
+          )}
+          {item.type === "group" && (
+            <View style={[styles.groupBadge, { backgroundColor: Colors.primary }]}>
+              <Users size={10} color="#fff" />
+            </View>
+          )}
+        </View>
+
+        <View style={styles.conversationContent}>
+          <View style={styles.conversationHeader}>
+            <Text
+              style={[styles.conversationName, isUnread && styles.unreadName]}
+              numberOfLines={1}
+            >
+              {item.name}
+            </Text>
+            <Text style={styles.conversationTime}>
+              {formatConversationTime(item.lastMessageTime)}
+            </Text>
+          </View>
+          <View style={styles.conversationPreview}>
+            <Text
+              style={[
+                styles.lastMessage,
+                isUnread && styles.unreadMessage,
+              ]}
+              numberOfLines={1}
+            >
+              {item.lastMessage || "No messages yet"}
+            </Text>
+            {isUnread && (
+              <View style={styles.unreadBadge}>
+                <Text style={styles.unreadCount}>
+                  {item.unreadCount > 99 ? "99+" : item.unreadCount}
+                </Text>
+              </View>
+            )}
+          </View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+});
 
 interface OrgMember {
   id: string;
@@ -40,6 +152,7 @@ export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const queryClient = useQueryClient();
+  const { colors: themeColors } = useTheme();
   const { currentOrganization, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -348,94 +461,13 @@ export default function MessagesScreen() {
     });
   };
 
-  const getConversationDisplayName = (conversation: Conversation) => {
-    if (conversation.type === "direct" && conversation.participantIds && user) {
-      return conversation.name;
-    }
-    return conversation.name;
-  };
+  const handleConversationPress = useCallback((conversationId: string) => {
+    router.push(`/chat/${conversationId}` as Href);
+  }, [router]);
 
-  const ConversationItem = ({ item }: { item: Conversation }) => {
-    const isUnread = item.unreadCount > 0;
-    const scaleAnim = useRef(new Animated.Value(1)).current;
-
-    const handlePressIn = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 0.98,
-        useNativeDriver: true,
-        speed: 50,
-        bounciness: 4,
-      }).start();
-    };
-
-    const handlePressOut = () => {
-      Animated.spring(scaleAnim, {
-        toValue: 1,
-        useNativeDriver: true,
-        speed: 50,
-        bounciness: 4,
-      }).start();
-    };
-
-    return (
-      <TouchableOpacity
-        onPress={() => router.push(`/chat/${item.id}` as Href)}
-        onPressIn={handlePressIn}
-        onPressOut={handlePressOut}
-        activeOpacity={1}
-        testID={`conversation-${item.id}`}
-      >
-        <Animated.View style={[styles.conversationItem, { transform: [{ scale: scaleAnim }] }]}>
-        <View style={styles.avatarContainer}>
-          <Image source={{ uri: item.avatar }} style={styles.avatar} />
-          {item.type === "ministry" && item.ministryColor && (
-            <View
-              style={[
-                styles.ministryBadge,
-                { backgroundColor: item.ministryColor },
-              ]}
-            />
-          )}
-          {item.type === "group" && (
-            <View style={[styles.groupBadge, { backgroundColor: Colors.primary }]}>
-              <Users size={10} color="#fff" />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.conversationContent}>
-          <View style={styles.conversationHeader}>
-            <Text
-              style={[styles.conversationName, isUnread && styles.unreadName]}
-              numberOfLines={1}
-            >
-              {getConversationDisplayName(item)}
-            </Text>
-            <Text style={styles.conversationTime}>{item.lastMessageTime}</Text>
-          </View>
-          <View style={styles.conversationPreview}>
-            <Text
-              style={[
-                styles.lastMessage,
-                isUnread && styles.unreadMessage,
-              ]}
-              numberOfLines={1}
-            >
-              {item.lastMessage || "No messages yet"}
-            </Text>
-            {isUnread && (
-              <View style={styles.unreadBadge}>
-                <Text style={styles.unreadCount}>
-                  {item.unreadCount > 99 ? "99+" : item.unreadCount}
-                </Text>
-              </View>
-            )}
-          </View>
-        </View>
-        </Animated.View>
-      </TouchableOpacity>
-    );
-  };
+  const renderConversationItem = useCallback(({ item }: { item: Conversation }) => (
+    <ConversationListItem item={item} onPress={handleConversationPress} />
+  ), [handleConversationPress]);
 
   const renderMemberItem = ({ item }: { item: OrgMember }) => {
     const isSelected = selectedMembers.some((m) => m.id === item.id);
@@ -485,16 +517,16 @@ export default function MessagesScreen() {
 
   if (!currentOrganization) {
     return (
-      <View style={styles.container}>
-        <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
-          <Text style={styles.title}>Messages</Text>
+      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
+          <Text style={[styles.title, { color: themeColors.text }]}>Messages</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <View style={styles.emptyIcon}>
-            <MessageCircle size={40} color={Colors.textTertiary} />
+          <View style={[styles.emptyIcon, { backgroundColor: themeColors.surfaceSecondary }]}>
+            <MessageCircle size={40} color={themeColors.textTertiary} />
           </View>
-          <Text style={styles.emptyText}>Join an organization first</Text>
-          <Text style={styles.emptySubtext}>
+          <Text style={[styles.emptyText, { color: themeColors.text }]}>Join an organization first</Text>
+          <Text style={[styles.emptySubtext, { color: themeColors.textSecondary }]}>
             You need to be part of an organization to start messaging
           </Text>
         </View>
@@ -503,24 +535,24 @@ export default function MessagesScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
+    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
         <View style={styles.headerTop}>
-          <Text style={styles.title}>Messages</Text>
+          <Text style={[styles.title, { color: themeColors.text }]}>Messages</Text>
           <TouchableOpacity
             style={styles.newChatButton}
             onPress={() => setShowNewChatModal(true)}
             activeOpacity={0.7}
           >
-            <Plus size={22} color={Colors.primary} />
+            <Plus size={22} color={Colors.textInverse} />
           </TouchableOpacity>
         </View>
-        <View style={styles.searchContainer}>
-          <Search size={18} color={Colors.textTertiary} />
+        <View style={[styles.searchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
+          <Search size={18} color={themeColors.textTertiary} />
           <TextInput
-            style={styles.searchInput}
+            style={[styles.searchInput, { color: themeColors.text }]}
             placeholder="Search conversations..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={themeColors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -530,7 +562,7 @@ export default function MessagesScreen() {
       <FlatList
         data={filteredConversations}
         keyExtractor={(item) => item.id}
-        renderItem={ConversationItem}
+        renderItem={renderConversationItem}
         contentContainerStyle={styles.listContent}
         refreshControl={
           <RefreshControl

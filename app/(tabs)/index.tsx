@@ -8,6 +8,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import AnnouncementCard from "@/components/AnnouncementCard";
 import EventCard from "@/components/EventCard";
 import PendingApprovalBanner from "@/components/PendingApprovalBanner";
@@ -87,6 +88,7 @@ function QuickActionCard({ icon, title, subtitle, colors, onPress, delay }: Quic
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { colors: themeColors } = useTheme();
   const { user, currentOrganization, isChurchPending, churchStatus } = useAuth();
   const { 
     isLoading, 
@@ -377,9 +379,9 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Latest Announcements</Text>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Latest Announcements</Text>
               <TouchableOpacity onPress={() => router.push("/announcements" as Href)}>
-                <Text style={styles.sectionAction}>View all</Text>
+                <Text style={[styles.sectionAction, { color: themeColors.primary }]}>View all</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.announcementsContainer}>
@@ -411,9 +413,9 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Upcoming Events</Text>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Upcoming Events</Text>
               <TouchableOpacity onPress={() => router.push("/(tabs)/calendar" as Href)}>
-                <Text style={styles.sectionAction}>See all</Text>
+                <Text style={[styles.sectionAction, { color: themeColors.primary }]}>See all</Text>
               </TouchableOpacity>
             </View>
             <View style={styles.eventsContainer}>
@@ -440,9 +442,9 @@ export default function HomeScreen() {
             ]}
           >
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Your Ministries</Text>
+              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Your Ministries</Text>
               <TouchableOpacity onPress={() => router.push("/(tabs)/groups" as Href)}>
-                <Text style={styles.sectionAction}>View all</Text>
+                <Text style={[styles.sectionAction, { color: themeColors.primary }]}>View all</Text>
               </TouchableOpacity>
             </View>
             <ScrollView
