@@ -5,7 +5,7 @@ import { createTRPCRouter, publicProcedure } from "../create-context";
 function getStripe() {
   const key = process.env.STRIPE_SECRET_KEY;
   if (!key) throw new Error("STRIPE_SECRET_KEY is not set");
-  return new Stripe(key, { apiVersion: "2026-02-25.clover" });
+  return new Stripe(key);
 }
 
 const BASE_URL = process.env.EXPO_PUBLIC_RORK_API_BASE_URL ?? "https://rork.com";

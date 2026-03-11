@@ -13,6 +13,7 @@ import {
   Platform,
 } from "react-native";
 import { Stack } from "expo-router";
+import * as Linking from "expo-linking";
 import {
   Heart,
   DollarSign,
@@ -236,52 +237,84 @@ export default function GivingScreen() {
         churchName: currentOrganization?.name,
       });
 
-      if (!result.url) throw new Error('No checkout URL returned from server');
+      console.log('Giving: Checkout session result:', JSON.stringify(result));
+
+      if (!result.url) {
+        console.error('Giving: No checkout URL in result:', result);
+        throw new Error('No checkout URL returned from server');
+      }
 
       setShowConfirmModal(false);
       setPendingSessionId(result.sessionId);
-      console.log('Giving: Opening Stripe checkout in browser...');
+      console.log('Giving: Opening Stripe checkout URL:', result.url);
 
       if (Platform.OS === 'web') {
-        await WebBrowser.openBrowserAsync(result.url);
-        const answer = await new Promise<boolean>((resolve) => {
+        try {
+          const supported = await Linking.canOpenURL(result.url);
+          console.log('Giving: Can open URL:', supported);
+          if (supported) {
+            await Linking.openURL(result.url);
+          } else {
+            window.open(result.url, '_blank');
+          }
+        } catch (linkErr) {
+          console.log('Giving: Linking.openURL failed, trying window.open:', linkErr);
+          window.open(result.url, '_blank');
+        }
+
+        setTimeout(() => {
           Alert.alert(
             'Payment Complete?',
-            'Did you finish your payment in the browser?',
+            'Did you finish your payment in the browser tab?',
             [
-              { text: 'No', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Yes, Verify', onPress: () => resolve(true) },
+              { text: 'No', style: 'cancel', onPress: () => setPendingSessionId(null) },
+              {
+                text: 'Yes, Verify',
+                onPress: () => void handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId),
+              },
             ]
           );
-        });
-        if (answer) await handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
-        else setPendingSessionId(null);
+        }, 2000);
       } else {
-        const browserResult = await WebBrowser.openAuthSessionAsync(result.url, 'rork-app://');
-        console.log('Giving: Browser result:', browserResult.type);
+        const redirectUrl = Linking.createURL('payment-success');
+        console.log('Giving: Native redirect URL:', redirectUrl);
+
+        const browserResult = await WebBrowser.openAuthSessionAsync(result.url, redirectUrl);
+        console.log('Giving: Browser result type:', browserResult.type);
 
         if (browserResult.type === 'success' && browserResult.url) {
+          console.log('Giving: Browser returned URL:', browserResult.url);
           try {
             const returnedUrl = new URL(browserResult.url);
             const returnedSessionId = returnedUrl.searchParams.get('session_id') || result.sessionId;
             await handlePaymentComplete(returnedSessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
-          } catch {
+          } catch (parseErr) {
+            console.log('Giving: URL parse error, using original session ID:', parseErr);
             await handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
           }
-        } else {
+        } else if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
+          console.log('Giving: Browser was dismissed/cancelled');
           Alert.alert(
             'Payment Status',
-            'Did you complete the payment?',
+            'Did you complete the payment before closing?',
             [
               { text: 'No', style: 'cancel', onPress: () => setPendingSessionId(null) },
               { text: 'Yes, Verify', onPress: () => void handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId) },
             ]
           );
+        } else {
+          console.log('Giving: Unexpected browser result:', JSON.stringify(browserResult));
+          setPendingSessionId(null);
         }
       }
-    } catch (err) {
-      console.error('Giving: Checkout error:', err);
-      Alert.alert('Error', 'Failed to initiate payment. Please check your connection and try again.');
+    } catch (err: any) {
+      console.error('Giving: Checkout error:', err?.message || err);
+      const errorMsg = err?.message?.includes('STRIPE_SECRET_KEY')
+        ? 'Stripe is not configured yet. Please contact your church administrator.'
+        : err?.message?.includes('fetch')
+        ? 'Could not reach the payment server. Please check your internet connection.'
+        : `Failed to initiate payment: ${err?.message || 'Unknown error'}`;
+      Alert.alert('Payment Error', errorMsg);
     }
   };
 
