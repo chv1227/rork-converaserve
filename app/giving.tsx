@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   Alert,
   RefreshControl,
+  Platform,
 } from "react-native";
 import { Stack } from "expo-router";
 import {
@@ -23,12 +24,14 @@ import {
   Gift,
   Repeat,
   History,
-  AlertCircle,
+  ShieldCheck,
 } from "lucide-react-native";
-import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
+import { useQueryClient, useQuery } from "@tanstack/react-query";
+import * as WebBrowser from "expo-web-browser";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
+import { trpc, trpcClient } from "@/lib/trpc";
 import { GivingType, GivingFrequency, Donation, RecurringGiving } from "@/types";
 
 type Tab = "give" | "history" | "recurring";
@@ -55,6 +58,8 @@ export default function GivingScreen() {
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showSuccessModal, setShowSuccessModal] = useState(false);
   const [selectedMinistryId, setSelectedMinistryId] = useState<string | null>(null);
+  const [_pendingSessionId, setPendingSessionId] = useState<string | null>(null);
+  const [isVerifying, setIsVerifying] = useState(false);
 
   const organizationId = currentOrganization?.id || "";
 
@@ -133,58 +138,7 @@ export default function GivingScreen() {
     enabled: !!user && activeTab === "recurring",
   });
 
-  const donateMutation = useMutation({
-    mutationFn: async (data: { organizationId: string; type: GivingType; amount: number; frequency: GivingFrequency; note?: string; paymentMethod: string; ministryId?: string | null }) => {
-      if (!user?.id) throw new Error('Not authenticated');
-      if (!isChurchApproved) throw new Error('Giving is not available until your church is approved');
-
-      console.log('Processing donation:', data);
-      const { error } = await (supabase as any)
-        .from('donations')
-        .insert({
-          church_id: data.organizationId,
-          user_id: user.id,
-          donation_type: data.type,
-          amount: data.amount,
-          currency: 'USD',
-          frequency: data.frequency,
-          note: data.note || null,
-          payment_method: data.paymentMethod,
-          ministry_id: data.ministryId || null,
-          status: 'completed',
-        });
-      if (error) {
-        console.error('Donation insert error:', error);
-        throw new Error(error.message || 'Failed to process donation');
-      }
-    },
-    onSuccess: () => {
-      console.log("Donation successful");
-      void queryClient.invalidateQueries({ queryKey: ["giving"] });
-      setShowConfirmModal(false);
-      setShowSuccessModal(true);
-      resetForm();
-    },
-    onError: (error: Error) => {
-      console.error("Donation failed:", error);
-      Alert.alert("Error", "Failed to process donation. Please try again.");
-    },
-  });
-
-  const cancelRecurringMutation = useMutation({
-    mutationFn: async (data: { recurringId: string }) => {
-      console.log('Cancel recurring:', data);
-    },
-    onSuccess: () => {
-      console.log("Recurring giving cancelled");
-      void queryClient.invalidateQueries({ queryKey: ["giving", "recurring"] });
-      Alert.alert("Success", "Recurring giving has been cancelled.");
-    },
-    onError: (error: Error) => {
-      console.error("Cancel failed:", error);
-      Alert.alert("Error", "Failed to cancel recurring giving.");
-    },
-  });
+  const checkoutMutation = trpc.stripe.createCheckoutSession.useMutation();
 
   const resetForm = useCallback(() => {
     setAmount("");
@@ -194,6 +148,47 @@ export default function GivingScreen() {
     setGivingType("tithe");
     setSelectedMinistryId(null);
   }, []);
+
+  const handlePaymentComplete = useCallback(async (sessionId: string, numAmount: number, currentGivingType: GivingType, currentFrequency: GivingFrequency, currentNote: string, currentMinistryId: string | null, currentOrgId: string) => {
+    setIsVerifying(true);
+    try {
+      console.log('Giving: Verifying Stripe session:', sessionId);
+      const verification = await trpcClient.stripe.verifySession.query({ sessionId });
+      console.log('Giving: Verification result, paid:', verification.paid);
+
+      if (verification.paid) {
+        const { error } = await (supabase as any)
+          .from('donations')
+          .insert({
+            church_id: currentOrgId,
+            user_id: user?.id,
+            donation_type: currentGivingType,
+            amount: numAmount,
+            currency: 'USD',
+            frequency: currentFrequency,
+            note: currentNote.trim() || null,
+            payment_method: 'stripe',
+            ministry_id: currentMinistryId || null,
+            status: 'completed',
+            stripe_session_id: sessionId,
+          });
+        if (error) {
+          console.error('Giving: Supabase insert error:', error);
+        }
+        void queryClient.invalidateQueries({ queryKey: ['giving'] });
+        setPendingSessionId(null);
+        setShowSuccessModal(true);
+        resetForm();
+      } else {
+        Alert.alert('Payment Incomplete', 'Your payment was not completed. Please try again.');
+      }
+    } catch (err) {
+      console.error('Giving: Verification error:', err);
+      Alert.alert('Verification Error', 'Could not verify payment. Contact support if you were charged.');
+    } finally {
+      setIsVerifying(false);
+    }
+  }, [user?.id, queryClient, resetForm]);
 
   const handleAmountSelect = (value: number) => {
     setAmount(value.toString());
@@ -219,33 +214,87 @@ export default function GivingScreen() {
     setShowConfirmModal(true);
   };
 
-  const confirmDonation = () => {
-    if (!isChurchApproved) {
+  const confirmDonation = async () => {
+    if (!isChurchApproved || !user?.id) {
       Alert.alert('Not Available', 'Giving is not available until your church registration is approved.');
       return;
     }
     const numAmount = parseFloat(amount);
-    donateMutation.mutate({
-      organizationId,
-      type: givingType,
-      amount: numAmount,
-      frequency,
-      note: note.trim() || undefined,
-      paymentMethod: "card",
-      ministryId: selectedMinistryId,
-    });
+    if (isNaN(numAmount) || numAmount <= 0) return;
+
+    try {
+      console.log('Giving: Creating Stripe checkout session, amount:', numAmount);
+      const result = await checkoutMutation.mutateAsync({
+        amount: numAmount,
+        currency: 'usd',
+        donationType: givingType,
+        churchId: organizationId,
+        userId: user.id,
+        ministryId: selectedMinistryId,
+        note: note.trim() || undefined,
+        frequency,
+        churchName: currentOrganization?.name,
+      });
+
+      if (!result.url) throw new Error('No checkout URL returned from server');
+
+      setShowConfirmModal(false);
+      setPendingSessionId(result.sessionId);
+      console.log('Giving: Opening Stripe checkout in browser...');
+
+      if (Platform.OS === 'web') {
+        await WebBrowser.openBrowserAsync(result.url);
+        const answer = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Payment Complete?',
+            'Did you finish your payment in the browser?',
+            [
+              { text: 'No', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Yes, Verify', onPress: () => resolve(true) },
+            ]
+          );
+        });
+        if (answer) await handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
+        else setPendingSessionId(null);
+      } else {
+        const browserResult = await WebBrowser.openAuthSessionAsync(result.url, 'rork-app://');
+        console.log('Giving: Browser result:', browserResult.type);
+
+        if (browserResult.type === 'success' && browserResult.url) {
+          try {
+            const returnedUrl = new URL(browserResult.url);
+            const returnedSessionId = returnedUrl.searchParams.get('session_id') || result.sessionId;
+            await handlePaymentComplete(returnedSessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
+          } catch {
+            await handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
+          }
+        } else {
+          Alert.alert(
+            'Payment Status',
+            'Did you complete the payment?',
+            [
+              { text: 'No', style: 'cancel', onPress: () => setPendingSessionId(null) },
+              { text: 'Yes, Verify', onPress: () => void handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId) },
+            ]
+          );
+        }
+      }
+    } catch (err) {
+      console.error('Giving: Checkout error:', err);
+      Alert.alert('Error', 'Failed to initiate payment. Please check your connection and try again.');
+    }
   };
 
   const handleCancelRecurring = (recurring: RecurringGiving) => {
     Alert.alert(
       "Cancel Recurring Giving",
-      `Are you sure you want to cancel your ${recurring.frequency.replace("_", "-")} ${recurring.type} of $${recurring.amount.toFixed(2)}?`,
+      `Are you sure you want to cancel your ${recurring.frequency.replace("_", "-")} ${recurring.type} of ${recurring.amount.toFixed(2)}?`,
       [
         { text: "No", style: "cancel" },
         {
           text: "Yes, Cancel",
           style: "destructive",
-          onPress: () => cancelRecurringMutation.mutate({ recurringId: recurring.id }),
+          onPress: () => console.log('Cancel recurring:', recurring.id),
         },
       ]
     );
@@ -525,7 +574,7 @@ export default function GivingScreen() {
           (!amount || parseFloat(amount) <= 0) && styles.submitButtonDisabled,
         ]}
         onPress={handleSubmit}
-        disabled={!amount || parseFloat(amount) <= 0}
+        disabled={!amount || parseFloat(amount) <= 0 || isVerifying}
       >
         <Heart size={20} color={Colors.textInverse} />
         <Text style={styles.submitButtonText}>
@@ -533,17 +582,10 @@ export default function GivingScreen() {
         </Text>
       </TouchableOpacity>
 
-      <View style={styles.betaNotice}>
-        <AlertCircle size={16} color={Colors.warning} />
-        <Text style={styles.betaNoticeText}>
-          Beta: Donations are recorded but payment processing is not yet active. Integration with a payment provider is coming soon.
-        </Text>
-      </View>
-
       <View style={styles.securityNote}>
-        <CreditCard size={16} color={Colors.textSecondary} />
-        <Text style={styles.securityText}>
-          Secure payment processing will be available at launch.
+        <ShieldCheck size={16} color={Colors.success} />
+        <Text style={[styles.securityText, { color: Colors.success }]}>
+          Secured by Stripe · SSL encrypted
         </Text>
       </View>
 
@@ -687,7 +729,7 @@ export default function GivingScreen() {
                 <TouchableOpacity
                   style={styles.cancelButton}
                   onPress={() => handleCancelRecurring(recurring)}
-                  disabled={cancelRecurringMutation.isPending}
+                  disabled={false}
                 >
                   <X size={18} color={Colors.error} />
                 </TouchableOpacity>
@@ -813,15 +855,15 @@ export default function GivingScreen() {
               </TouchableOpacity>
               <TouchableOpacity
                 style={styles.modalConfirmButton}
-                onPress={confirmDonation}
-                disabled={donateMutation.isPending}
+                onPress={() => void confirmDonation()}
+                disabled={checkoutMutation.isPending || isVerifying}
               >
-                {donateMutation.isPending ? (
+                {checkoutMutation.isPending || isVerifying ? (
                   <ActivityIndicator size="small" color={Colors.textInverse} />
                 ) : (
                   <>
-                    <Check size={18} color={Colors.textInverse} />
-                    <Text style={styles.modalConfirmText}>Confirm</Text>
+                    <CreditCard size={18} color={Colors.textInverse} />
+                    <Text style={styles.modalConfirmText}>Pay with Stripe</Text>
                   </>
                 )}
               </TouchableOpacity>
