@@ -11,8 +11,9 @@ import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { DataProvider } from "@/providers/DataProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
 import { ThemeProvider, useTheme } from "@/providers/ThemeProvider";
+import { NotificationsProvider } from "@/providers/NotificationsProvider";
 
-SplashScreen.preventAutoHideAsync();
+void SplashScreen.preventAutoHideAsync();
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -28,7 +29,7 @@ const queryClient = new QueryClient({
 });
 
 function AuthGate({ children }: { children: ReactNode }) {
-  const { isLoading, isAuthenticated } = useAuth();
+  const { isLoading, isAuthenticated, emailVerified } = useAuth();
   const segments = useSegments();
   const router = useRouter();
   const [isNavigating, setIsNavigating] = useState(false);
@@ -38,6 +39,7 @@ function AuthGate({ children }: { children: ReactNode }) {
 
     const inAuthGroup = segments[0] === "login" as string || segments[0] === "register" as string;
     const inOrganizationGroup = segments[0] === "organization" as string;
+    const inVerifyEmail = segments[0] === "verify-email" as string;
 
     if (!isAuthenticated && !inAuthGroup && !inOrganizationGroup) {
       setIsNavigating(true);
@@ -45,14 +47,20 @@ function AuthGate({ children }: { children: ReactNode }) {
         router.replace("/login" as any);
         setIsNavigating(false);
       }, 100);
-    } else if (isAuthenticated && segments[0] === "login" as string) {
+    } else if (isAuthenticated && !emailVerified && !inVerifyEmail && !inAuthGroup) {
+      setIsNavigating(true);
+      setTimeout(() => {
+        router.replace("/verify-email" as any);
+        setIsNavigating(false);
+      }, 100);
+    } else if (isAuthenticated && emailVerified && (segments[0] === "login" as string || inVerifyEmail)) {
       setIsNavigating(true);
       setTimeout(() => {
         router.replace("/(tabs)");
         setIsNavigating(false);
       }, 100);
     }
-  }, [isLoading, isAuthenticated, segments, router, isNavigating]);
+  }, [isLoading, isAuthenticated, emailVerified, segments, router, isNavigating]);
 
   if (isLoading) {
     return (
@@ -88,6 +96,13 @@ function RootLayoutNav() {
         name="register" 
         options={{ 
           headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="verify-email" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
         }} 
       />
       <Stack.Screen 
@@ -284,12 +299,14 @@ function AppContent() {
   return (
     <AuthProvider>
       <ThemeProvider>
-        <DataProvider>
-          <AuthGate>
-            <ThemedStatusBar />
-            <RootLayoutNav />
-          </AuthGate>
-        </DataProvider>
+        <NotificationsProvider>
+          <DataProvider>
+            <AuthGate>
+              <ThemedStatusBar />
+              <RootLayoutNav />
+            </AuthGate>
+          </DataProvider>
+        </NotificationsProvider>
       </ThemeProvider>
     </AuthProvider>
   );
@@ -311,7 +328,7 @@ export default function RootLayout() {
         // Splash screen hide error can be safely ignored
       }
     };
-    hideSplash();
+    void hideSplash();
   }, []);
 
   return (

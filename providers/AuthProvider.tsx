@@ -72,6 +72,7 @@ interface AuthState {
   session: Session | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  emailVerified: boolean;
   currentOrganization: Organization | null;
   currentMembership: Membership | null;
   churchStatus: ChurchApprovalStatus | null;
@@ -165,6 +166,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     session: null,
     isLoading: true,
     isAuthenticated: false,
+    emailVerified: false,
     currentOrganization: null,
     currentMembership: null,
     churchStatus: null,
@@ -292,11 +294,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
             churchStatus = (churchData as any)?.status || 'active';
           }
 
+          const emailVerified = !!session.user.email_confirmed_at;
+          console.log('AuthProvider: Email verified:', emailVerified);
+
           setState({
             user,
             session,
             isLoading: false,
             isAuthenticated: true,
+            emailVerified,
             currentOrganization: currentOrg,
             currentMembership: initMembership,
             churchStatus,
@@ -328,6 +334,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
           session: null,
           isLoading: false,
           isAuthenticated: false,
+          emailVerified: false,
           currentOrganization: null,
           currentMembership: null,
           churchStatus: null,
@@ -561,11 +568,15 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
         loginChurchStatus = (churchData as any)?.status || 'active';
       }
 
+      const loginEmailVerified = !!data.user.email_confirmed_at;
+      console.log('AuthProvider: Login email verified:', loginEmailVerified);
+
       setState({
         user,
         session: data.session,
         isLoading: false,
         isAuthenticated: true,
+        emailVerified: loginEmailVerified,
         currentOrganization: currentOrg,
         currentMembership: loginMembership,
         churchStatus: loginChurchStatus,
@@ -645,11 +656,13 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       if (data.session) {
         const user = createUserFromSupabase(data.user, { name: name.trim(), phone: phone?.trim() });
 
+        const registerEmailVerified = !!data.user.email_confirmed_at;
         setState({
           user,
           session: data.session,
           isLoading: false,
           isAuthenticated: true,
+          emailVerified: registerEmailVerified,
           currentOrganization: null,
           currentMembership: null,
           churchStatus: null,
@@ -705,6 +718,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
       session: null,
       isLoading: false,
       isAuthenticated: false,
+      emailVerified: false,
       currentOrganization: null,
       currentMembership: null,
       churchStatus: null,
@@ -947,6 +961,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     token: state.session?.access_token || null,
     isLoading: state.isLoading,
     isAuthenticated: state.isAuthenticated,
+    emailVerified: state.emailVerified,
     currentOrganization: state.currentOrganization,
     currentMembership: state.currentMembership,
     churchStatus: state.churchStatus,
@@ -974,7 +989,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     refreshOrganizations,
   }), [
     state.user, state.session?.access_token, state.isLoading, state.isAuthenticated,
-    state.currentOrganization, state.currentMembership, state.churchStatus,
+    state.emailVerified, state.currentOrganization, state.currentMembership, state.churchStatus,
     state.organizations, state.error,
     login, register, logout, updateUser, refreshUser, sendPasswordResetEmail,
     changePassword, getIdToken, setCurrentOrganization, setOrganizations, clearError,
