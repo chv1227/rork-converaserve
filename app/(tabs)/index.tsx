@@ -176,9 +176,7 @@ export default function HomeScreen() {
                   <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
                 </View>
               )}
-              <View style={styles.betaBadge}>
-                <Text style={styles.betaBadgeText}>BETA</Text>
-              </View>
+
             </View>
             <Text style={styles.greetingSmall}>{greeting}</Text>
             <Text style={styles.userName}>{firstName}</Text>
@@ -525,18 +523,7 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
-  betaBadge: {
-    backgroundColor: "rgba(212, 168, 67, 0.85)",
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-    borderRadius: 8,
-  },
-  betaBadgeText: {
-    fontSize: 10,
-    fontWeight: "800" as const,
-    color: "#1B3A5C",
-    letterSpacing: 1,
-  },
+
   greetingSmall: {
     fontSize: 14,
     color: Colors.textInverse,

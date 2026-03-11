@@ -1216,25 +1216,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: Colors.textSecondary,
   },
-  betaNotice: {
-    flexDirection: "row" as const,
-    alignItems: "flex-start" as const,
-    gap: 8,
-    marginHorizontal: 16,
-    marginTop: 16,
-    padding: 12,
-    backgroundColor: Colors.warningLight,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.warning + '30',
-  },
-  betaNoticeText: {
-    flex: 1,
-    fontSize: 12,
-    color: Colors.warning,
-    lineHeight: 18,
-    fontWeight: "500" as const,
-  },
+
   loadingContainer: {
     flex: 1,
     justifyContent: "center",
