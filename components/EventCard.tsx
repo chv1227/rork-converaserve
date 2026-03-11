@@ -2,6 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { MapPin, Clock, Users } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 import { Event } from '@/types';
 
 interface EventCardProps {
@@ -11,6 +12,7 @@ interface EventCardProps {
 }
 
 export default function EventCard({ event, onPress, compact = false }: EventCardProps) {
+  const { colors } = useTheme();
   const eventDate = new Date(event.date);
   const dayName = eventDate.toLocaleDateString('en-US', { weekday: 'short' });
   const dayNum = eventDate.getDate();
@@ -39,18 +41,18 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
   if (compact) {
     return (
       <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
-        <Animated.View style={[styles.compactContainer, { transform: [{ scale: scaleAnim }] }]}>
+        <Animated.View style={[styles.compactContainer, { backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }]}>
         <View style={[styles.compactDateBox, { backgroundColor: event.color + '15' }]}>
           <Text style={[styles.compactDayNum, { color: event.color }]}>{dayNum}</Text>
           <Text style={[styles.compactMonth, { color: event.color }]}>{month}</Text>
         </View>
         <View style={styles.compactContent}>
-          <Text style={styles.compactTitle} numberOfLines={1}>{event.title}</Text>
+          <Text style={[styles.compactTitle, { color: colors.text }]} numberOfLines={1}>{event.title}</Text>
           <View style={styles.compactMeta}>
-            <Clock size={12} color={Colors.textTertiary} />
-            <Text style={styles.compactMetaText}>{event.time}</Text>
-            <View style={styles.dot} />
-            <Text style={styles.compactMinistry}>{event.ministryName}</Text>
+            <Clock size={12} color={colors.textTertiary} />
+            <Text style={[styles.compactMetaText, { color: colors.textTertiary }]}>{event.time}</Text>
+            <View style={[styles.dot, { backgroundColor: colors.textTertiary }]} />
+            <Text style={[styles.compactMinistry, { color: colors.textSecondary }]}>{event.ministryName}</Text>
           </View>
         </View>
         </Animated.View>
@@ -60,7 +62,7 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
 
   return (
     <TouchableOpacity onPress={onPress} onPressIn={handlePressIn} onPressOut={handlePressOut} activeOpacity={1}>
-      <Animated.View style={[styles.container, { transform: [{ scale: scaleAnim }] }]}>
+      <Animated.View style={[styles.container, { backgroundColor: colors.surface, transform: [{ scale: scaleAnim }] }]}>
       <View style={styles.dateColumn}>
         <View style={[styles.dateBox, { backgroundColor: event.color }]}>
           <Text style={styles.dayName}>{dayName}</Text>
@@ -72,26 +74,26 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
       <View style={styles.content}>
         <View style={styles.ministryBadge}>
           <View style={[styles.ministryDot, { backgroundColor: event.color }]} />
-          <Text style={styles.ministryName}>{event.ministryName}</Text>
+          <Text style={[styles.ministryName, { color: colors.textSecondary }]}>{event.ministryName}</Text>
         </View>
         
-        <Text style={styles.title}>{event.title}</Text>
-        <Text style={styles.description} numberOfLines={2}>{event.description}</Text>
+        <Text style={[styles.title, { color: colors.text }]}>{event.title}</Text>
+        <Text style={[styles.description, { color: colors.textSecondary }]} numberOfLines={2}>{event.description}</Text>
         
         <View style={styles.metaRow}>
           <View style={styles.metaItem}>
-            <Clock size={14} color={Colors.textTertiary} />
-            <Text style={styles.metaText}>{event.time}</Text>
+            <Clock size={14} color={colors.textTertiary} />
+            <Text style={[styles.metaText, { color: colors.textTertiary }]}>{event.time}</Text>
           </View>
           <View style={styles.metaItem}>
-            <MapPin size={14} color={Colors.textTertiary} />
-            <Text style={styles.metaText}>{event.location}</Text>
+            <MapPin size={14} color={colors.textTertiary} />
+            <Text style={[styles.metaText, { color: colors.textTertiary }]}>{event.location}</Text>
           </View>
         </View>
         
         <View style={styles.attendeesRow}>
-          <Users size={14} color={Colors.primary} />
-          <Text style={styles.attendeesText}>{event.attendees} attending</Text>
+          <Users size={14} color={colors.primary} />
+          <Text style={[styles.attendeesText, { color: colors.primary }]}>{event.attendees} attending</Text>
         </View>
       </View>
       </Animated.View>
@@ -157,18 +159,15 @@ const styles = StyleSheet.create({
   },
   ministryName: {
     fontSize: 12,
-    color: Colors.textSecondary,
     fontWeight: '500' as const,
   },
   title: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginBottom: 4,
   },
   description: {
     fontSize: 13,
-    color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -184,7 +183,6 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: Colors.textTertiary,
   },
   attendeesRow: {
     flexDirection: 'row',
@@ -193,11 +191,9 @@ const styles = StyleSheet.create({
   },
   attendeesText: {
     fontSize: 12,
-    color: Colors.primary,
     fontWeight: '600' as const,
   },
   compactContainer: {
-    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -232,7 +228,6 @@ const styles = StyleSheet.create({
   compactTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
     marginBottom: 4,
   },
   compactMeta: {
@@ -242,17 +237,14 @@ const styles = StyleSheet.create({
   },
   compactMetaText: {
     fontSize: 12,
-    color: Colors.textTertiary,
   },
   compactMinistry: {
     fontSize: 12,
-    color: Colors.textSecondary,
   },
   dot: {
     width: 3,
     height: 3,
     borderRadius: 1.5,
-    backgroundColor: Colors.textTertiary,
     marginHorizontal: 4,
   },
 });

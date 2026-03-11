@@ -30,6 +30,7 @@ import {
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import Colors from "@/constants/colors";
+import { useTheme } from "@/providers/ThemeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { trpc, trpcClient } from "@/lib/trpc";
@@ -48,6 +49,7 @@ const FREQUENCY_OPTIONS: { value: GivingFrequency; label: string; description: s
 
 export default function GivingScreen() {
   const queryClient = useQueryClient();
+  const { colors: tc } = useTheme();
   const { user, currentOrganization, isChurchApproved } = useAuth();
 
   const [activeTab, setActiveTab] = useState<Tab>("give");
@@ -360,52 +362,54 @@ export default function GivingScreen() {
         <RefreshControl
           refreshing={statsQuery.isRefetching}
           onRefresh={onRefresh}
-          tintColor={Colors.primary}
+          tintColor={tc.primary}
         />
       }
     >
       {statsQuery.data && (
-        <View style={styles.statsCard}>
+        <View style={[styles.statsCard, { backgroundColor: tc.surface }]}>
           <View style={styles.statsHeader}>
-            <TrendingUp size={20} color={Colors.primary} />
-            <Text style={styles.statsTitle}>Your Giving Summary</Text>
+            <TrendingUp size={20} color={tc.primary} />
+            <Text style={[styles.statsTitle, { color: tc.text }]}>Your Giving Summary</Text>
           </View>
           <View style={styles.statsGrid}>
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{formatCurrency(statsQuery.data.thisMonthTotal)}</Text>
-              <Text style={styles.statLabel}>This Month</Text>
+              <Text style={[styles.statValue, { color: tc.text }]}>{formatCurrency(statsQuery.data.thisMonthTotal)}</Text>
+              <Text style={[styles.statLabel, { color: tc.textSecondary }]}>This Month</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: tc.borderLight }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{formatCurrency(statsQuery.data.thisYearTotal)}</Text>
-              <Text style={styles.statLabel}>This Year</Text>
+              <Text style={[styles.statValue, { color: tc.text }]}>{formatCurrency(statsQuery.data.thisYearTotal)}</Text>
+              <Text style={[styles.statLabel, { color: tc.textSecondary }]}>This Year</Text>
             </View>
-            <View style={styles.statDivider} />
+            <View style={[styles.statDivider, { backgroundColor: tc.borderLight }]} />
             <View style={styles.statItem}>
-              <Text style={styles.statValue}>{statsQuery.data.donationCount}</Text>
-              <Text style={styles.statLabel}>Total Gifts</Text>
+              <Text style={[styles.statValue, { color: tc.text }]}>{statsQuery.data.donationCount}</Text>
+              <Text style={[styles.statLabel, { color: tc.textSecondary }]}>Total Gifts</Text>
             </View>
           </View>
         </View>
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Giving Type</Text>
+        <Text style={[styles.sectionTitle, { color: tc.text }]}>Giving Type</Text>
         <View style={styles.typeButtons}>
           <TouchableOpacity
             style={[
               styles.typeButton,
-              givingType === "tithe" && styles.typeButtonActive,
+              { backgroundColor: tc.surface, borderColor: tc.borderLight },
+              givingType === "tithe" && { backgroundColor: tc.primary, borderColor: tc.primary },
             ]}
             onPress={() => setGivingType("tithe")}
           >
             <DollarSign
               size={24}
-              color={givingType === "tithe" ? Colors.textInverse : Colors.primary}
+              color={givingType === "tithe" ? "#fff" : tc.primary}
             />
             <Text
               style={[
                 styles.typeButtonText,
+                { color: tc.text },
                 givingType === "tithe" && styles.typeButtonTextActive,
               ]}
             >
@@ -414,6 +418,7 @@ export default function GivingScreen() {
             <Text
               style={[
                 styles.typeButtonDescription,
+                { color: tc.textSecondary },
                 givingType === "tithe" && styles.typeButtonDescriptionActive,
               ]}
             >
@@ -423,17 +428,19 @@ export default function GivingScreen() {
           <TouchableOpacity
             style={[
               styles.typeButton,
-              givingType === "offering" && styles.typeButtonActive,
+              { backgroundColor: tc.surface, borderColor: tc.borderLight },
+              givingType === "offering" && { backgroundColor: tc.primary, borderColor: tc.primary },
             ]}
             onPress={() => setGivingType("offering")}
           >
             <Gift
               size={24}
-              color={givingType === "offering" ? Colors.textInverse : Colors.secondary}
+              color={givingType === "offering" ? "#fff" : tc.secondary}
             />
             <Text
               style={[
                 styles.typeButtonText,
+                { color: tc.text },
                 givingType === "offering" && styles.typeButtonTextActive,
               ]}
             >
@@ -442,6 +449,7 @@ export default function GivingScreen() {
             <Text
               style={[
                 styles.typeButtonDescription,
+                { color: tc.textSecondary },
                 givingType === "offering" && styles.typeButtonDescriptionActive,
               ]}
             >
@@ -452,21 +460,23 @@ export default function GivingScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Amount</Text>
+        <Text style={[styles.sectionTitle, { color: tc.text }]}>Amount</Text>
         <View style={styles.amountGrid}>
           {PRESET_AMOUNTS.map((presetAmount) => (
             <TouchableOpacity
               key={presetAmount}
               style={[
                 styles.amountButton,
-                amount === presetAmount.toString() && !customAmount && styles.amountButtonActive,
+                { backgroundColor: tc.surface, borderColor: tc.borderLight },
+                amount === presetAmount.toString() && !customAmount && { backgroundColor: tc.primary, borderColor: tc.primary },
               ]}
               onPress={() => handleAmountSelect(presetAmount)}
             >
               <Text
                 style={[
                   styles.amountButtonText,
-                  amount === presetAmount.toString() && !customAmount && styles.amountButtonTextActive,
+                  { color: tc.text },
+                  amount === presetAmount.toString() && !customAmount && { color: '#fff' },
                 ]}
               >
                 ${presetAmount}
@@ -475,13 +485,13 @@ export default function GivingScreen() {
           ))}
         </View>
         <View style={styles.customAmountContainer}>
-          <Text style={styles.customAmountLabel}>Or enter custom amount</Text>
-          <View style={styles.customAmountInput}>
-            <Text style={styles.currencySymbol}>$</Text>
+          <Text style={[styles.customAmountLabel, { color: tc.textSecondary }]}>Or enter custom amount</Text>
+          <View style={[styles.customAmountInput, { backgroundColor: tc.surface, borderColor: tc.borderLight }]}>
+            <Text style={[styles.currencySymbol, { color: tc.text }]}>$</Text>
             <TextInput
-              style={styles.amountInput}
+              style={[styles.amountInput, { color: tc.text }]}
               placeholder="0.00"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={tc.textTertiary}
               keyboardType="decimal-pad"
               value={customAmount ? amount : ""}
               onChangeText={handleCustomAmount}
@@ -492,14 +502,15 @@ export default function GivingScreen() {
       </View>
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Frequency</Text>
+        <Text style={[styles.sectionTitle, { color: tc.text }]}>Frequency</Text>
         <View style={styles.frequencyOptions}>
           {FREQUENCY_OPTIONS.map((option) => (
             <TouchableOpacity
               key={option.value}
               style={[
                 styles.frequencyOption,
-                frequency === option.value && styles.frequencyOptionActive,
+                { backgroundColor: tc.surface, borderColor: tc.borderLight },
+                frequency === option.value && { backgroundColor: tc.primary, borderColor: tc.primary },
               ]}
               onPress={() => setFrequency(option.value)}
             >
@@ -507,7 +518,7 @@ export default function GivingScreen() {
                 {option.value !== "one_time" && (
                   <Repeat
                     size={16}
-                    color={frequency === option.value ? Colors.textInverse : Colors.textSecondary}
+                    color={frequency === option.value ? '#fff' : tc.textSecondary}
                     style={styles.frequencyIcon}
                   />
                 )}
@@ -515,7 +526,8 @@ export default function GivingScreen() {
                   <Text
                     style={[
                       styles.frequencyLabel,
-                      frequency === option.value && styles.frequencyLabelActive,
+                      { color: tc.text },
+                      frequency === option.value && { color: '#fff' },
                     ]}
                   >
                     {option.label}
@@ -523,7 +535,8 @@ export default function GivingScreen() {
                   <Text
                     style={[
                       styles.frequencyDescription,
-                      frequency === option.value && styles.frequencyDescriptionActive,
+                      { color: tc.textSecondary },
+                      frequency === option.value && { color: '#fff', opacity: 0.9 },
                     ]}
                   >
                     {option.description}
@@ -531,7 +544,7 @@ export default function GivingScreen() {
                 </View>
               </View>
               {frequency === option.value && (
-                <Check size={20} color={Colors.textInverse} />
+                <Check size={20} color="#fff" />
               )}
             </TouchableOpacity>
           ))}
@@ -540,12 +553,13 @@ export default function GivingScreen() {
 
       {(ministriesQuery.data || []).length > 0 && (
         <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Direct To (Optional)</Text>
+          <Text style={[styles.sectionTitle, { color: tc.text }]}>Direct To (Optional)</Text>
           <View style={styles.frequencyOptions}>
             <TouchableOpacity
               style={[
                 styles.frequencyOption,
-                !selectedMinistryId && styles.frequencyOptionActive,
+                { backgroundColor: tc.surface, borderColor: tc.borderLight },
+                !selectedMinistryId && { backgroundColor: tc.primary, borderColor: tc.primary },
               ]}
               onPress={() => setSelectedMinistryId(null)}
             >
@@ -553,35 +567,39 @@ export default function GivingScreen() {
                 <View>
                   <Text style={[
                     styles.frequencyLabel,
-                    !selectedMinistryId && styles.frequencyLabelActive,
+                    { color: tc.text },
+                    !selectedMinistryId && { color: '#fff' },
                   ]}>General Fund</Text>
                   <Text style={[
                     styles.frequencyDescription,
-                    !selectedMinistryId && styles.frequencyDescriptionActive,
+                    { color: tc.textSecondary },
+                    !selectedMinistryId && { color: '#fff', opacity: 0.9 },
                   ]}>Church general fund</Text>
                 </View>
               </View>
-              {!selectedMinistryId && <Check size={20} color={Colors.textInverse} />}
+              {!selectedMinistryId && <Check size={20} color="#fff" />}
             </TouchableOpacity>
             {(ministriesQuery.data || []).map((m) => (
               <TouchableOpacity
                 key={m.id}
                 style={[
                   styles.frequencyOption,
-                  selectedMinistryId === m.id && styles.frequencyOptionActive,
+                  { backgroundColor: tc.surface, borderColor: tc.borderLight },
+                  selectedMinistryId === m.id && { backgroundColor: tc.primary, borderColor: tc.primary },
                 ]}
                 onPress={() => setSelectedMinistryId(m.id)}
               >
                 <View style={styles.frequencyOptionContent}>
-                  <View style={[styles.ministryDot, { backgroundColor: m.color || Colors.primary }]} />
+                  <View style={[styles.ministryDot, { backgroundColor: m.color || tc.primary }]} />
                   <View>
                     <Text style={[
                       styles.frequencyLabel,
-                      selectedMinistryId === m.id && styles.frequencyLabelActive,
+                      { color: tc.text },
+                      selectedMinistryId === m.id && { color: '#fff' },
                     ]}>{m.name}</Text>
                   </View>
                 </View>
-                {selectedMinistryId === m.id && <Check size={20} color={Colors.textInverse} />}
+                {selectedMinistryId === m.id && <Check size={20} color="#fff" />}
               </TouchableOpacity>
             ))}
           </View>
@@ -589,11 +607,11 @@ export default function GivingScreen() {
       )}
 
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Note (Optional)</Text>
+        <Text style={[styles.sectionTitle, { color: tc.text }]}>Note (Optional)</Text>
         <TextInput
-          style={styles.noteInput}
+          style={[styles.noteInput, { backgroundColor: tc.surface, borderColor: tc.borderLight, color: tc.text }]}
           placeholder="Add a note or memo..."
-          placeholderTextColor={Colors.textTertiary}
+          placeholderTextColor={tc.textTertiary}
           value={note}
           onChangeText={setNote}
           multiline
@@ -604,20 +622,21 @@ export default function GivingScreen() {
       <TouchableOpacity
         style={[
           styles.submitButton,
+          { backgroundColor: tc.primary },
           (!amount || parseFloat(amount) <= 0) && styles.submitButtonDisabled,
         ]}
         onPress={handleSubmit}
         disabled={!amount || parseFloat(amount) <= 0 || isVerifying}
       >
-        <Heart size={20} color={Colors.textInverse} />
+        <Heart size={20} color="#fff" />
         <Text style={styles.submitButtonText}>
           Give {amount ? formatCurrency(parseFloat(amount)) : "$0.00"}
         </Text>
       </TouchableOpacity>
 
       <View style={styles.securityNote}>
-        <ShieldCheck size={16} color={Colors.success} />
-        <Text style={[styles.securityText, { color: Colors.success }]}>
+        <ShieldCheck size={16} color={tc.success} />
+        <Text style={[styles.securityText, { color: tc.success }]}>
           Secured by Stripe · SSL encrypted
         </Text>
       </View>
@@ -801,40 +820,40 @@ export default function GivingScreen() {
   );
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { backgroundColor: tc.background }]}>
       <Stack.Screen
         options={{
           title: "Giving",
-          headerStyle: { backgroundColor: Colors.surface },
-          headerTintColor: Colors.text,
+          headerStyle: { backgroundColor: tc.surface },
+          headerTintColor: tc.text,
         }}
       />
 
-      <View style={styles.tabs}>
+      <View style={[styles.tabs, { backgroundColor: tc.surface, borderBottomColor: tc.borderLight }]}>
         <TouchableOpacity
-          style={[styles.tab, activeTab === "give" && styles.tabActive]}
+          style={[styles.tab, activeTab === "give" && { borderBottomColor: tc.primary }]}
           onPress={() => setActiveTab("give")}
         >
-          <Heart size={18} color={activeTab === "give" ? Colors.primary : Colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === "give" && styles.tabTextActive]}>
+          <Heart size={18} color={activeTab === "give" ? tc.primary : tc.textSecondary} />
+          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "give" && { color: tc.primary }]}>
             Give
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === "history" && styles.tabActive]}
+          style={[styles.tab, activeTab === "history" && { borderBottomColor: tc.primary }]}
           onPress={() => setActiveTab("history")}
         >
-          <History size={18} color={activeTab === "history" ? Colors.primary : Colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === "history" && styles.tabTextActive]}>
+          <History size={18} color={activeTab === "history" ? tc.primary : tc.textSecondary} />
+          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "history" && { color: tc.primary }]}>
             History
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          style={[styles.tab, activeTab === "recurring" && styles.tabActive]}
+          style={[styles.tab, activeTab === "recurring" && { borderBottomColor: tc.primary }]}
           onPress={() => setActiveTab("recurring")}
         >
-          <Repeat size={18} color={activeTab === "recurring" ? Colors.primary : Colors.textSecondary} />
-          <Text style={[styles.tabText, activeTab === "recurring" && styles.tabTextActive]}>
+          <Repeat size={18} color={activeTab === "recurring" ? tc.primary : tc.textSecondary} />
+          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "recurring" && { color: tc.primary }]}>
             Recurring
           </Text>
         </TouchableOpacity>
@@ -845,57 +864,57 @@ export default function GivingScreen() {
       {activeTab === "recurring" && renderRecurringTab()}
 
       <Modal visible={showConfirmModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalContent}>
-            <View style={styles.modalHeader}>
-              <Text style={styles.modalTitle}>Confirm Donation</Text>
+        <View style={[styles.modalOverlay, { backgroundColor: tc.overlay }]}>
+          <View style={[styles.modalContent, { backgroundColor: tc.surface }]}>
+            <View style={[styles.modalHeader, { borderBottomColor: tc.borderLight }]}>
+              <Text style={[styles.modalTitle, { color: tc.text }]}>Confirm Donation</Text>
               <TouchableOpacity onPress={() => setShowConfirmModal(false)}>
-                <X size={24} color={Colors.textSecondary} />
+                <X size={24} color={tc.textSecondary} />
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              <View style={styles.confirmDetail}>
-                <Text style={styles.confirmLabel}>Type</Text>
-                <Text style={styles.confirmValue}>
+              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+                <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Type</Text>
+                <Text style={[styles.confirmValue, { color: tc.text }]}>
                   {givingType === "tithe" ? "Tithe" : "Offering"}
                 </Text>
               </View>
-              <View style={styles.confirmDetail}>
-                <Text style={styles.confirmLabel}>Amount</Text>
-                <Text style={styles.confirmValueLarge}>
+              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+                <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Amount</Text>
+                <Text style={[styles.confirmValueLarge, { color: tc.text }]}>
                   {amount ? formatCurrency(parseFloat(amount)) : "$0.00"}
                 </Text>
               </View>
-              <View style={styles.confirmDetail}>
-                <Text style={styles.confirmLabel}>Frequency</Text>
-                <Text style={styles.confirmValue}>
+              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+                <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Frequency</Text>
+                <Text style={[styles.confirmValue, { color: tc.text }]}>
                   {FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.label}
                 </Text>
               </View>
               {note && (
-                <View style={styles.confirmDetail}>
-                  <Text style={styles.confirmLabel}>Note</Text>
-                  <Text style={styles.confirmValue}>{note}</Text>
+                <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+                  <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Note</Text>
+                  <Text style={[styles.confirmValue, { color: tc.text }]}>{note}</Text>
                 </View>
               )}
             </View>
             <View style={styles.modalActions}>
               <TouchableOpacity
-                style={styles.modalCancelButton}
+                style={[styles.modalCancelButton, { backgroundColor: tc.surfaceSecondary }]}
                 onPress={() => setShowConfirmModal(false)}
               >
-                <Text style={styles.modalCancelText}>Cancel</Text>
+                <Text style={[styles.modalCancelText, { color: tc.text }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
-                style={styles.modalConfirmButton}
+                style={[styles.modalConfirmButton, { backgroundColor: tc.primary }]}
                 onPress={() => void confirmDonation()}
                 disabled={checkoutMutation.isPending || isVerifying}
               >
                 {checkoutMutation.isPending || isVerifying ? (
-                  <ActivityIndicator size="small" color={Colors.textInverse} />
+                  <ActivityIndicator size="small" color="#fff" />
                 ) : (
                   <>
-                    <CreditCard size={18} color={Colors.textInverse} />
+                    <CreditCard size={18} color="#fff" />
                     <Text style={styles.modalConfirmText}>Pay with Stripe</Text>
                   </>
                 )}
@@ -906,22 +925,22 @@ export default function GivingScreen() {
       </Modal>
 
       <Modal visible={showSuccessModal} transparent animationType="fade">
-        <View style={styles.modalOverlay}>
-          <View style={styles.successModalContent}>
-            <View style={styles.successIcon}>
-              <Check size={48} color={Colors.success} />
+        <View style={[styles.modalOverlay, { backgroundColor: tc.overlay }]}>
+          <View style={[styles.successModalContent, { backgroundColor: tc.surface }]}>
+            <View style={[styles.successIcon, { backgroundColor: tc.successLight }]}>
+              <Check size={48} color={tc.success} />
             </View>
-            <Text style={styles.successTitle}>Thank You!</Text>
-            <Text style={styles.successText}>
+            <Text style={[styles.successTitle, { color: tc.text }]}>Thank You!</Text>
+            <Text style={[styles.successText, { color: tc.textSecondary }]}>
               Your {givingType === "tithe" ? "tithe" : "offering"} has been processed successfully.
             </Text>
             {frequency !== "one_time" && (
-              <Text style={styles.successRecurringNote}>
+              <Text style={[styles.successRecurringNote, { color: tc.textSecondary }]}>
                 Your recurring {frequency.replace("_", "-")} donation has been set up.
               </Text>
             )}
             <TouchableOpacity
-              style={styles.successButton}
+              style={[styles.successButton, { backgroundColor: tc.primary }]}
               onPress={() => setShowSuccessModal(false)}
             >
               <Text style={styles.successButtonText}>Done</Text>

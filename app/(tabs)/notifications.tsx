@@ -51,6 +51,7 @@ function NotificationCard({
   onDelete,
   getIcon,
   getTimeAgo,
+  themeColors,
 }: { 
   notification: Notification;
   onPress: () => void;
@@ -58,6 +59,7 @@ function NotificationCard({
   onDelete: () => void;
   getIcon: (type: Notification["type"]) => React.ReactNode;
   getTimeAgo: (dateStr: string) => string;
+  themeColors: Record<string, string>;
 }) {
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
@@ -88,14 +90,16 @@ function NotificationCard({
     >
       <Animated.View style={[
         styles.notificationCard,
-        !notification.isRead && styles.unreadCard,
+        { backgroundColor: themeColors.surface },
+        !notification.isRead && [styles.unreadCard, { backgroundColor: themeColors.surfaceElevated, borderLeftColor: themeColors.primary }],
         { transform: [{ scale: scaleAnim }] }
       ]}>
         <View style={styles.notificationContent}>
           <View
             style={[
               styles.iconContainer,
-              !notification.isRead && styles.unreadIconContainer,
+              { backgroundColor: themeColors.surfaceSecondary },
+              !notification.isRead && { backgroundColor: themeColors.primaryLight },
             ]}
           >
             {getIcon(notification.type)}
@@ -105,18 +109,19 @@ function NotificationCard({
               <Text
                 style={[
                   styles.notificationTitle,
+                  { color: themeColors.text },
                   !notification.isRead && styles.unreadTitle,
                 ]}
                 numberOfLines={1}
               >
                 {notification.title}
               </Text>
-              {!notification.isRead && <View style={styles.unreadDot} />}
+              {!notification.isRead && <View style={[styles.unreadDot, { backgroundColor: themeColors.primary }]} />}
             </View>
-            <Text style={styles.notificationMessage} numberOfLines={2}>
+            <Text style={[styles.notificationMessage, { color: themeColors.textSecondary }]} numberOfLines={2}>
               {notification.message}
             </Text>
-            <Text style={styles.notificationTime}>
+            <Text style={[styles.notificationTime, { color: themeColors.textTertiary }]}>
               {getTimeAgo(notification.createdAt)}
             </Text>
           </View>
@@ -128,7 +133,7 @@ function NotificationCard({
               onPress={onMarkAsRead}
               hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
             >
-              <Check size={18} color={Colors.success} />
+              <Check size={18} color={themeColors.success} />
             </TouchableOpacity>
           )}
           <TouchableOpacity
@@ -136,7 +141,7 @@ function NotificationCard({
             onPress={onDelete}
             hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
           >
-            <Trash2 size={18} color={Colors.error} />
+            <Trash2 size={18} color={themeColors.error} />
           </TouchableOpacity>
         </View>
       </Animated.View>
@@ -397,21 +402,21 @@ export default function NotificationsScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={themeColors.primary}
           />
         }
       >
         {isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={themeColors.primary} />
           </View>
         ) : notifications.length === 0 ? (
           <View style={styles.emptyContainer}>
-            <View style={styles.emptyIconContainer}>
-              <Bell size={48} color={Colors.textTertiary} />
+            <View style={[styles.emptyIconContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
+              <Bell size={48} color={themeColors.textTertiary} />
             </View>
-            <Text style={styles.emptyTitle}>No Notifications</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No Notifications</Text>
+            <Text style={[styles.emptySubtitle, { color: themeColors.textSecondary }]}>
               You&apos;re all caught up! Check back later for updates.
             </Text>
           </View>
@@ -428,13 +433,14 @@ export default function NotificationsScreen() {
                   onDelete={() => deleteNotification(notification.id)}
                   getIcon={getNotificationIcon}
                   getTimeAgo={getTimeAgo}
+                  themeColors={themeColors}
                 />
               ))}
             
             {notifications.filter((n) => n.isRead).length > 0 && (
               <>
                 {notifications.filter((n) => !n.isRead).length > 0 && (
-                  <Text style={styles.sectionTitle}>Earlier</Text>
+                  <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>Earlier</Text>
                 )}
                 {notifications
                   .filter((n) => n.isRead)
@@ -447,6 +453,7 @@ export default function NotificationsScreen() {
                       onDelete={() => deleteNotification(notification.id)}
                       getIcon={getNotificationIcon}
                       getTimeAgo={getTimeAgo}
+                      themeColors={themeColors}
                     />
                   ))}
               </>

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native
 import { Image } from 'expo-image';
 import { Pin, ChevronRight } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 import { Announcement } from '@/types';
 
 interface AnnouncementCardProps {
@@ -11,6 +12,7 @@ interface AnnouncementCardProps {
 }
 
 export default function AnnouncementCard({ announcement, onPress }: AnnouncementCardProps) {
+  const { colors } = useTheme();
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const handlePressIn = useCallback(() => {
@@ -40,13 +42,14 @@ export default function AnnouncementCard({ announcement, onPress }: Announcement
     >
       <Animated.View style={[
         styles.container,
-        announcement.isPinned && styles.pinnedContainer,
+        { backgroundColor: colors.surface },
+        announcement.isPinned && [styles.pinnedContainer, { borderColor: colors.secondary + '40', backgroundColor: colors.warningLight }],
         { transform: [{ scale: scaleAnim }] }
       ]}>
       {announcement.isPinned && (
         <View style={styles.pinnedBadge}>
-          <Pin size={12} color={Colors.primary} />
-          <Text style={styles.pinnedText}>Pinned</Text>
+          <Pin size={12} color={colors.primary} />
+          <Text style={[styles.pinnedText, { color: colors.primary }]}>Pinned</Text>
         </View>
       )}
       
@@ -57,26 +60,26 @@ export default function AnnouncementCard({ announcement, onPress }: Announcement
           contentFit="cover"
         />
         <View style={styles.authorInfo}>
-          <Text style={styles.authorName}>{announcement.author}</Text>
-          <Text style={styles.authorRole}>{announcement.authorRole}</Text>
+          <Text style={[styles.authorName, { color: colors.text }]}>{announcement.author}</Text>
+          <Text style={[styles.authorRole, { color: colors.textSecondary }]}>{announcement.authorRole}</Text>
         </View>
-        <Text style={styles.date}>{formatDate(announcement.date)}</Text>
+        <Text style={[styles.date, { color: colors.textTertiary }]}>{formatDate(announcement.date)}</Text>
       </View>
       
-      <Text style={styles.title}>{announcement.title}</Text>
-      <Text style={styles.content} numberOfLines={2}>
+      <Text style={[styles.title, { color: colors.text }]}>{announcement.title}</Text>
+      <Text style={[styles.content, { color: colors.textSecondary }]} numberOfLines={2}>
         {announcement.content}
       </Text>
       
       {announcement.ministryName && (
-        <View style={styles.ministryTag}>
-          <Text style={styles.ministryTagText}>{announcement.ministryName}</Text>
+        <View style={[styles.ministryTag, { backgroundColor: colors.surfaceSecondary }]}>
+          <Text style={[styles.ministryTagText, { color: colors.textSecondary }]}>{announcement.ministryName}</Text>
         </View>
       )}
       
-      <View style={styles.footer}>
-        <Text style={styles.readMore}>Read more</Text>
-        <ChevronRight size={16} color={Colors.primary} />
+      <View style={[styles.footer, { borderTopColor: colors.borderLight }]}>
+        <Text style={[styles.readMore, { color: colors.primary }]}>Read more</Text>
+        <ChevronRight size={16} color={colors.primary} />
       </View>
       </Animated.View>
     </TouchableOpacity>
@@ -98,7 +101,6 @@ function formatDate(dateString: string): string {
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -110,8 +112,6 @@ const styles = StyleSheet.create({
   },
   pinnedContainer: {
     borderWidth: 1,
-    borderColor: Colors.secondary + '40',
-    backgroundColor: '#FBF8F2',
   },
   pinnedBadge: {
     flexDirection: 'row',
@@ -122,7 +122,6 @@ const styles = StyleSheet.create({
   pinnedText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.primary,
   },
   header: {
     flexDirection: 'row',
@@ -141,32 +140,26 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
   },
   authorRole: {
     fontSize: 12,
-    color: Colors.textSecondary,
     marginTop: 1,
   },
   date: {
     fontSize: 12,
-    color: Colors.textTertiary,
   },
   title: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.text,
     marginBottom: 6,
     lineHeight: 22,
   },
   content: {
     fontSize: 14,
-    color: Colors.textSecondary,
     lineHeight: 20,
   },
   ministryTag: {
     alignSelf: 'flex-start',
-    backgroundColor: Colors.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -174,7 +167,6 @@ const styles = StyleSheet.create({
   },
   ministryTagText: {
     fontSize: 12,
-    color: Colors.textSecondary,
     fontWeight: '500' as const,
   },
   footer: {
@@ -188,6 +180,5 @@ const styles = StyleSheet.create({
   readMore: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.primary,
   },
 });

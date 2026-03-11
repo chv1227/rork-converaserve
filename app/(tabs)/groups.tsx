@@ -583,11 +583,11 @@ export default function GroupsScreen() {
 
         {hasNoMinistries && !isLoading && (
           <View style={styles.emptyState}>
-            <View style={styles.emptyIconContainer}>
-              <Users size={48} color={Colors.primary} />
+            <View style={[styles.emptyIconContainer, { backgroundColor: themeColors.primary + '15' }]}>
+              <Users size={48} color={themeColors.primary} />
             </View>
-            <Text style={styles.emptyTitle}>No Ministries Yet</Text>
-            <Text style={styles.emptySubtitle}>
+            <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No Ministries Yet</Text>
+            <Text style={[styles.emptySubtitle, { color: themeColors.textSecondary }]}>
               {isAdmin
                 ? "Create your first ministry to start connecting your community"
                 : "Ministries will appear here once they are created"}
@@ -607,9 +607,9 @@ export default function GroupsScreen() {
 
         {hasNoResults && (
           <View style={styles.noResultsContainer}>
-            <Search size={40} color={Colors.textTertiary} />
-            <Text style={styles.noResultsTitle}>No Results</Text>
-            <Text style={styles.noResultsSubtitle}>
+            <Search size={40} color={themeColors.textTertiary} />
+            <Text style={[styles.noResultsTitle, { color: themeColors.text }]}>No Results</Text>
+            <Text style={[styles.noResultsSubtitle, { color: themeColors.textSecondary }]}>
               Try a different search term
             </Text>
           </View>
@@ -621,10 +621,10 @@ export default function GroupsScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
-                    <TrendingUp size={18} color={Colors.primary} />
-                    <Text style={styles.sectionTitle}>Featured</Text>
+                    <TrendingUp size={18} color={themeColors.primary} />
+                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Featured</Text>
                   </View>
-                  <Text style={styles.sectionSubtitle}>
+                  <Text style={[styles.sectionSubtitle, { color: themeColors.textSecondary }]}>
                     Popular ministries in your church
                   </Text>
                 </View>
@@ -653,10 +653,10 @@ export default function GroupsScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
-                    <Star size={18} color={Colors.warning} />
-                    <Text style={styles.sectionTitle}>My Ministries</Text>
+                    <Star size={18} color={themeColors.warning} />
+                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>My Ministries</Text>
                   </View>
-                  <Text style={styles.sectionSubtitle}>
+                  <Text style={[styles.sectionSubtitle, { color: themeColors.textSecondary }]}>
                     You are a member of {myMinistries.length}{" "}
                     {myMinistries.length === 1 ? "ministry" : "ministries"}
                   </Text>
@@ -678,12 +678,12 @@ export default function GroupsScreen() {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionTitleRow}>
-                    <Users size={18} color={Colors.textSecondary} />
-                    <Text style={styles.sectionTitle}>
+                    <Users size={18} color={themeColors.textSecondary} />
+                    <Text style={[styles.sectionTitle, { color: themeColors.text }]}>
                       {myMinistries.length > 0 ? "Explore More" : "All Ministries"}
                     </Text>
                   </View>
-                  <Text style={styles.sectionSubtitle}>
+                  <Text style={[styles.sectionSubtitle, { color: themeColors.textSecondary }]}>
                     Discover and join other ministries
                   </Text>
                 </View>

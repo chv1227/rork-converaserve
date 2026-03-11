@@ -21,6 +21,7 @@ export default function CalendarScreen() {
 
   const calendarAnim = useRef(new Animated.Value(0)).current;
   const eventsAnim = useRef(new Animated.Value(0)).current;
+  const colors = themeColors;
 
   useEffect(() => {
     Animated.stagger(150, [
@@ -120,7 +121,7 @@ export default function CalendarScreen() {
           <Text style={[styles.title, { color: themeColors.text }]}>Calendar</Text>
           {isAdmin && currentOrganization && (
             <TouchableOpacity
-              style={styles.createButtonHeader}
+              style={[styles.createButtonHeader, { backgroundColor: colors.primary }]}
               onPress={() => router.push("/admin" as Href)}
               activeOpacity={0.7}
               testID="calendar-create-button"
@@ -138,30 +139,30 @@ export default function CalendarScreen() {
           <RefreshControl
             refreshing={localRefreshing || isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={colors.primary}
           />
         }
       >
         {isLoading && events.length === 0 && currentOrganization && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={colors.primary} />
           </View>
         )}
 
-        <Animated.View style={[styles.calendarCard, { opacity: calendarAnim, transform: [{ translateY: calendarAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
+        <Animated.View style={[styles.calendarCard, { backgroundColor: colors.surface, opacity: calendarAnim, transform: [{ translateY: calendarAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
           <View style={styles.monthNav}>
             <TouchableOpacity onPress={() => changeMonth(-1)} style={styles.navButton}>
-              <ChevronLeft size={24} color={Colors.text} />
+              <ChevronLeft size={24} color={colors.text} />
             </TouchableOpacity>
-            <Text style={styles.monthText}>{currentMonth}</Text>
+            <Text style={[styles.monthText, { color: colors.text }]}>{currentMonth}</Text>
             <TouchableOpacity onPress={() => changeMonth(1)} style={styles.navButton}>
-              <ChevronRight size={24} color={Colors.text} />
+              <ChevronRight size={24} color={colors.text} />
             </TouchableOpacity>
           </View>
 
           <View style={styles.weekDays}>
             {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-              <Text key={day} style={styles.weekDay}>
+              <Text key={day} style={[styles.weekDay, { color: colors.textTertiary }]}>
                 {day}
               </Text>
             ))}
@@ -173,8 +174,8 @@ export default function CalendarScreen() {
                 key={index}
                 style={[
                   styles.dayCell,
-                  day ? (isSelected(day) ? styles.selectedDay : undefined) : undefined,
-                  day ? (isToday(day) && !isSelected(day) ? styles.todayDay : undefined) : undefined,
+                  day ? (isSelected(day) ? [styles.selectedDay, { backgroundColor: colors.primary }] : undefined) : undefined,
+                  day ? (isToday(day) && !isSelected(day) ? [styles.todayDay, { borderColor: colors.primary }] : undefined) : undefined,
                 ]}
                 onPress={() => day && selectDay(day)}
                 disabled={!day}
@@ -184,15 +185,16 @@ export default function CalendarScreen() {
                     <Text
                       style={[
                         styles.dayText,
+                        { color: colors.text },
                         isSelected(day) && styles.selectedDayText,
-                        isToday(day) && !isSelected(day) && styles.todayDayText,
+                        isToday(day) && !isSelected(day) && { color: colors.primary },
                       ]}
                     >
                       {day}
                     </Text>
                     {hasEventsOnDay(day) && (
                       <View
-                        style={[styles.eventDot, isSelected(day) && styles.selectedEventDot]}
+                        style={[styles.eventDot, { backgroundColor: colors.primary }, isSelected(day) && styles.selectedEventDot]}
                       />
                     )}
                   </>
@@ -203,7 +205,7 @@ export default function CalendarScreen() {
         </Animated.View>
 
         <Animated.View style={[styles.eventsSection, { opacity: eventsAnim, transform: [{ translateY: eventsAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>
-          <Text style={styles.sectionTitle}>
+          <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
             Events on {selectedDate.toLocaleDateString("en-US", { month: "short", day: "numeric" })}
           </Text>
           {eventsOnDate.length > 0 ? (
@@ -215,8 +217,8 @@ export default function CalendarScreen() {
               />
             ))
           ) : (
-            <View style={styles.noEvents}>
-              <Text style={styles.noEventsText}>No events scheduled for this day</Text>
+            <View style={[styles.noEvents, { backgroundColor: colors.surface }]}>
+              <Text style={[styles.noEventsText, { color: colors.textSecondary }]}>No events scheduled for this day</Text>
             </View>
           )}
         </Animated.View>

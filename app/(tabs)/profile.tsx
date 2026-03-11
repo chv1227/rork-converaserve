@@ -295,13 +295,13 @@ export default function ProfileScreen() {
         )}
 
         <View style={styles.myMinistriesHeader}>
-          <Text style={styles.sectionTitle}>My Ministries</Text>
+          <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>My Ministries</Text>
           {userMinistries.length > 0 && (
             <TouchableOpacity
               onPress={() => router.push("/(tabs)/groups" as any)}
               activeOpacity={0.7}
             >
-              <Text style={styles.viewAllText}>View All</Text>
+              <Text style={[styles.viewAllText, { color: themeColors.primary }]}>View All</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -309,7 +309,7 @@ export default function ProfileScreen() {
           {userMinistries.map((ministry) => (
             <TouchableOpacity
               key={ministry.id}
-              style={[styles.ministryBadge, { borderLeftColor: ministry.color, borderLeftWidth: 3 }]}
+              style={[styles.ministryBadge, { backgroundColor: themeColors.surface, borderLeftColor: ministry.color, borderLeftWidth: 3 }]}
               onPress={() => router.push(`/group/${ministry.id}` as any)}
               activeOpacity={0.7}
             >
@@ -317,21 +317,21 @@ export default function ProfileScreen() {
                 <View style={[styles.ministryDot, { backgroundColor: ministry.color }]} />
               </View>
               <View style={styles.ministryBadgeContent}>
-                <Text style={styles.ministryName}>{ministry.name}</Text>
-                <Text style={styles.ministryMemberCount}>{ministry.memberCount} members</Text>
+                <Text style={[styles.ministryName, { color: themeColors.text }]}>{ministry.name}</Text>
+                <Text style={[styles.ministryMemberCount, { color: themeColors.textSecondary }]}>{ministry.memberCount} members</Text>
               </View>
-              <ChevronRight size={16} color={Colors.textTertiary} />
+              <ChevronRight size={16} color={themeColors.textTertiary} />
             </TouchableOpacity>
           ))}
           {userMinistries.length === 0 && (
             <TouchableOpacity
-              style={styles.noMinistriesCard}
+              style={[styles.noMinistriesCard, { backgroundColor: themeColors.surfaceSecondary }]}
               onPress={() => router.push("/(tabs)/groups" as any)}
               activeOpacity={0.7}
             >
-              <Users size={24} color={Colors.textTertiary} />
-              <Text style={styles.noMinistriesTitle}>Not a member of any ministries yet</Text>
-              <Text style={styles.noMinistriesSubtitle}>Tap to explore and join ministries</Text>
+              <Users size={24} color={themeColors.textTertiary} />
+              <Text style={[styles.noMinistriesTitle, { color: themeColors.textSecondary }]}>Not a member of any ministries yet</Text>
+              <Text style={[styles.noMinistriesSubtitle, { color: themeColors.textTertiary }]}>Tap to explore and join ministries</Text>
             </TouchableOpacity>
           )}
         </View>
@@ -342,8 +342,8 @@ export default function ProfileScreen() {
 
         {isAdmin && (
           <>
-            <Text style={styles.sectionTitle}>Admin</Text>
-            <View style={styles.menuSection}>
+            <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>Admin</Text>
+            <View style={[styles.menuSection, { backgroundColor: themeColors.surface }]}>
               <MenuItem
                 icon={<Shield size={20} color="#7C3AED" />}
                 title="Admin Dashboard"
@@ -355,28 +355,28 @@ export default function ProfileScreen() {
           </>
         )}
 
-        <Text style={styles.sectionTitle}>Settings</Text>
-        <View style={styles.menuSection}>
+        <Text style={[styles.sectionTitle, { color: themeColors.textSecondary }]}>Settings</Text>
+        <View style={[styles.menuSection, { backgroundColor: themeColors.surface }]}>
           <MenuItem
-            icon={<Settings size={20} color={Colors.primary} />}
+            icon={<Settings size={20} color={themeColors.primary} />}
             title="Account Settings"
             subtitle="Manage your account preferences"
             onPress={() => router.push("/edit-profile" as any)}
           />
           <MenuItem
-            icon={<Bell size={20} color={Colors.primary} />}
+            icon={<Bell size={20} color={themeColors.primary} />}
             title="Notifications"
             subtitle="Configure notification preferences"
             onPress={() => setNotificationsModalVisible(true)}
           />
           <MenuItem
-            icon={<Shield size={20} color={Colors.primary} />}
+            icon={<Shield size={20} color={themeColors.primary} />}
             title="Privacy & Security"
             subtitle="Manage your privacy settings"
             onPress={() => setPrivacyModalVisible(true)}
           />
           <MenuItem
-            icon={<HelpCircle size={20} color={Colors.primary} />}
+            icon={<HelpCircle size={20} color={themeColors.primary} />}
             title="Help & Support"
             subtitle="Get help and contact support"
             onPress={() => setHelpModalVisible(true)}
@@ -384,9 +384,9 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <View style={[styles.menuSection, { marginTop: 16 }]}>
+        <View style={[styles.menuSection, { marginTop: 16, backgroundColor: themeColors.surface }]}>
           <MenuItem
-            icon={<LogOut size={20} color={Colors.error} />}
+            icon={<LogOut size={20} color={themeColors.error} />}
             title="Sign Out"
             onPress={handleLogout}
             showBorder={false}
@@ -394,7 +394,7 @@ export default function ProfileScreen() {
           />
         </View>
 
-        <Text style={styles.version}>Version 1.0.0</Text>
+        <Text style={[styles.version, { color: themeColors.textTertiary }]}>Version 1.0.0</Text>
 
         <View style={{ height: 100 }} />
       </ScrollView>

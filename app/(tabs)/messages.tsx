@@ -475,18 +475,18 @@ export default function MessagesScreen() {
     if (newChatTab === "direct") {
       return (
         <TouchableOpacity
-          style={styles.memberItem}
+          style={[styles.memberItem, { backgroundColor: themeColors.surface }]}
           onPress={() => handleStartDM(item)}
           activeOpacity={0.7}
           disabled={createDMmutation.isPending}
         >
           <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
           <View style={styles.memberInfo}>
-            <Text style={styles.memberName}>{item.name}</Text>
-            <Text style={styles.memberEmail}>{item.email}</Text>
+            <Text style={[styles.memberName, { color: themeColors.text }]}>{item.name}</Text>
+            <Text style={[styles.memberEmail, { color: themeColors.textSecondary }]}>{item.email}</Text>
           </View>
           {createDMmutation.isPending && (
-            <ActivityIndicator size="small" color={Colors.primary} />
+            <ActivityIndicator size="small" color={themeColors.primary} />
           )}
         </TouchableOpacity>
       );
@@ -494,19 +494,20 @@ export default function MessagesScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.memberItem, isSelected && styles.memberItemSelected]}
+        style={[styles.memberItem, { backgroundColor: themeColors.surface }, isSelected && { backgroundColor: themeColors.primary + '10' }]}
         onPress={() => toggleMemberSelection(item)}
         activeOpacity={0.7}
       >
         <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
         <View style={styles.memberInfo}>
-          <Text style={styles.memberName}>{item.name}</Text>
-          <Text style={styles.memberEmail}>{item.email}</Text>
+          <Text style={[styles.memberName, { color: themeColors.text }]}>{item.name}</Text>
+          <Text style={[styles.memberEmail, { color: themeColors.textSecondary }]}>{item.email}</Text>
         </View>
         <View
           style={[
             styles.checkbox,
-            isSelected && styles.checkboxSelected,
+            { borderColor: themeColors.border },
+            isSelected && { backgroundColor: themeColors.primary, borderColor: themeColors.primary },
           ]}
         >
           {isSelected && <Check size={14} color="#fff" />}
@@ -540,11 +541,11 @@ export default function MessagesScreen() {
         <View style={styles.headerTop}>
           <Text style={[styles.title, { color: themeColors.text }]}>Messages</Text>
           <TouchableOpacity
-            style={styles.newChatButton}
+            style={[styles.newChatButton, { backgroundColor: themeColors.primary }]}
             onPress={() => setShowNewChatModal(true)}
             activeOpacity={0.7}
           >
-            <Plus size={22} color={Colors.textInverse} />
+            <Plus size={22} color="#fff" />
           </TouchableOpacity>
         </View>
         <View style={[styles.searchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
@@ -568,10 +569,10 @@ export default function MessagesScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={themeColors.primary}
           />
         }
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: themeColors.borderLight }]} />}
         ListHeaderComponent={
           isLoading && conversations.length === 0 ? (
             <View style={styles.loadingContainer}>
@@ -600,8 +601,8 @@ export default function MessagesScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowNewChatModal(false)}
       >
-        <View style={[styles.modalContainer, { paddingTop: insets.top }]}>
-          <View style={styles.modalHeader}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top, backgroundColor: themeColors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
             <TouchableOpacity
               onPress={() => {
                 setShowNewChatModal(false);
@@ -610,9 +611,9 @@ export default function MessagesScreen() {
                 setMemberSearch("");
               }}
             >
-              <X size={24} color={Colors.text} />
+              <X size={24} color={themeColors.text} />
             </TouchableOpacity>
-            <Text style={styles.modalTitle}>New Message</Text>
+            <Text style={[styles.modalTitle, { color: themeColors.text }]}>New Message</Text>
             {newChatTab === "group" && (
               <TouchableOpacity
                 onPress={handleCreateGroup}
@@ -637,33 +638,35 @@ export default function MessagesScreen() {
             {newChatTab === "direct" && <View style={{ width: 60 }} />}
           </View>
 
-          <View style={styles.tabContainer}>
+          <View style={[styles.tabContainer, { backgroundColor: themeColors.surface }]}>
             <TouchableOpacity
-              style={[styles.tab, newChatTab === "direct" && styles.activeTab]}
+              style={[styles.tab, { backgroundColor: themeColors.surfaceSecondary }, newChatTab === "direct" && { backgroundColor: themeColors.primary + '15' }]}
               onPress={() => {
                 setNewChatTab("direct");
                 setSelectedMembers([]);
               }}
             >
-              <User size={18} color={newChatTab === "direct" ? Colors.primary : Colors.textSecondary} />
+              <User size={18} color={newChatTab === "direct" ? themeColors.primary : themeColors.textSecondary} />
               <Text
                 style={[
                   styles.tabText,
-                  newChatTab === "direct" && styles.activeTabText,
+                  { color: themeColors.textSecondary },
+                  newChatTab === "direct" && { color: themeColors.primary },
                 ]}
               >
                 Direct
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, newChatTab === "group" && styles.activeTab]}
+              style={[styles.tab, { backgroundColor: themeColors.surfaceSecondary }, newChatTab === "group" && { backgroundColor: themeColors.primary + '15' }]}
               onPress={() => setNewChatTab("group")}
             >
-              <Users size={18} color={newChatTab === "group" ? Colors.primary : Colors.textSecondary} />
+              <Users size={18} color={newChatTab === "group" ? themeColors.primary : themeColors.textSecondary} />
               <Text
                 style={[
                   styles.tabText,
-                  newChatTab === "group" && styles.activeTabText,
+                  { color: themeColors.textSecondary },
+                  newChatTab === "group" && { color: themeColors.primary },
                 ]}
               >
                 Group
@@ -672,11 +675,11 @@ export default function MessagesScreen() {
           </View>
 
           {newChatTab === "group" && (
-            <View style={styles.groupNameContainer}>
+            <View style={[styles.groupNameContainer, { backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
               <TextInput
-                style={styles.groupNameInput}
+                style={[styles.groupNameInput, { color: themeColors.text, backgroundColor: themeColors.surfaceSecondary }]}
                 placeholder="Group name"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={themeColors.textTertiary}
                 value={groupName}
                 onChangeText={setGroupName}
               />
@@ -710,12 +713,12 @@ export default function MessagesScreen() {
             </View>
           )}
 
-          <View style={styles.memberSearchContainer}>
-            <Search size={18} color={Colors.textTertiary} />
+          <View style={[styles.memberSearchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
+            <Search size={18} color={themeColors.textTertiary} />
             <TextInput
-              style={styles.memberSearchInput}
+              style={[styles.memberSearchInput, { color: themeColors.text }]}
               placeholder="Search members..."
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={themeColors.textTertiary}
               value={memberSearch}
               onChangeText={setMemberSearch}
             />
@@ -723,7 +726,7 @@ export default function MessagesScreen() {
 
           {membersQuery.isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+              <ActivityIndicator size="large" color={themeColors.primary} />
             </View>
           ) : (
             <FlatList
@@ -731,10 +734,10 @@ export default function MessagesScreen() {
               keyExtractor={(item) => item.id}
               renderItem={renderMemberItem}
               contentContainerStyle={styles.memberListContent}
-              ItemSeparatorComponent={() => <View style={styles.separator} />}
+              ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: themeColors.borderLight }]} />}
               ListEmptyComponent={
                 <View style={styles.emptyMembersContainer}>
-                  <Text style={styles.emptyMembersText}>
+                  <Text style={[styles.emptyMembersText, { color: themeColors.textSecondary }]}>
                     {memberSearch
                       ? "No members found"
                       : "No other members in this organization"}

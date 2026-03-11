@@ -38,11 +38,15 @@
 - Only the Profile tab and a few screens respond to dark mode. Home, Messages, Groups, Calendar, Giving, Login, Chat, and other screens all stay in light mode
 - Fix: Update all major screens to use the current theme colors so dark mode works everywhere
 - [x] Home screen — container, stat cards, section titles, section actions
-- [x] Messages screen — container, header, search bar, title
-- [x] Notifications screen — container, header, title, action buttons
-- [x] Profile screen — container, header, profile card, user name, role text
-- [x] Groups screen — container, header, title, subtitle, search bar
-- [x] Calendar screen — container, header, title
+- [x] Messages screen — container, header, search bar, title, conversation items, modal, member list
+- [x] Notifications screen — container, header, title, action buttons, notification cards, empty state
+- [x] Profile screen — container, header, profile card, user name, role text, info section, menu items, ministry badges, management cards, section titles
+- [x] Groups screen — container, header, title, subtitle, search bar, compact cards, section titles, empty/no-results states
+- [x] Calendar screen — container, header, title, calendar card, month nav, day text, events section, no-events state
+- [x] Giving screen — container, tabs, stats card, type buttons, amount buttons, frequency options, inputs, modals, history items
+- [x] EventCard component — all text and background colors
+- [x] AnnouncementCard component — all text, background, border colors
+- [x] TabBarDropdown component — dropdown background, text, icons, borders
 
 ### 🔵 Minor Polish
 

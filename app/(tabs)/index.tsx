@@ -300,32 +300,32 @@ export default function HomeScreen() {
           ]}
         >
           <TouchableOpacity 
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
             onPress={() => router.push("/(tabs)/calendar" as Href)}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: Colors.primary + '15' }]}>
-              <Calendar size={20} color={Colors.primary} />
+            <View style={[styles.statIconContainer, { backgroundColor: themeColors.primary + '15' }]}>
+              <Calendar size={20} color={themeColors.primary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={styles.statValue}>{upcomingEvents.length}</Text>
-              <Text style={styles.statLabel}>Events This Week</Text>
+              <Text style={[styles.statValue, { color: themeColors.text }]}>{upcomingEvents.length}</Text>
+              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Events This Week</Text>
             </View>
-            <ChevronRight size={18} color={Colors.textTertiary} />
+            <ChevronRight size={18} color={themeColors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
             onPress={() => router.push("/(tabs)/groups" as Href)}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
-              <Users size={20} color={Colors.secondary} />
+            <View style={[styles.statIconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
+              <Users size={20} color={themeColors.secondary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={styles.statValue}>{userMinistries.length}</Text>
-              <Text style={styles.statLabel}>Your Ministries</Text>
+              <Text style={[styles.statValue, { color: themeColors.text }]}>{userMinistries.length}</Text>
+              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Your Ministries</Text>
             </View>
-            <ChevronRight size={18} color={Colors.textTertiary} />
+            <ChevronRight size={18} color={themeColors.textTertiary} />
           </TouchableOpacity>
         </Animated.View>
 
@@ -339,32 +339,32 @@ export default function HomeScreen() {
           ]}
         >
           <TouchableOpacity 
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
             onPress={() => {}}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: Colors.secondary + '15' }]}>
-              <Heart size={20} color={Colors.secondary} />
+            <View style={[styles.statIconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
+              <Heart size={20} color={themeColors.secondary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={styles.statValue}>{prayerRequestsCount.active}</Text>
-              <Text style={styles.statLabel}>Prayer Requests</Text>
+              <Text style={[styles.statValue, { color: themeColors.text }]}>{prayerRequestsCount.active}</Text>
+              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Prayer Requests</Text>
             </View>
-            <ChevronRight size={18} color={Colors.textTertiary} />
+            <ChevronRight size={18} color={themeColors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity 
-            style={styles.statCard}
+            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
             onPress={() => {}}
             activeOpacity={0.7}
           >
-            <View style={[styles.statIconContainer, { backgroundColor: Colors.tertiary + '15' }]}>
-              <Users size={20} color={Colors.tertiary} />
+            <View style={[styles.statIconContainer, { backgroundColor: themeColors.tertiary + '15' }]}>
+              <Users size={20} color={themeColors.tertiary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={styles.statValue}>{membersCount}</Text>
-              <Text style={styles.statLabel}>Church Members</Text>
+              <Text style={[styles.statValue, { color: themeColors.text }]}>{membersCount}</Text>
+              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Church Members</Text>
             </View>
-            <ChevronRight size={18} color={Colors.textTertiary} />
+            <ChevronRight size={18} color={themeColors.textTertiary} />
           </TouchableOpacity>
         </Animated.View>
 
@@ -676,7 +676,6 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     flexDirection: "row",
@@ -710,11 +709,9 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: Colors.text,
   },
   statLabel: {
     fontSize: 11,
-    color: Colors.textSecondary,
     marginTop: 2,
   },
   section: {
