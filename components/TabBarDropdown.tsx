@@ -10,7 +10,7 @@ import {
   Platform,
 } from 'react-native';
 import { useRouter, Href } from 'expo-router';
-import { Users, Calendar, MoreHorizontal, ChevronUp, Megaphone } from 'lucide-react-native';
+import { Users, Calendar, MoreHorizontal, Megaphone } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 interface DropdownItem {
@@ -103,11 +103,6 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
     }, 100);
   };
 
-  const rotation = rotateAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
   return (
     <>
       <TouchableOpacity
@@ -117,14 +112,6 @@ export default function TabBarDropdown({ isActive }: TabBarDropdownProps) {
       >
         <View style={[styles.iconContainer, isActive && styles.iconContainerActive]}>
           <MoreHorizontal size={24} color={isActive ? Colors.primary : Colors.textTertiary} />
-        </View>
-        <View style={styles.labelRow}>
-          <Text style={[styles.triggerLabel, isActive && styles.triggerLabelActive]}>
-            More
-          </Text>
-          <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-            <ChevronUp size={12} color={isActive ? Colors.primary : Colors.textTertiary} />
-          </Animated.View>
         </View>
       </TouchableOpacity>
 
