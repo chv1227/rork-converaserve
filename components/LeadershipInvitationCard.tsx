@@ -144,7 +144,7 @@ export default function LeadershipInvitationCard({
             </View>
           </View>
 
-          {invitation.message && (
+          {!!invitation.message && (
             <View style={styles.messageContainer}>
               <MessageSquare size={14} color={Colors.textSecondary} />
               <Text style={styles.messageText} numberOfLines={2}>
@@ -153,7 +153,7 @@ export default function LeadershipInvitationCard({
             </View>
           )}
 
-          {invitation.transferType && (
+          {!!invitation.transferType && (
             <View style={styles.transferInfo}>
               <Text style={styles.transferLabel}>Transfer Type:</Text>
               <Text style={styles.transferValue}>

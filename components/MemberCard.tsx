@@ -126,7 +126,7 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
               <Text style={styles.contactText} numberOfLines={1}>{member.email}</Text>
             </View>
           )}
-          {member.phone && (
+          {!!member.phone && (
             <View style={styles.contactItem}>
               <Phone size={12} color={Colors.textTertiary} />
               <Text style={styles.contactText}>{member.phone}</Text>

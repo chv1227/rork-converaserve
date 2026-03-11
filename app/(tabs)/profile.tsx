@@ -175,7 +175,7 @@ export default function ProfileScreen() {
             <Mail size={18} color={Colors.textSecondary} />
             <Text style={styles.infoText}>{user.email}</Text>
           </View>
-          {user.phone && (
+          {!!user.phone && (
             <View style={styles.infoItem}>
               <Phone size={18} color={Colors.textSecondary} />
               <Text style={styles.infoText}>{user.phone}</Text>

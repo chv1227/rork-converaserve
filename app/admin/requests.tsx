@@ -294,12 +294,12 @@ export default function MinistryRequestsPage() {
                   <Text style={styles.requestDate}>
                     Requested on {formatDate(request.createdAt)}
                   </Text>
-                  {request.reviewerName && (
+                  {!!request.reviewerName && (
                     <Text style={styles.reviewerText}>
                       Reviewed by {request.reviewerName}
                     </Text>
                   )}
-                  {request.reviewNote && (
+                  {!!request.reviewNote && (
                     <Text style={styles.reviewNote}>Note: {request.reviewNote}</Text>
                   )}
                 </View>

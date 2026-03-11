@@ -68,7 +68,7 @@ function SongCard({ song, onPress }: SongCardProps) {
         <Text style={styles.songTitle} numberOfLines={1}>
           {song.title}
         </Text>
-        {song.artist && (
+        {!!song.artist && (
           <Text style={styles.songArtist} numberOfLines={1}>
             {song.artist}
           </Text>

@@ -276,7 +276,7 @@ export default function AnnouncementsScreen() {
         {announcement.content}
       </Text>
 
-      {announcement.ministryName && (
+      {!!announcement.ministryName && (
         <View style={styles.ministryTag}>
           <Users size={12} color={Colors.textSecondary} />
           <Text style={styles.ministryTagText}>{announcement.ministryName}</Text>

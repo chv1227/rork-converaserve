@@ -71,7 +71,7 @@ export default function AnnouncementCard({ announcement, onPress }: Announcement
         {announcement.content}
       </Text>
       
-      {announcement.ministryName && (
+      {!!announcement.ministryName && (
         <View style={[styles.ministryTag, { backgroundColor: colors.surfaceSecondary }]}>
           <Text style={[styles.ministryTagText, { color: colors.textSecondary }]}>{announcement.ministryName}</Text>
         </View>

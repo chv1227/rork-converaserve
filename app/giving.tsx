@@ -683,7 +683,7 @@ export default function GivingScreen() {
                     {donation.type === "tithe" ? "Tithe" : "Offering"}
                   </Text>
                   <Text style={styles.historyDate}>{formatDate(donation.createdAt)}</Text>
-                  {donation.note && (
+                  {!!donation.note && (
                     <Text style={styles.historyNote} numberOfLines={1}>
                       {donation.note}
                     </Text>
@@ -793,7 +793,7 @@ export default function GivingScreen() {
                     Next: {formatDate(recurring.nextDate)}
                   </Text>
                 </View>
-                {recurring.note && (
+                {!!recurring.note && (
                   <Text style={styles.recurringNote}>{recurring.note}</Text>
                 )}
               </View>
@@ -891,7 +891,7 @@ export default function GivingScreen() {
                   {FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.label}
                 </Text>
               </View>
-              {note && (
+              {!!note && (
                 <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
                   <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Note</Text>
                   <Text style={[styles.confirmValue, { color: tc.text }]}>{note}</Text>

@@ -130,7 +130,7 @@ function ScheduleItem({ day, time, frequency, location, color }: ScheduleItemPro
       <View style={styles.scheduleInfo}>
         <Text style={styles.scheduleDay}>{day}</Text>
         <Text style={styles.scheduleTime}>{time} • {frequency}</Text>
-        {location && (
+        {!!location && (
           <View style={styles.locationRow}>
             <MapPin size={12} color={Colors.textTertiary} />
             <Text style={styles.locationText}>{location}</Text>

@@ -59,7 +59,7 @@ function SongRow({ song, onEdit, onDelete, isDeleting }: SongRowProps) {
             {song.title}
           </Text>
           <View style={styles.songRowMeta}>
-            {song.artist && (
+            {!!song.artist && (
               <Text style={styles.songRowArtist} numberOfLines={1}>
                 {song.artist}
               </Text>

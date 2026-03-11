@@ -411,7 +411,7 @@ export default function ChurchesManagementScreen() {
                     )}
                     <View style={styles.churchInfo}>
                       <Text style={styles.churchName}>{church.name}</Text>
-                      {church.denomination && (
+                      {!!church.denomination && (
                         <Text style={styles.churchDenomination}>{church.denomination}</Text>
                       )}
                       {roleBadge && (
@@ -432,19 +432,19 @@ export default function ChurchesManagementScreen() {
                         {church.city}, {church.state}
                       </Text>
                     </View>
-                    {church.email && (
+                    {!!church.email && (
                       <View style={styles.detailRow}>
                         <Mail size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText} numberOfLines={1}>{church.email}</Text>
                       </View>
                     )}
-                    {church.phone && (
+                    {!!church.phone && (
                       <View style={styles.detailRow}>
                         <Phone size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText}>{church.phone}</Text>
                       </View>
                     )}
-                    {church.website && (
+                    {!!church.website && (
                       <View style={styles.detailRow}>
                         <Globe size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText} numberOfLines={1}>{church.website}</Text>
