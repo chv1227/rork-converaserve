@@ -23,6 +23,8 @@ import {
   Cog,
   Church,
   Pencil,
+  Trash2,
+  AlertTriangle,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -72,7 +74,7 @@ export default function ProfileScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const { colors: themeColors } = useTheme();
-  const { user, logout, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin, changePassword } = useAuth();
+  const { user, logout, deleteAccount, isAdmin, isSuperAdmin, currentOrganization, hasOrganization, isOrganizationSuperAdmin, changePassword } = useAuth();
   const { ministries, userMinistries } = useData();
   
   const [notificationsModalVisible, setNotificationsModalVisible] = useState(false);
@@ -85,6 +87,9 @@ export default function ProfileScreen() {
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [deleteAccountModalVisible, setDeleteAccountModalVisible] = useState(false);
+  const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+  const [deleteConfirmText, setDeleteConfirmText] = useState('');
 
 
 
@@ -389,6 +394,14 @@ export default function ProfileScreen() {
             icon={<LogOut size={20} color={themeColors.error} />}
             title="Sign Out"
             onPress={handleLogout}
+            showBorder
+            danger
+          />
+          <MenuItem
+            icon={<Trash2 size={20} color={themeColors.error} />}
+            title="Delete Account"
+            subtitle="Permanently remove your account and data"
+            onPress={() => setDeleteAccountModalVisible(true)}
             showBorder={false}
             danger
           />
@@ -564,14 +577,14 @@ export default function ProfileScreen() {
               style={styles.privacyItem}
               onPress={() => {
                 if (Platform.OS !== "web") {
-                  void Linking.openURL("mailto:support@churchconnect.org");
+                  void Linking.openURL("mailto:support@converaserve.com");
                 }
               }}
             >
               <Mail size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Email Support</Text>
-                <Text style={styles.privacyItemSubtitle}>support@churchconnect.org</Text>
+                <Text style={styles.privacyItemSubtitle}>support@converaserve.com</Text>
               </View>
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
@@ -579,7 +592,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                void Linking.openURL("https://churchconnect.org/faq");
+                void Linking.openURL("https://converaserve.com/faq");
               }}
             >
               <MessageCircle size={20} color={Colors.primary} />
@@ -593,7 +606,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                void Linking.openURL("https://churchconnect.org/terms");
+                void Linking.openURL("https://converaserve.com/terms");
               }}
             >
               <FileText size={20} color={Colors.primary} />
@@ -614,6 +627,101 @@ export default function ProfileScreen() {
               onPress={() => setHelpModalVisible(false)}
             >
               <Text style={styles.modalButtonTextSecondary}>Close</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      {/* Delete Account Modal */}
+      <Modal
+        visible={deleteAccountModalVisible}
+        animationType="slide"
+        transparent={true}
+        onRequestClose={() => setDeleteAccountModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Delete Account</Text>
+              <TouchableOpacity
+                onPress={() => {
+                  setDeleteAccountModalVisible(false);
+                  setDeleteConfirmText('');
+                }}
+                style={styles.modalCloseButton}
+              >
+                <X size={24} color={Colors.text} />
+              </TouchableOpacity>
+            </View>
+
+            <View style={styles.deleteWarningContainer}>
+              <AlertTriangle size={32} color={Colors.error} />
+              <Text style={styles.deleteWarningTitle}>This action is permanent</Text>
+              <Text style={styles.deleteWarningText}>
+                Deleting your account will permanently remove your profile, messages, and all associated data. This cannot be undone.
+              </Text>
+            </View>
+
+            <Text style={styles.deleteConfirmLabel}>Type "DELETE" to confirm:</Text>
+            <View style={styles.passwordInputContainer}>
+              <TextInput
+                style={styles.passwordInput}
+                placeholder='Type "DELETE" here'
+                placeholderTextColor={Colors.textTertiary}
+                value={deleteConfirmText}
+                onChangeText={setDeleteConfirmText}
+                autoCapitalize="characters"
+              />
+            </View>
+
+            <TouchableOpacity
+              style={[
+                styles.deleteAccountButton,
+                (deleteConfirmText !== 'DELETE' || isDeletingAccount) && styles.deleteAccountButtonDisabled,
+              ]}
+              onPress={async () => {
+                if (deleteConfirmText !== 'DELETE') return;
+                setIsDeletingAccount(true);
+                try {
+                  const result = await deleteAccount();
+                  if (result.success) {
+                    setDeleteAccountModalVisible(false);
+                    setDeleteConfirmText('');
+                    router.replace('/login' as any);
+                  } else {
+                    if (Platform.OS !== 'web') {
+                      Alert.alert('Error', result.error || 'Failed to delete account');
+                    } else {
+                      alert(result.error || 'Failed to delete account');
+                    }
+                  }
+                } catch {
+                  if (Platform.OS !== 'web') {
+                    Alert.alert('Error', 'Failed to delete account. Please try again.');
+                  } else {
+                    alert('Failed to delete account. Please try again.');
+                  }
+                } finally {
+                  setIsDeletingAccount(false);
+                }
+              }}
+              disabled={deleteConfirmText !== 'DELETE' || isDeletingAccount}
+            >
+              {isDeletingAccount ? (
+                <ActivityIndicator color={Colors.textInverse} />
+              ) : (
+                <Text style={styles.deleteAccountButtonText}>Delete My Account</Text>
+              )}
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.modalButton, styles.modalButtonSecondary]}
+              onPress={() => {
+                setDeleteAccountModalVisible(false);
+                setDeleteConfirmText('');
+              }}
+            >
+              <Text style={styles.modalButtonTextSecondary}>Cancel</Text>
             </TouchableOpacity>
           </View>
         </View>
@@ -1331,5 +1439,50 @@ const styles = StyleSheet.create({
   },
   modalButtonDisabled: {
     opacity: 0.7,
+  },
+  deleteWarningContainer: {
+    alignItems: "center",
+    paddingVertical: 16,
+    paddingHorizontal: 8,
+    marginBottom: 16,
+    backgroundColor: Colors.error + "08",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: Colors.error + "20",
+  },
+  deleteWarningTitle: {
+    fontSize: 18,
+    fontWeight: "700" as const,
+    color: Colors.error,
+    marginTop: 12,
+    marginBottom: 8,
+  },
+  deleteWarningText: {
+    fontSize: 14,
+    color: Colors.textSecondary,
+    textAlign: "center",
+    lineHeight: 20,
+  },
+  deleteConfirmLabel: {
+    fontSize: 14,
+    fontWeight: "600" as const,
+    color: Colors.text,
+    marginBottom: 8,
+  },
+  deleteAccountButton: {
+    backgroundColor: Colors.error,
+    borderRadius: 14,
+    paddingVertical: 16,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 12,
+  },
+  deleteAccountButtonDisabled: {
+    opacity: 0.4,
+  },
+  deleteAccountButtonText: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    color: Colors.textInverse,
   },
 });

@@ -281,7 +281,7 @@ export default function UserManagement() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      void queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       if (Platform.OS !== "web") {
         Alert.alert("Success", "User status updated");
       }
@@ -297,7 +297,7 @@ export default function UserManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      void queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       if (Platform.OS !== "web") {
         Alert.alert("Success", "User deleted successfully");
       }
@@ -318,7 +318,7 @@ export default function UserManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      void queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       setEditingUser(null);
       if (Platform.OS !== "web") {
         Alert.alert("Success", "Profile updated");
@@ -338,7 +338,7 @@ export default function UserManagement() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
+      void queryClient.invalidateQueries({ queryKey: ['adminUsers'] });
       setRoleModalUser(null);
       if (Platform.OS !== "web") {
         Alert.alert("Success", "User role updated");
@@ -354,7 +354,7 @@ export default function UserManagement() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      void queryClient.invalidateQueries({ queryKey: ['invitations'] });
       setShowInviteModal(false);
       setInviteForm({ name: "", email: "", role: "member", ministries: [] });
       Alert.alert("Success", "Invitation sent successfully");
@@ -369,7 +369,7 @@ export default function UserManagement() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      void queryClient.invalidateQueries({ queryKey: ['invitations'] });
       Alert.alert("Success", "Invitation canceled");
     },
     onError: (error: Error) => {
@@ -382,7 +382,7 @@ export default function UserManagement() {
       return { success: true };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['invitations'] });
+      void queryClient.invalidateQueries({ queryKey: ['invitations'] });
       Alert.alert("Success", "Invitation resent");
     },
     onError: (error: Error) => {
@@ -605,7 +605,7 @@ export default function UserManagement() {
             <View style={styles.emptyState}>
               <Mail size={48} color={Colors.textTertiary} />
               <Text style={styles.emptyStateText}>No pending invitations</Text>
-              <Text style={styles.emptyStateSubtext}>Invite users to join Church Connect</Text>
+              <Text style={styles.emptyStateSubtext}>Invite users to join ConveraServe</Text>
             </View>
           ) : (
             invitationsQuery.data?.map((invitation) => (

@@ -7,10 +7,7 @@ import type { User as SupabaseUser, Session } from "@supabase/supabase-js";
 
 export type UserRole = "member" | "leader" | "admin" | "super_admin";
 
-const FALLBACK_SUPER_ADMIN_EMAILS = [
-  "chv1227@gmail.com",
-  "coreytmoss@gmail.com",
-];
+const FALLBACK_SUPER_ADMIN_EMAILS: string[] = [];
 
 let cachedSuperAdminEmails: string[] | null = null;
 let superAdminCacheTime = 0;
@@ -772,6 +769,58 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     }
   }, [state.session]);
 
+  const deleteAccount = useCallback(async () => {
+    if (!state.session?.user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    try {
+      console.log("AuthProvider: Deleting account...");
+
+      const userId = state.session.user.id;
+
+      const { error: profileDeleteError } = await (supabase
+        .from('users') as any)
+        .update({ status: 'deleted', full_name: 'Deleted User', avatar_url: null, phone: null, updated_at: new Date().toISOString() })
+        .eq('id', userId);
+
+      if (profileDeleteError) {
+        console.error("AuthProvider: Profile soft-delete error:", profileDeleteError);
+      }
+
+      const { error: rolesError } = await (supabase
+        .from('user_church_roles') as any)
+        .update({ is_active: false })
+        .eq('user_id', userId);
+
+      if (rolesError) {
+        console.error("AuthProvider: Roles deactivation error:", rolesError);
+      }
+
+      await setStoredOrganization(null);
+      await supabase.auth.signOut();
+
+      setState({
+        user: null,
+        session: null,
+        isLoading: false,
+        isAuthenticated: false,
+        emailVerified: false,
+        currentOrganization: null,
+        currentMembership: null,
+        churchStatus: null,
+        organizations: [],
+        error: null,
+      });
+
+      return { success: true };
+    } catch (error: unknown) {
+      console.error("AuthProvider: Delete account error:", error);
+      const message = error instanceof Error ? error.message : "Failed to delete account. Please try again.";
+      return { success: false, error: message };
+    }
+  }, [state.session]);
+
   const changePassword = useCallback(async (newPassword: string) => {
     if (!state.session) {
       return { success: false, error: "Not authenticated" };
@@ -970,6 +1019,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     login,
     register,
     logout,
+    deleteAccount,
     updateUser,
     refreshUser,
     sendPasswordResetEmail,
@@ -991,7 +1041,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
     state.user, state.session?.access_token, state.isLoading, state.isAuthenticated,
     state.emailVerified, state.currentOrganization, state.currentMembership, state.churchStatus,
     state.organizations, state.error,
-    login, register, logout, updateUser, refreshUser, sendPasswordResetEmail,
+    login, register, logout, deleteAccount, updateUser, refreshUser, sendPasswordResetEmail,
     changePassword, getIdToken, setCurrentOrganization, setOrganizations, clearError,
     isAdmin, isSuperAdmin, isLeader, isOrganizationAdmin, isOrganizationSuperAdmin,
     hasOrganization, isChurchApproved, isChurchPending, refreshOrganizations,
