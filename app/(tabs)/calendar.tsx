@@ -213,7 +213,7 @@ export default function CalendarScreen() {
               <EventCard
                 key={event.id}
                 event={event}
-                onPress={() => console.log("Event pressed:", event.id)}
+                onPress={() => {}}
               />
             ))
           ) : (

@@ -338,7 +338,7 @@ export default function HomeScreen() {
         >
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => {}}
+            onPress={() => router.push("/(tabs)/groups" as Href)}
             activeOpacity={0.7}
           >
             <View style={[styles.statIconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
@@ -352,7 +352,7 @@ export default function HomeScreen() {
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => {}}
+            onPress={() => router.push("/church-management" as Href)}
             activeOpacity={0.7}
           >
             <View style={[styles.statIconContainer, { backgroundColor: themeColors.tertiary + '15' }]}>
@@ -392,7 +392,7 @@ export default function HomeScreen() {
                   <AnnouncementCard
                     key={announcement.id}
                     announcement={announcement}
-                    onPress={() => {}}
+                    onPress={() => router.push("/announcements" as Href)}
                   />
                 ))
               )}
@@ -422,7 +422,7 @@ export default function HomeScreen() {
                   key={event.id}
                   event={event}
                   compact
-                  onPress={() => {}}
+                  onPress={() => router.push("/(tabs)/calendar" as Href)}
                 />
               ))}
             </View>

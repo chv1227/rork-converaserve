@@ -738,7 +738,7 @@ export default function GivingScreen() {
     </ScrollView>
   );
 
-  const renderRecurringTab = () => (
+  const _renderRecurringTab = () => (
     <ScrollView
       style={styles.tabContent}
       showsVerticalScrollIndicator={false}
@@ -848,20 +848,12 @@ export default function GivingScreen() {
             History
           </Text>
         </TouchableOpacity>
-        <TouchableOpacity
-          style={[styles.tab, activeTab === "recurring" && { borderBottomColor: tc.primary }]}
-          onPress={() => setActiveTab("recurring")}
-        >
-          <Repeat size={18} color={activeTab === "recurring" ? tc.primary : tc.textSecondary} />
-          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "recurring" && { color: tc.primary }]}>
-            Recurring
-          </Text>
-        </TouchableOpacity>
+
       </View>
 
       {activeTab === "give" && renderGiveTab()}
       {activeTab === "history" && renderHistoryTab()}
-      {activeTab === "recurring" && renderRecurringTab()}
+
 
       <Modal visible={showConfirmModal} transparent animationType="fade">
         <View style={[styles.modalOverlay, { backgroundColor: tc.overlay }]}>

@@ -123,7 +123,7 @@ export default function RegisterScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={[Colors.primary, "#0D5C56"]}
+        colors={['#1B3A5C', '#0F2440']}
         style={styles.headerGradient}
       >
         <View style={[styles.headerContent, { paddingTop: insets.top + 16 }]}>
