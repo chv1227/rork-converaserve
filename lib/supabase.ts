@@ -1216,6 +1216,95 @@ export type Database = {
           updated_at?: string;
         };
       };
+      donations: {
+        Row: {
+          id: string;
+          church_id: string;
+          user_id: string;
+          profile_id: string | null;
+          amount: number;
+          currency: string;
+          giving_type: string;
+          frequency: string;
+          ministry_id: string | null;
+          status: string;
+          stripe_session_id: string | null;
+          stripe_payment_intent_id: string | null;
+          note: string | null;
+          is_anonymous: boolean;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          user_id: string;
+          profile_id?: string | null;
+          amount: number;
+          currency?: string;
+          giving_type?: string;
+          frequency?: string;
+          ministry_id?: string | null;
+          status?: string;
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          note?: string | null;
+          is_anonymous?: boolean;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          status?: string;
+          stripe_session_id?: string | null;
+          stripe_payment_intent_id?: string | null;
+          note?: string | null;
+          is_anonymous?: boolean;
+          updated_at?: string;
+        };
+      };
+      recurring_giving: {
+        Row: {
+          id: string;
+          church_id: string;
+          user_id: string;
+          amount: number;
+          currency: string;
+          giving_type: string;
+          frequency: string;
+          ministry_id: string | null;
+          is_active: boolean;
+          next_date: string | null;
+          stripe_subscription_id: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          church_id: string;
+          user_id: string;
+          amount: number;
+          currency?: string;
+          giving_type?: string;
+          frequency?: string;
+          ministry_id?: string | null;
+          is_active?: boolean;
+          next_date?: string | null;
+          stripe_subscription_id?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          amount?: number;
+          giving_type?: string;
+          frequency?: string;
+          ministry_id?: string | null;
+          is_active?: boolean;
+          next_date?: string | null;
+          stripe_subscription_id?: string | null;
+          updated_at?: string;
+        };
+      };
     };
     Functions: {
       user_belongs_to_church: {

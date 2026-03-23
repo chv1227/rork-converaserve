@@ -563,10 +563,10 @@ CREATE POLICY "Admins can view audit logs"
         OR public.user_is_admin_of_church(church_id)
     );
 
--- Only system can insert audit logs (via SECURITY DEFINER functions)
-CREATE POLICY "System can insert audit logs"
+-- Authenticated users can insert audit logs for themselves
+CREATE POLICY "Authenticated users can insert audit logs"
     ON public.audit_logs FOR INSERT
-    WITH CHECK (TRUE);
+    WITH CHECK (auth.uid() IS NOT NULL AND (user_id = auth.uid() OR user_id IS NULL));
 
 -- ============================================
 -- TENANT_SETTINGS POLICIES
@@ -592,10 +592,10 @@ CREATE POLICY "Update own notifications"
     ON public.system_notifications FOR UPDATE
     USING (user_id = auth.uid());
 
--- System can insert notifications
-CREATE POLICY "System can insert notifications"
+-- Authenticated users can insert notifications (for system use)
+CREATE POLICY "Authenticated users can insert notifications"
     ON public.system_notifications FOR INSERT
-    WITH CHECK (TRUE);
+    WITH CHECK (auth.uid() IS NOT NULL);
 
 -- ============================================
 -- FEATURE_FLAGS POLICIES

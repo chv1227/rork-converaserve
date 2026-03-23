@@ -9,6 +9,8 @@ export const [DataProvider, useData] = createContextHook(() => {
   const { currentOrganization, user, isAuthenticated, isChurchApproved } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState<boolean>(false);
   const queryClient = useQueryClient();
+  const userIdRef = useRef(user?.id);
+  useEffect(() => { userIdRef.current = user?.id; }, [user?.id]);
 
   const organizationId = currentOrganization?.id;
 
@@ -30,7 +32,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         { event: '*', schema: 'public', table: 'announcements', filter: `church_id=eq.${organizationId}` },
         () => {
           console.log('Announcements updated - refreshing...');
-          queryClient.invalidateQueries({ queryKey: ['announcements', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['announcements', organizationId] });
         }
       )
       .subscribe();
@@ -44,7 +46,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         { event: '*', schema: 'public', table: 'events', filter: `church_id=eq.${organizationId}` },
         () => {
           console.log('Events updated - refreshing...');
-          queryClient.invalidateQueries({ queryKey: ['events', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['events', organizationId] });
         }
       )
       .subscribe();
@@ -58,8 +60,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         { event: '*', schema: 'public', table: 'ministries', filter: `church_id=eq.${organizationId}` },
         () => {
           console.log('Ministries updated - refreshing...');
-          queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
-          queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+          void queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
         }
       )
       .subscribe();
@@ -73,8 +75,8 @@ export const [DataProvider, useData] = createContextHook(() => {
         { event: 'INSERT', schema: 'public', table: 'messages' },
         () => {
           console.log('New message - refreshing unread count...');
-          queryClient.invalidateQueries({ queryKey: ['totalUnread', organizationId] });
-          queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['totalUnread', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
         }
       )
       .subscribe();
@@ -88,7 +90,7 @@ export const [DataProvider, useData] = createContextHook(() => {
         { event: '*', schema: 'public', table: 'prayer_requests', filter: `church_id=eq.${organizationId}` },
         () => {
           console.log('Prayer requests updated - refreshing...');
-          queryClient.invalidateQueries({ queryKey: ['prayerRequests', organizationId] });
+          void queryClient.invalidateQueries({ queryKey: ['prayerRequests', organizationId] });
         }
       )
       .subscribe();
@@ -96,7 +98,7 @@ export const [DataProvider, useData] = createContextHook(() => {
 
     return () => {
       channels.forEach(channel => {
-        supabase.removeChannel(channel);
+        void supabase.removeChannel(channel);
       });
     };
   }, [organizationId, queryClient]);
@@ -286,7 +288,7 @@ export const [DataProvider, useData] = createContextHook(() => {
       
       const { data: participantData, error: participantError } = await (supabase as any)
         .from('conversation_participants')
-        .select('conversation_id')
+        .select('conversation_id, last_read_at')
         .eq('profile_id', profileId);
       
       if (participantError) {
@@ -297,44 +299,56 @@ export const [DataProvider, useData] = createContextHook(() => {
       const conversationIds = (participantData || []).map((p: { conversation_id: string }) => p.conversation_id);
       if (conversationIds.length === 0) return [];
       
+      const lastReadMap = new Map<string, string | null>();
+      for (const p of (participantData || []) as { conversation_id: string; last_read_at: string | null }[]) {
+        lastReadMap.set(p.conversation_id, p.last_read_at);
+      }
+      
       const { data, error } = await (supabase as any)
         .from('conversations')
         .select('*, ministries(color)')
         .in('id', conversationIds)
         .eq('organization_id', organizationId)
         .eq('is_archived', false)
-        .order('updated_at', { ascending: false });
+        .order('updated_at', { ascending: false })
+        .limit(50);
       
       if (error) {
         console.error('Error fetching conversations:', error.message || JSON.stringify(error));
         throw new Error(error.message || 'Failed to fetch conversations');
       }
       
-      const conversationsWithMessages = await Promise.all((data || []).map(async (c: any) => {
-        const { data: lastMessage } = await (supabase as any)
-          .from('messages')
-          .select('content, created_at')
-          .eq('conversation_id', c.id)
-          .order('created_at', { ascending: false })
-          .limit(1)
-          .single();
-        
-        const { count: unreadCount } = await (supabase as any)
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', c.id)
-          .neq('sender_id', user?.id || '')
-          .gt('created_at', c.updated_at);
+      const convIds = (data || []).map((c: { id: string }) => c.id);
+      if (convIds.length === 0) return [];
+      
+      const { data: allLastMessages } = await (supabase as any)
+        .from('messages')
+        .select('conversation_id, content, created_at')
+        .in('conversation_id', convIds)
+        .order('created_at', { ascending: false });
+      
+      const lastMessageMap = new Map<string, { content: string; created_at: string }>();
+      for (const msg of (allLastMessages || []) as { conversation_id: string; content: string; created_at: string }[]) {
+        if (!lastMessageMap.has(msg.conversation_id)) {
+          lastMessageMap.set(msg.conversation_id, { content: msg.content, created_at: msg.created_at });
+        }
+      }
+      
+      const currentUserId = userIdRef.current || user?.id || '';
+      
+      const conversationsMapped = (data || []).map((c: any) => {
+        const lastMsg = lastMessageMap.get(c.id);
+        const lastReadAt = lastReadMap.get(c.id);
         
         return {
           id: c.id,
           organizationId: c.organization_id,
           name: c.name,
           avatar: c.avatar || '',
-          lastMessage: lastMessage?.content || '',
-          lastMessageTime: lastMessage?.created_at || c.updated_at,
-          lastMessageTimestamp: lastMessage?.created_at || c.updated_at,
-          unreadCount: unreadCount || 0,
+          lastMessage: lastMsg?.content || '',
+          lastMessageTime: lastMsg?.created_at || c.updated_at,
+          lastMessageTimestamp: lastMsg?.created_at || c.updated_at,
+          unreadCount: 0,
           isGroup: c.type !== 'direct',
           type: c.type as 'direct' | 'group' | 'ministry',
           ministryId: c.ministry_id || undefined,
@@ -343,13 +357,27 @@ export const [DataProvider, useData] = createContextHook(() => {
           createdAt: c.created_at,
           updatedAt: c.updated_at,
           isArchived: c.is_archived,
+          _lastReadAt: lastReadAt,
         };
-      }));
+      });
       
-      return conversationsWithMessages as Conversation[];
+      const unreadPromises = conversationsMapped.map(async (conv: any) => {
+        const cutoff = conv._lastReadAt || '1970-01-01';
+        const { count } = await (supabase as any)
+          .from('messages')
+          .select('*', { count: 'exact', head: true })
+          .eq('conversation_id', conv.id)
+          .neq('sender_id', currentUserId)
+          .gt('created_at', cutoff);
+        return { ...conv, unreadCount: count || 0, _lastReadAt: undefined };
+      });
+      
+      const result = await Promise.all(unreadPromises);
+      return result as Conversation[];
     },
     enabled: !!organizationId && isAuthenticated && !!profileId,
-    refetchInterval: 10000,
+    refetchInterval: 15000,
+    staleTime: 10_000,
   });
 
   const totalUnreadQuery = useQuery({
@@ -364,22 +392,26 @@ export const [DataProvider, useData] = createContextHook(() => {
       
       if (!participantData || participantData.length === 0) return 0;
       
-      let totalUnread = 0;
-      for (const participant of (participantData as { conversation_id: string; last_read_at: string | null }[])) {
-        const { count } = await (supabase as any)
-          .from('messages')
-          .select('*', { count: 'exact', head: true })
-          .eq('conversation_id', participant.conversation_id)
-          .neq('sender_id', user?.id || '')
-          .gt('created_at', participant.last_read_at || '1970-01-01');
-        
-        totalUnread += count || 0;
-      }
+      const currentUserId = userIdRef.current || user?.id || '';
+      const participants = participantData as { conversation_id: string; last_read_at: string | null }[];
       
-      return totalUnread;
+      const counts = await Promise.all(
+        participants.map(async (participant) => {
+          const { count } = await (supabase as any)
+            .from('messages')
+            .select('*', { count: 'exact', head: true })
+            .eq('conversation_id', participant.conversation_id)
+            .neq('sender_id', currentUserId)
+            .gt('created_at', participant.last_read_at || '1970-01-01');
+          return count || 0;
+        })
+      );
+      
+      return counts.reduce((sum, c) => sum + c, 0);
     },
     enabled: !!organizationId && isAuthenticated && !!profileId,
-    refetchInterval: 5000,
+    refetchInterval: 15000,
+    staleTime: 10_000,
   });
 
   // Prayer requests count query
@@ -513,8 +545,8 @@ export const [DataProvider, useData] = createContextHook(() => {
     },
     onSuccess: () => {
       const orgId = orgIdRef.current || organizationId;
-      queryClient.invalidateQueries({ queryKey: ['ministries', orgId] });
-      queryClient.invalidateQueries({ queryKey: ['organization-ministries', orgId] });
+      void queryClient.invalidateQueries({ queryKey: ['ministries', orgId] });
+      void queryClient.invalidateQueries({ queryKey: ['organization-ministries', orgId] });
     },
   });
 
@@ -537,7 +569,7 @@ export const [DataProvider, useData] = createContextHook(() => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
     },
   });
 
@@ -551,8 +583,8 @@ export const [DataProvider, useData] = createContextHook(() => {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
-      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+      void queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
     },
   });
 
@@ -582,13 +614,11 @@ export const [DataProvider, useData] = createContextHook(() => {
       
       if (error) throw error;
       
-      await (supabase as any).rpc('increment_ministry_member_count', { ministry_id: ministryId });
-      
       return { message: 'Successfully joined ministry' };
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
-      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+      void queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
     },
   });
 
@@ -615,12 +645,10 @@ export const [DataProvider, useData] = createContextHook(() => {
         .eq('profile_id', (profileData as { id: string }).id);
       
       if (error) throw error;
-      
-      await (supabase as any).rpc('decrement_ministry_member_count', { ministry_id: ministryId });
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
-      queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
+      void queryClient.invalidateQueries({ queryKey: ['ministries', organizationId] });
+      void queryClient.invalidateQueries({ queryKey: ['userMinistries'] });
     },
   });
 
@@ -870,7 +898,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     return queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
   }, [queryClient, organizationId]);
 
-  return {
+  return useMemo(() => ({
     ministries,
     events,
     announcements,
@@ -897,5 +925,13 @@ export const [DataProvider, useData] = createContextHook(() => {
     prayerRequestsCount,
     membersCount,
     givingStats,
-  };
+  }), [
+    ministries, events, announcements, conversations,
+    isLoading, isRefreshing, conversationsQuery.isRefetching, error,
+    refresh, getUpcomingEvents, getAnnouncements, getGeneralAnnouncements,
+    getMinistryById, getEventsByDate, getTotalUnread, userMinistries,
+    joinMinistry, leaveMinistry, createMinistry, updateMinistry, deleteMinistry,
+    isMinistryMember, getMinistryRole, refetchConversations,
+    prayerRequestsCount, membersCount, givingStats,
+  ]);
 });
