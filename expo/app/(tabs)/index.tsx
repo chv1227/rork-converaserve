@@ -2,17 +2,16 @@ import React, { useCallback, useState, useRef, useEffect, useMemo } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, Calendar, Users, Heart, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2 } from "lucide-react-native";
+import { Bell, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2, Heart, Pin, Globe, Users } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
-import AnnouncementCard from "@/components/AnnouncementCard";
-import EventCard from "@/components/EventCard";
 import PendingApprovalBanner from "@/components/PendingApprovalBanner";
 import { useScalePress } from "@/hooks/useAnimations";
+import { Announcement } from "@/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -85,6 +84,21 @@ function QuickActionCard({ icon, title, subtitle, colors, onPress, delay }: Quic
   );
 }
 
+function formatAnnouncementDate(dateStr: string): string {
+  try {
+    const date = new Date(dateStr);
+    const now = new Date();
+    const diffMs = now.getTime() - date.getTime();
+    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+    if (diffDays === 0) return "Today";
+    if (diffDays === 1) return "Yesterday";
+    if (diffDays < 7) return `${diffDays}d ago`;
+    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
+  } catch {
+    return "";
+  }
+}
+
 export default function HomeScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
@@ -94,11 +108,8 @@ export default function HomeScreen() {
     isLoading, 
     isRefreshing, 
     refresh, 
-    getUpcomingEvents, 
     getGeneralAnnouncements, 
-    userMinistries,
     getTotalUnread,
-    prayerRequestsCount,
     membersCount,
     givingStats,
     announcements: allAnnouncements,
@@ -132,8 +143,7 @@ export default function HomeScreen() {
     ]).start();
   }, [headerAnim, heroAnim, contentAnim]);
 
-  const announcements = getGeneralAnnouncements(2);
-  const upcomingEvents = getUpcomingEvents(3);
+  const announcements = getGeneralAnnouncements(5);
   const totalUnread = getTotalUnread();
   const greeting = useMemo(() => getTimeBasedGreeting(), []);
   const firstName = user?.name?.split(" ")[0] || "Friend";
@@ -143,13 +153,47 @@ export default function HomeScreen() {
     try {
       await refresh();
     } catch {
-      // Refresh error handled silently
+      // handled silently
     } finally {
       setLocalRefreshing(false);
     }
   }, [refresh]);
 
   const notificationAnim = useScalePress();
+
+  const renderAnnouncementItem = useCallback((announcement: Announcement) => {
+    const priorityColor = announcement.priority === 'high' ? Colors.error : announcement.priority === 'low' ? Colors.textTertiary : Colors.primary;
+
+    return (
+      <TouchableOpacity
+        key={announcement.id}
+        style={[styles.announcementItem, { backgroundColor: themeColors.surface }]}
+        onPress={() => router.push("/announcements" as Href)}
+        activeOpacity={0.7}
+      >
+        <View style={styles.announcementItemTop}>
+          {announcement.isPinned && (
+            <View style={styles.pinnedBadge}>
+              <Pin size={10} color={themeColors.primary} />
+              <Text style={[styles.pinnedText, { color: themeColors.primary }]}>Pinned</Text>
+            </View>
+          )}
+          <View style={[styles.typeBadge, { backgroundColor: announcement.ministryId ? themeColors.secondary + '15' : themeColors.primary + '15' }]}>
+            {announcement.ministryId ? <Users size={10} color={themeColors.secondary} /> : <Globe size={10} color={themeColors.primary} />}
+            <Text style={[styles.typeBadgeText, { color: announcement.ministryId ? themeColors.secondary : themeColors.primary }]}>
+              {announcement.ministryId ? (announcement.ministryName || 'Ministry') : 'General'}
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.announcementItemTitle, { color: themeColors.text }]} numberOfLines={2}>{announcement.title}</Text>
+        <Text style={[styles.announcementItemContent, { color: themeColors.textSecondary }]} numberOfLines={2}>{announcement.content}</Text>
+        <View style={styles.announcementItemFooter}>
+          <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+          <Text style={[styles.announcementItemDate, { color: themeColors.textTertiary }]}>{formatAnnouncementDate(announcement.date)}</Text>
+        </View>
+      </TouchableOpacity>
+    );
+  }, [themeColors, router]);
 
   return (
     <View style={styles.container}>
@@ -176,7 +220,6 @@ export default function HomeScreen() {
                   <Text style={styles.orgName} numberOfLines={1}>{currentOrganization.name}</Text>
                 </View>
               )}
-
             </View>
             <Text style={styles.greetingSmall}>{greeting}</Text>
             <Text style={styles.userName}>{firstName}</Text>
@@ -228,8 +271,8 @@ export default function HomeScreen() {
             </View>
             <Text style={styles.heroTitle}>Stay Connected</Text>
             <Text style={styles.heroSubtitle}>
-              {upcomingEvents.length > 0 
-                ? `${upcomingEvents.length} upcoming event${upcomingEvents.length > 1 ? 's' : ''} this week`
+              {allAnnouncements.length > 0 
+                ? `${allAnnouncements.length} announcement${allAnnouncements.length > 1 ? 's' : ''} from your church`
                 : "Check out what's happening in your community"
               }
             </Text>
@@ -263,27 +306,27 @@ export default function HomeScreen() {
             delay={0}
           />
           <QuickActionCard
-            icon={<Calendar size={22} color={Colors.textInverse} />}
-            title="Events"
-            subtitle={`${upcomingEvents.length} upcoming`}
-            colors={['#5A8F8F', '#4A7A7A']}
-            onPress={() => router.push("/(tabs)/calendar" as Href)}
-            delay={50}
-          />
-          <QuickActionCard
             icon={<MessageCircle size={22} color={Colors.textInverse} />}
             title="Messages"
             subtitle={totalUnread > 0 ? `${totalUnread} unread` : "Chat"}
             colors={['#6B8F71', '#5A7D60']}
             onPress={() => router.push("/(tabs)/messages" as Href)}
-            delay={100}
+            delay={50}
           />
           <QuickActionCard
             icon={<Heart size={22} color={Colors.textInverse} />}
             title="Giving"
-            subtitle={givingStats.thisMonth > 0 ? `${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"}
+            subtitle={givingStats.thisMonth > 0 ? `$${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"}
             colors={['#C8943E', '#A67A2E']}
-            onPress={() => router.push("/giving" as Href)}
+            onPress={() => router.push("/(tabs)/giving" as Href)}
+            delay={100}
+          />
+          <QuickActionCard
+            icon={<Users size={22} color={Colors.textInverse} />}
+            title="Community"
+            subtitle={`${membersCount} members`}
+            colors={['#5A8F8F', '#4A7A7A']}
+            onPress={() => router.push("/(tabs)/profile" as Href)}
             delay={150}
           />
         </View>
@@ -299,64 +342,25 @@ export default function HomeScreen() {
         >
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => router.push("/(tabs)/calendar" as Href)}
+            onPress={() => router.push("/(tabs)/messages" as Href)}
             activeOpacity={0.7}
           >
             <View style={[styles.statIconContainer, { backgroundColor: themeColors.primary + '15' }]}>
-              <Calendar size={20} color={themeColors.primary} />
+              <MessageCircle size={20} color={themeColors.primary} />
             </View>
             <View style={styles.statContent}>
-              <Text style={[styles.statValue, { color: themeColors.text }]}>{upcomingEvents.length}</Text>
-              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Events This Week</Text>
+              <Text style={[styles.statValue, { color: themeColors.text }]}>{totalUnread}</Text>
+              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Unread Messages</Text>
             </View>
             <ChevronRight size={18} color={themeColors.textTertiary} />
           </TouchableOpacity>
           <TouchableOpacity 
             style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => router.push("/(tabs)/groups" as Href)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.statIconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
-              <Users size={20} color={themeColors.secondary} />
-            </View>
-            <View style={styles.statContent}>
-              <Text style={[styles.statValue, { color: themeColors.text }]}>{userMinistries.length}</Text>
-              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Your Ministries</Text>
-            </View>
-            <ChevronRight size={18} color={themeColors.textTertiary} />
-          </TouchableOpacity>
-        </Animated.View>
-
-        <Animated.View 
-          style={[
-            styles.statsContainer,
-            {
-              opacity: contentAnim,
-              transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
-            }
-          ]}
-        >
-          <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => router.push("/(tabs)/groups" as Href)}
+            onPress={() => router.push("/(tabs)/giving" as Href)}
             activeOpacity={0.7}
           >
             <View style={[styles.statIconContainer, { backgroundColor: themeColors.secondary + '15' }]}>
               <Heart size={20} color={themeColors.secondary} />
-            </View>
-            <View style={styles.statContent}>
-              <Text style={[styles.statValue, { color: themeColors.text }]}>{prayerRequestsCount.active}</Text>
-              <Text style={[styles.statLabel, { color: themeColors.textSecondary }]}>Prayer Requests</Text>
-            </View>
-            <ChevronRight size={18} color={themeColors.textTertiary} />
-          </TouchableOpacity>
-          <TouchableOpacity 
-            style={[styles.statCard, { backgroundColor: themeColors.surface }]}
-            onPress={() => router.push("/church-management" as Href)}
-            activeOpacity={0.7}
-          >
-            <View style={[styles.statIconContainer, { backgroundColor: themeColors.tertiary + '15' }]}>
-              <Users size={20} color={themeColors.tertiary} />
             </View>
             <View style={styles.statContent}>
               <Text style={[styles.statValue, { color: themeColors.text }]}>{membersCount}</Text>
@@ -388,90 +392,31 @@ export default function HomeScreen() {
                   <ActivityIndicator size="small" color={Colors.primary} />
                 </View>
               ) : (
-                announcements.map((announcement) => (
-                  <AnnouncementCard
-                    key={announcement.id}
-                    announcement={announcement}
-                    onPress={() => router.push("/announcements" as Href)}
-                  />
-                ))
+                announcements.slice(0, 4).map(renderAnnouncementItem)
               )}
             </View>
           </Animated.View>
         )}
 
-        {upcomingEvents.length > 0 && (
+        {announcements.length === 0 && !isLoading && (
           <Animated.View 
             style={[
-              styles.section,
+              styles.emptyAnnouncementsSection,
               {
                 opacity: contentAnim,
                 transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
               }
             ]}
           >
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Upcoming Events</Text>
-              <TouchableOpacity onPress={() => router.push("/(tabs)/calendar" as Href)}>
-                <Text style={[styles.sectionAction, { color: themeColors.primary }]}>See all</Text>
-              </TouchableOpacity>
+            <View style={[styles.emptyAnnouncementsCard, { backgroundColor: themeColors.surface }]}>
+              <View style={[styles.emptyIconCircle, { backgroundColor: themeColors.primary + '12' }]}>
+                <Megaphone size={28} color={themeColors.primary} />
+              </View>
+              <Text style={[styles.emptyTitle, { color: themeColors.text }]}>No Announcements Yet</Text>
+              <Text style={[styles.emptySubtitle, { color: themeColors.textSecondary }]}>
+                Announcements from your church will appear here
+              </Text>
             </View>
-            <View style={styles.eventsContainer}>
-              {upcomingEvents.slice(0, 2).map((event) => (
-                <EventCard
-                  key={event.id}
-                  event={event}
-                  compact
-                  onPress={() => router.push("/(tabs)/calendar" as Href)}
-                />
-              ))}
-            </View>
-          </Animated.View>
-        )}
-
-        {userMinistries.length > 0 && (
-          <Animated.View 
-            style={[
-              styles.section,
-              {
-                opacity: contentAnim,
-                transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }]
-              }
-            ]}
-          >
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: themeColors.text }]}>Your Ministries</Text>
-              <TouchableOpacity onPress={() => router.push("/(tabs)/groups" as Href)}>
-                <Text style={[styles.sectionAction, { color: themeColors.primary }]}>View all</Text>
-              </TouchableOpacity>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.ministriesHorizontal}
-            >
-              {userMinistries.slice(0, 5).map((ministry) => (
-                <TouchableOpacity
-                  key={ministry.id}
-                  style={styles.ministryCard}
-                  onPress={() => router.push(`/group/${ministry.id}` as Href)}
-                  activeOpacity={0.8}
-                >
-                  <Image
-                    source={{ uri: ministry.image }}
-                    style={styles.ministryImage}
-                    contentFit="cover"
-                  />
-                  <LinearGradient
-                    colors={['transparent', 'rgba(0,0,0,0.7)']}
-                    style={styles.ministryGradient}
-                  />
-                  <View style={styles.ministryInfo}>
-                    <Text style={styles.ministryName} numberOfLines={2}>{ministry.name}</Text>
-                  </View>
-                </TouchableOpacity>
-              ))}
-            </ScrollView>
           </Animated.View>
         )}
 
@@ -523,7 +468,6 @@ const styles = StyleSheet.create({
     gap: 8,
     marginBottom: 6,
   },
-
   greetingSmall: {
     fontSize: 14,
     color: Colors.textInverse,
@@ -724,42 +668,122 @@ const styles = StyleSheet.create({
   },
   announcementsContainer: {
     paddingHorizontal: 20,
+    gap: 12,
   },
-  eventsContainer: {
+  announcementItem: {
+    borderRadius: 16,
+    padding: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      },
+    }),
+  },
+  announcementItemTop: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    marginBottom: 10,
+  },
+  pinnedBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+  },
+  pinnedText: {
+    fontSize: 11,
+    fontWeight: "600" as const,
+  },
+  typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 8,
+  },
+  typeBadgeText: {
+    fontSize: 10,
+    fontWeight: "600" as const,
+    textTransform: "uppercase" as const,
+  },
+  announcementItemTitle: {
+    fontSize: 16,
+    fontWeight: "700" as const,
+    lineHeight: 22,
+    marginBottom: 6,
+  },
+  announcementItemContent: {
+    fontSize: 14,
+    lineHeight: 20,
+    marginBottom: 10,
+  },
+  announcementItemFooter: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+  },
+  priorityDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  announcementItemDate: {
+    fontSize: 12,
+  },
+  emptyAnnouncementsSection: {
     paddingHorizontal: 20,
+    paddingTop: 24,
+  },
+  emptyAnnouncementsCard: {
+    borderRadius: 20,
+    padding: 32,
+    alignItems: "center",
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 8,
+      },
+      android: {
+        elevation: 2,
+      },
+      web: {
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+      },
+    }),
+  },
+  emptyIconCircle: {
+    width: 64,
+    height: 64,
+    borderRadius: 32,
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: 16,
+  },
+  emptyTitle: {
+    fontSize: 17,
+    fontWeight: "600" as const,
+    marginBottom: 6,
+  },
+  emptySubtitle: {
+    fontSize: 14,
+    textAlign: "center",
+    lineHeight: 20,
   },
   loadingContainer: {
     padding: 24,
     alignItems: "center",
-  },
-  ministriesHorizontal: {
-    paddingHorizontal: 20,
-    gap: 14,
-  },
-  ministryCard: {
-    width: 150,
-    height: 100,
-    borderRadius: 16,
-    overflow: "hidden",
-  },
-  ministryImage: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  ministryGradient: {
-    ...StyleSheet.absoluteFillObject,
-  },
-  ministryInfo: {
-    position: "absolute",
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 12,
-  },
-  ministryName: {
-    fontSize: 13,
-    fontWeight: "600" as const,
-    color: Colors.textInverse,
-    lineHeight: 17,
   },
   bottomSpacer: {
     height: 100,

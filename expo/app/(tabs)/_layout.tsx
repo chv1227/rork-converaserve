@@ -1,10 +1,9 @@
 import { Tabs } from "expo-router";
-import { Home, User, MessageCircle } from "lucide-react-native";
+import { Home, MessageCircle, Heart, User } from "lucide-react-native";
 import React from "react";
 import { Platform } from "react-native";
 
 import { useTheme } from "@/providers/ThemeProvider";
-import TabBarDropdown from "@/components/TabBarDropdown";
 
 export default function TabLayout() {
   const { colors } = useTheme();
@@ -30,17 +29,10 @@ export default function TabLayout() {
       }}
     >
       <Tabs.Screen
-        name="more"
+        name="index"
         options={{
-          title: "More",
-          tabBarButton: (props) => (
-            <TabBarDropdown isActive={props.accessibilityState?.selected} />
-          ),
-        }}
-        listeners={{
-          tabPress: (e) => {
-            e.preventDefault();
-          },
+          title: "Home",
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -51,10 +43,10 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="index"
+        name="giving"
         options={{
-          title: "Home",
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          title: "Giving",
+          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -82,7 +74,12 @@ export default function TabLayout() {
           href: null,
         }}
       />
-      
+      <Tabs.Screen
+        name="more"
+        options={{
+          href: null,
+        }}
+      />
     </Tabs>
   );
 }

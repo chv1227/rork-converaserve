@@ -12,12 +12,10 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
-import { Stack } from "expo-router";
 import * as Linking from "expo-linking";
 import {
   Heart,
   DollarSign,
-  Calendar,
   Check,
   X,
   CreditCard,
@@ -27,6 +25,7 @@ import {
   History,
   ShieldCheck,
 } from "lucide-react-native";
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useQueryClient, useQuery } from "@tanstack/react-query";
 import * as WebBrowser from "expo-web-browser";
 import Colors from "@/constants/colors";
@@ -34,9 +33,9 @@ import { useTheme } from "@/providers/ThemeProvider";
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { trpc, trpcClient } from "@/lib/trpc";
-import { GivingType, GivingFrequency, Donation, RecurringGiving } from "@/types";
+import { GivingType, GivingFrequency, Donation } from "@/types";
 
-type Tab = "give" | "history" | "recurring";
+type Tab = "give" | "history";
 
 const PRESET_AMOUNTS = [25, 50, 100, 250, 500, 1000];
 
@@ -47,7 +46,8 @@ const FREQUENCY_OPTIONS: { value: GivingFrequency; label: string; description: s
   { value: "monthly", label: "Monthly", description: "Every month" },
 ];
 
-export default function GivingScreen() {
+export default function GivingTabScreen() {
+  const insets = useSafeAreaInsets();
   const queryClient = useQueryClient();
   const { colors: tc } = useTheme();
   const { user, currentOrganization, isChurchApproved } = useAuth();
@@ -133,12 +133,6 @@ export default function GivingScreen() {
       })) as Donation[];
     },
     enabled: !!user && !!organizationId && activeTab === "history",
-  });
-
-  const recurringQuery = useQuery({
-    queryKey: ['giving', 'recurring', organizationId, user?.id],
-    queryFn: async () => [] as RecurringGiving[],
-    enabled: !!user && activeTab === "recurring",
   });
 
   const checkoutMutation = trpc.stripe.createCheckoutSession.useMutation();
@@ -239,21 +233,16 @@ export default function GivingScreen() {
         churchName: currentOrganization?.name,
       });
 
-      console.log('Giving: Checkout session result:', JSON.stringify(result));
-
       if (!result.url) {
-        console.error('Giving: No checkout URL in result:', result);
         throw new Error('No checkout URL returned from server');
       }
 
       setShowConfirmModal(false);
       setPendingSessionId(result.sessionId);
-      console.log('Giving: Opening Stripe checkout URL:', result.url);
 
       if (Platform.OS === 'web') {
         try {
           const supported = await Linking.canOpenURL(result.url);
-          console.log('Giving: Can open URL:', supported);
           if (supported) {
             await Linking.openURL(result.url);
           } else {
@@ -279,13 +268,9 @@ export default function GivingScreen() {
         }, 2000);
       } else {
         const redirectUrl = Linking.createURL('payment-success');
-        console.log('Giving: Native redirect URL:', redirectUrl);
-
         const browserResult = await WebBrowser.openAuthSessionAsync(result.url, redirectUrl);
-        console.log('Giving: Browser result type:', browserResult.type);
 
         if (browserResult.type === 'success' && browserResult.url) {
-          console.log('Giving: Browser returned URL:', browserResult.url);
           try {
             const returnedUrl = new URL(browserResult.url);
             const returnedSessionId = returnedUrl.searchParams.get('session_id') || result.sessionId;
@@ -295,7 +280,6 @@ export default function GivingScreen() {
             await handlePaymentComplete(result.sessionId, numAmount, givingType, frequency, note, selectedMinistryId, organizationId);
           }
         } else if (browserResult.type === 'cancel' || browserResult.type === 'dismiss') {
-          console.log('Giving: Browser was dismissed/cancelled');
           Alert.alert(
             'Payment Status',
             'Did you complete the payment before closing?',
@@ -305,7 +289,6 @@ export default function GivingScreen() {
             ]
           );
         } else {
-          console.log('Giving: Unexpected browser result:', JSON.stringify(browserResult));
           setPendingSessionId(null);
         }
       }
@@ -318,21 +301,6 @@ export default function GivingScreen() {
         : `Failed to initiate payment: ${err?.message || 'Unknown error'}`;
       Alert.alert('Payment Error', errorMsg);
     }
-  };
-
-  const handleCancelRecurring = (recurring: RecurringGiving) => {
-    Alert.alert(
-      "Cancel Recurring Giving",
-      `Are you sure you want to cancel your ${recurring.frequency.replace("_", "-")} ${recurring.type} of ${recurring.amount.toFixed(2)}?`,
-      [
-        { text: "No", style: "cancel" },
-        {
-          text: "Yes, Cancel",
-          style: "destructive",
-          onPress: () => console.log('Cancel recurring:', recurring.id),
-        },
-      ]
-    );
   };
 
   const formatDate = (dateString: string) => {
@@ -402,28 +370,9 @@ export default function GivingScreen() {
             ]}
             onPress={() => setGivingType("tithe")}
           >
-            <DollarSign
-              size={24}
-              color={givingType === "tithe" ? "#fff" : tc.primary}
-            />
-            <Text
-              style={[
-                styles.typeButtonText,
-                { color: tc.text },
-                givingType === "tithe" && styles.typeButtonTextActive,
-              ]}
-            >
-              Tithe
-            </Text>
-            <Text
-              style={[
-                styles.typeButtonDescription,
-                { color: tc.textSecondary },
-                givingType === "tithe" && styles.typeButtonDescriptionActive,
-              ]}
-            >
-              10% of income
-            </Text>
+            <DollarSign size={24} color={givingType === "tithe" ? "#fff" : tc.primary} />
+            <Text style={[styles.typeButtonText, { color: tc.text }, givingType === "tithe" && styles.typeButtonTextActive]}>Tithe</Text>
+            <Text style={[styles.typeButtonDescription, { color: tc.textSecondary }, givingType === "tithe" && styles.typeButtonDescriptionActive]}>10% of income</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -433,28 +382,9 @@ export default function GivingScreen() {
             ]}
             onPress={() => setGivingType("offering")}
           >
-            <Gift
-              size={24}
-              color={givingType === "offering" ? "#fff" : tc.secondary}
-            />
-            <Text
-              style={[
-                styles.typeButtonText,
-                { color: tc.text },
-                givingType === "offering" && styles.typeButtonTextActive,
-              ]}
-            >
-              Offering
-            </Text>
-            <Text
-              style={[
-                styles.typeButtonDescription,
-                { color: tc.textSecondary },
-                givingType === "offering" && styles.typeButtonDescriptionActive,
-              ]}
-            >
-              Additional gift
-            </Text>
+            <Gift size={24} color={givingType === "offering" ? "#fff" : tc.secondary} />
+            <Text style={[styles.typeButtonText, { color: tc.text }, givingType === "offering" && styles.typeButtonTextActive]}>Offering</Text>
+            <Text style={[styles.typeButtonDescription, { color: tc.textSecondary }, givingType === "offering" && styles.typeButtonDescriptionActive]}>Additional gift</Text>
           </TouchableOpacity>
         </View>
       </View>
@@ -516,36 +446,14 @@ export default function GivingScreen() {
             >
               <View style={styles.frequencyOptionContent}>
                 {option.value !== "one_time" && (
-                  <Repeat
-                    size={16}
-                    color={frequency === option.value ? '#fff' : tc.textSecondary}
-                    style={styles.frequencyIcon}
-                  />
+                  <Repeat size={16} color={frequency === option.value ? '#fff' : tc.textSecondary} style={styles.frequencyIcon} />
                 )}
                 <View>
-                  <Text
-                    style={[
-                      styles.frequencyLabel,
-                      { color: tc.text },
-                      frequency === option.value && { color: '#fff' },
-                    ]}
-                  >
-                    {option.label}
-                  </Text>
-                  <Text
-                    style={[
-                      styles.frequencyDescription,
-                      { color: tc.textSecondary },
-                      frequency === option.value && { color: '#fff', opacity: 0.9 },
-                    ]}
-                  >
-                    {option.description}
-                  </Text>
+                  <Text style={[styles.frequencyLabel, { color: tc.text }, frequency === option.value && { color: '#fff' }]}>{option.label}</Text>
+                  <Text style={[styles.frequencyDescription, { color: tc.textSecondary }, frequency === option.value && { color: '#fff', opacity: 0.9 }]}>{option.description}</Text>
                 </View>
               </View>
-              {frequency === option.value && (
-                <Check size={20} color="#fff" />
-              )}
+              {frequency === option.value && <Check size={20} color="#fff" />}
             </TouchableOpacity>
           ))}
         </View>
@@ -565,16 +473,8 @@ export default function GivingScreen() {
             >
               <View style={styles.frequencyOptionContent}>
                 <View>
-                  <Text style={[
-                    styles.frequencyLabel,
-                    { color: tc.text },
-                    !selectedMinistryId && { color: '#fff' },
-                  ]}>General Fund</Text>
-                  <Text style={[
-                    styles.frequencyDescription,
-                    { color: tc.textSecondary },
-                    !selectedMinistryId && { color: '#fff', opacity: 0.9 },
-                  ]}>Church general fund</Text>
+                  <Text style={[styles.frequencyLabel, { color: tc.text }, !selectedMinistryId && { color: '#fff' }]}>General Fund</Text>
+                  <Text style={[styles.frequencyDescription, { color: tc.textSecondary }, !selectedMinistryId && { color: '#fff', opacity: 0.9 }]}>Church general fund</Text>
                 </View>
               </View>
               {!selectedMinistryId && <Check size={20} color="#fff" />}
@@ -592,11 +492,7 @@ export default function GivingScreen() {
                 <View style={styles.frequencyOptionContent}>
                   <View style={[styles.ministryDot, { backgroundColor: m.color || tc.primary }]} />
                   <View>
-                    <Text style={[
-                      styles.frequencyLabel,
-                      { color: tc.text },
-                      selectedMinistryId === m.id && { color: '#fff' },
-                    ]}>{m.name}</Text>
+                    <Text style={[styles.frequencyLabel, { color: tc.text }, selectedMinistryId === m.id && { color: '#fff' }]}>{m.name}</Text>
                   </View>
                 </View>
                 {selectedMinistryId === m.id && <Check size={20} color="#fff" />}
@@ -636,12 +532,10 @@ export default function GivingScreen() {
 
       <View style={styles.securityNote}>
         <ShieldCheck size={16} color={tc.success} />
-        <Text style={[styles.securityText, { color: tc.success }]}>
-          Secured by Stripe · SSL encrypted
-        </Text>
+        <Text style={[styles.securityText, { color: tc.success }]}>Secured by Stripe · SSL encrypted</Text>
       </View>
 
-      <View style={{ height: 40 }} />
+      <View style={{ height: 100 }} />
     </ScrollView>
   );
 
@@ -650,76 +544,31 @@ export default function GivingScreen() {
       style={styles.tabContent}
       showsVerticalScrollIndicator={false}
       refreshControl={
-        <RefreshControl
-          refreshing={historyQuery.isRefetching}
-          onRefresh={onRefresh}
-          tintColor={Colors.primary}
-        />
+        <RefreshControl refreshing={historyQuery.isRefetching} onRefresh={onRefresh} tintColor={tc.primary} />
       }
     >
       {historyQuery.isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={tc.primary} />
         </View>
       ) : historyQuery.data && historyQuery.data.length > 0 ? (
         <View style={styles.historyList}>
           {historyQuery.data.map((donation: Donation) => (
-            <View key={donation.id} style={styles.historyItem}>
+            <View key={donation.id} style={[styles.historyItem, { backgroundColor: tc.surface }]}>
               <View style={styles.historyItemLeft}>
-                <View
-                  style={[
-                    styles.historyIcon,
-                    { backgroundColor: donation.type === "tithe" ? Colors.primaryLight : Colors.secondaryLight },
-                  ]}
-                >
-                  {donation.type === "tithe" ? (
-                    <DollarSign size={18} color={Colors.primary} />
-                  ) : (
-                    <Gift size={18} color={Colors.secondary} />
-                  )}
+                <View style={[styles.historyIcon, { backgroundColor: donation.type === "tithe" ? tc.primaryLight + '20' : tc.secondaryLight + '20' }]}>
+                  {donation.type === "tithe" ? <DollarSign size={18} color={tc.primary} /> : <Gift size={18} color={tc.secondary} />}
                 </View>
                 <View style={styles.historyDetails}>
-                  <Text style={styles.historyType}>
-                    {donation.type === "tithe" ? "Tithe" : "Offering"}
-                  </Text>
-                  <Text style={styles.historyDate}>{formatDate(donation.createdAt)}</Text>
-                  {!!donation.note && (
-                    <Text style={styles.historyNote} numberOfLines={1}>
-                      {donation.note}
-                    </Text>
-                  )}
+                  <Text style={[styles.historyType, { color: tc.text }]}>{donation.type === "tithe" ? "Tithe" : "Offering"}</Text>
+                  <Text style={[styles.historyDate, { color: tc.textSecondary }]}>{formatDate(donation.createdAt)}</Text>
+                  {!!donation.note && <Text style={[styles.historyNote, { color: tc.textTertiary }]} numberOfLines={1}>{donation.note}</Text>}
                 </View>
               </View>
               <View style={styles.historyItemRight}>
-                <Text style={styles.historyAmount}>{formatCurrency(donation.amount)}</Text>
-                <View
-                  style={[
-                    styles.statusBadge,
-                    {
-                      backgroundColor:
-                        donation.status === "completed"
-                          ? Colors.successLight
-                          : donation.status === "failed"
-                          ? Colors.errorLight
-                          : Colors.warningLight,
-                    },
-                  ]}
-                >
-                  <Text
-                    style={[
-                      styles.statusText,
-                      {
-                        color:
-                          donation.status === "completed"
-                            ? Colors.success
-                            : donation.status === "failed"
-                            ? Colors.error
-                            : Colors.warning,
-                      },
-                    ]}
-                  >
-                    {donation.status}
-                  </Text>
+                <Text style={[styles.historyAmount, { color: tc.text }]}>{formatCurrency(donation.amount)}</Text>
+                <View style={[styles.statusBadge, { backgroundColor: donation.status === "completed" ? tc.successLight : donation.status === "failed" ? tc.errorLight : tc.warningLight }]}>
+                  <Text style={[styles.statusText, { color: donation.status === "completed" ? tc.success : donation.status === "failed" ? tc.error : tc.warning }]}>{donation.status}</Text>
                 </View>
               </View>
             </View>
@@ -727,107 +576,20 @@ export default function GivingScreen() {
         </View>
       ) : (
         <View style={styles.emptyState}>
-          <History size={48} color={Colors.textTertiary} />
-          <Text style={styles.emptyStateTitle}>No Giving History</Text>
-          <Text style={styles.emptyStateText}>
-            Your donations will appear here after you make your first gift.
-          </Text>
+          <History size={48} color={tc.textTertiary} />
+          <Text style={[styles.emptyStateTitle, { color: tc.text }]}>No Giving History</Text>
+          <Text style={[styles.emptyStateText, { color: tc.textSecondary }]}>Your donations will appear here after you make your first gift.</Text>
         </View>
       )}
-      <View style={{ height: 40 }} />
-    </ScrollView>
-  );
-
-  const _renderRecurringTab = () => (
-    <ScrollView
-      style={styles.tabContent}
-      showsVerticalScrollIndicator={false}
-      refreshControl={
-        <RefreshControl
-          refreshing={recurringQuery.isRefetching}
-          onRefresh={onRefresh}
-          tintColor={Colors.primary}
-        />
-      }
-    >
-      {recurringQuery.isLoading ? (
-        <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
-        </View>
-      ) : recurringQuery.data && recurringQuery.data.length > 0 ? (
-        <View style={styles.recurringList}>
-          {recurringQuery.data.map((recurring: RecurringGiving) => (
-            <View key={recurring.id} style={styles.recurringItem}>
-              <View style={styles.recurringHeader}>
-                <View style={styles.recurringInfo}>
-                  <View
-                    style={[
-                      styles.recurringIcon,
-                      { backgroundColor: recurring.type === "tithe" ? Colors.primaryLight : Colors.secondaryLight },
-                    ]}
-                  >
-                    <Repeat
-                      size={18}
-                      color={recurring.type === "tithe" ? Colors.primary : Colors.secondary}
-                    />
-                  </View>
-                  <View>
-                    <Text style={styles.recurringType}>
-                      {recurring.frequency.replace("_", "-")} {recurring.type}
-                    </Text>
-                    <Text style={styles.recurringAmount}>{formatCurrency(recurring.amount)}</Text>
-                  </View>
-                </View>
-                <TouchableOpacity
-                  style={styles.cancelButton}
-                  onPress={() => handleCancelRecurring(recurring)}
-                  disabled={false}
-                >
-                  <X size={18} color={Colors.error} />
-                </TouchableOpacity>
-              </View>
-              <View style={styles.recurringDetails}>
-                <View style={styles.recurringDetail}>
-                  <Calendar size={14} color={Colors.textSecondary} />
-                  <Text style={styles.recurringDetailText}>
-                    Next: {formatDate(recurring.nextDate)}
-                  </Text>
-                </View>
-                {!!recurring.note && (
-                  <Text style={styles.recurringNote}>{recurring.note}</Text>
-                )}
-              </View>
-            </View>
-          ))}
-        </View>
-      ) : (
-        <View style={styles.emptyState}>
-          <Repeat size={48} color={Colors.textTertiary} />
-          <Text style={styles.emptyStateTitle}>No Recurring Giving</Text>
-          <Text style={styles.emptyStateText}>
-            Set up recurring donations to give consistently and automatically.
-          </Text>
-          <TouchableOpacity
-            style={styles.emptyStateButton}
-            onPress={() => setActiveTab("give")}
-          >
-            <Text style={styles.emptyStateButtonText}>Set Up Recurring</Text>
-          </TouchableOpacity>
-        </View>
-      )}
-      <View style={{ height: 40 }} />
+      <View style={{ height: 100 }} />
     </ScrollView>
   );
 
   return (
     <View style={[styles.container, { backgroundColor: tc.background }]}>
-      <Stack.Screen
-        options={{
-          title: "Giving",
-          headerStyle: { backgroundColor: tc.surface },
-          headerTintColor: tc.text,
-        }}
-      />
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: tc.surface, borderBottomColor: tc.borderLight }]}>
+        <Text style={[styles.title, { color: tc.text }]}>Giving</Text>
+      </View>
 
       <View style={[styles.tabs, { backgroundColor: tc.surface, borderBottomColor: tc.borderLight }]}>
         <TouchableOpacity
@@ -835,25 +597,19 @@ export default function GivingScreen() {
           onPress={() => setActiveTab("give")}
         >
           <Heart size={18} color={activeTab === "give" ? tc.primary : tc.textSecondary} />
-          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "give" && { color: tc.primary }]}>
-            Give
-          </Text>
+          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "give" && { color: tc.primary }]}>Give</Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={[styles.tab, activeTab === "history" && { borderBottomColor: tc.primary }]}
           onPress={() => setActiveTab("history")}
         >
           <History size={18} color={activeTab === "history" ? tc.primary : tc.textSecondary} />
-          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "history" && { color: tc.primary }]}>
-            History
-          </Text>
+          <Text style={[styles.tabText, { color: tc.textSecondary }, activeTab === "history" && { color: tc.primary }]}>History</Text>
         </TouchableOpacity>
-
       </View>
 
       {activeTab === "give" && renderGiveTab()}
       {activeTab === "history" && renderHistoryTab()}
-
 
       <Modal visible={showConfirmModal} transparent animationType="fade">
         <View style={[styles.modalOverlay, { backgroundColor: tc.overlay }]}>
@@ -865,36 +621,27 @@ export default function GivingScreen() {
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
-              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+              <View style={styles.confirmDetail}>
                 <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Type</Text>
-                <Text style={[styles.confirmValue, { color: tc.text }]}>
-                  {givingType === "tithe" ? "Tithe" : "Offering"}
-                </Text>
+                <Text style={[styles.confirmValue, { color: tc.text }]}>{givingType === "tithe" ? "Tithe" : "Offering"}</Text>
               </View>
-              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+              <View style={styles.confirmDetail}>
                 <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Amount</Text>
-                <Text style={[styles.confirmValueLarge, { color: tc.text }]}>
-                  {amount ? formatCurrency(parseFloat(amount)) : "$0.00"}
-                </Text>
+                <Text style={[styles.confirmValueLarge, { color: tc.primary }]}>{amount ? formatCurrency(parseFloat(amount)) : "$0.00"}</Text>
               </View>
-              <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+              <View style={styles.confirmDetail}>
                 <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Frequency</Text>
-                <Text style={[styles.confirmValue, { color: tc.text }]}>
-                  {FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.label}
-                </Text>
+                <Text style={[styles.confirmValue, { color: tc.text }]}>{FREQUENCY_OPTIONS.find((f) => f.value === frequency)?.label}</Text>
               </View>
               {!!note && (
-                <View style={[styles.confirmDetail, { borderBottomColor: tc.borderLight }]}>
+                <View style={styles.confirmDetail}>
                   <Text style={[styles.confirmLabel, { color: tc.textSecondary }]}>Note</Text>
                   <Text style={[styles.confirmValue, { color: tc.text }]}>{note}</Text>
                 </View>
               )}
             </View>
             <View style={styles.modalActions}>
-              <TouchableOpacity
-                style={[styles.modalCancelButton, { backgroundColor: tc.surfaceSecondary }]}
-                onPress={() => setShowConfirmModal(false)}
-              >
+              <TouchableOpacity style={[styles.modalCancelButton, { backgroundColor: tc.surfaceSecondary }]} onPress={() => setShowConfirmModal(false)}>
                 <Text style={[styles.modalCancelText, { color: tc.text }]}>Cancel</Text>
               </TouchableOpacity>
               <TouchableOpacity
@@ -923,18 +670,11 @@ export default function GivingScreen() {
               <Check size={48} color={tc.success} />
             </View>
             <Text style={[styles.successTitle, { color: tc.text }]}>Thank You!</Text>
-            <Text style={[styles.successText, { color: tc.textSecondary }]}>
-              Your {givingType === "tithe" ? "tithe" : "offering"} has been processed successfully.
-            </Text>
+            <Text style={[styles.successText, { color: tc.textSecondary }]}>Your {givingType === "tithe" ? "tithe" : "offering"} has been processed successfully.</Text>
             {frequency !== "one_time" && (
-              <Text style={[styles.successRecurringNote, { color: tc.textSecondary }]}>
-                Your recurring {frequency.replace("_", "-")} donation has been set up.
-              </Text>
+              <Text style={[styles.successRecurringNote, { color: tc.textSecondary }]}>Your recurring {frequency.replace("_", "-")} donation has been set up.</Text>
             )}
-            <TouchableOpacity
-              style={[styles.successButton, { backgroundColor: tc.primary }]}
-              onPress={() => setShowSuccessModal(false)}
-            >
+            <TouchableOpacity style={[styles.successButton, { backgroundColor: tc.primary }]} onPress={() => setShowSuccessModal(false)}>
               <Text style={styles.successButtonText}>Done</Text>
             </TouchableOpacity>
           </View>
@@ -945,15 +685,19 @@ export default function GivingScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
+  container: { flex: 1 },
+  header: {
+    paddingHorizontal: 20,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
+  },
+  title: {
+    fontSize: 28,
+    fontWeight: "700" as const,
   },
   tabs: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
     paddingHorizontal: 16,
   },
   tab: {
@@ -966,547 +710,89 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: "transparent",
   },
-  tabActive: {
-    borderBottomColor: Colors.primary,
-  },
-  tabText: {
-    fontSize: 14,
-    fontWeight: "600" as const,
-    color: Colors.textSecondary,
-  },
-  tabTextActive: {
-    color: Colors.primary,
-  },
-  tabContent: {
-    flex: 1,
-  },
+  tabText: { fontSize: 14, fontWeight: "600" as const },
+  tabContent: { flex: 1 },
   statsCard: {
     margin: 16,
     padding: 16,
-    backgroundColor: Colors.surface,
     borderRadius: 16,
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
-  },
-  statsHeader: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-    marginBottom: 16,
-  },
-  statsTitle: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  statsGrid: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  statItem: {
-    flex: 1,
-    alignItems: "center",
-  },
-  statValue: {
-    fontSize: 18,
-    fontWeight: "700" as const,
-    color: Colors.text,
-  },
-  statLabel: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  statDivider: {
-    width: 1,
-    height: 40,
-    backgroundColor: Colors.borderLight,
-  },
-  section: {
-    paddingHorizontal: 16,
-    marginBottom: 24,
-  },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-    marginBottom: 12,
-  },
-  typeButtons: {
-    flexDirection: "row",
-    gap: 12,
-  },
-  typeButton: {
-    flex: 1,
-    padding: 16,
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    alignItems: "center",
-    borderWidth: 2,
-    borderColor: Colors.borderLight,
-  },
-  typeButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  typeButtonText: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-    marginTop: 8,
-  },
-  typeButtonTextActive: {
-    color: Colors.textInverse,
-  },
-  typeButtonDescription: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 4,
-  },
-  typeButtonDescriptionActive: {
-    color: Colors.textInverse,
-    opacity: 0.9,
-  },
-  amountGrid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    gap: 10,
-  },
-  amountButton: {
-    width: "31%",
-    paddingVertical: 14,
-    backgroundColor: Colors.surface,
-    borderRadius: 10,
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  amountButtonActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  amountButtonText: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  amountButtonTextActive: {
-    color: Colors.textInverse,
-  },
-  customAmountContainer: {
-    marginTop: 16,
-  },
-  customAmountLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    marginBottom: 8,
-  },
-  customAmountInput: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    paddingHorizontal: 16,
-  },
-  currencySymbol: {
-    fontSize: 20,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  amountInput: {
-    flex: 1,
-    fontSize: 20,
-    fontWeight: "600" as const,
-    color: Colors.text,
-    paddingVertical: 14,
-    paddingLeft: 8,
-  },
-  frequencyOptions: {
-    gap: 10,
-  },
-  frequencyOption: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
-    padding: 14,
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-  },
-  frequencyOptionActive: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
-  },
-  frequencyOptionContent: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  frequencyIcon: {
-    marginRight: 10,
-  },
-  frequencyLabel: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  frequencyLabelActive: {
-    color: Colors.textInverse,
-  },
-  frequencyDescription: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  frequencyDescriptionActive: {
-    color: Colors.textInverse,
-    opacity: 0.9,
-  },
-  noteInput: {
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.borderLight,
-    padding: 14,
-    fontSize: 15,
-    color: Colors.text,
-    minHeight: 80,
-    textAlignVertical: "top",
-  },
-  submitButton: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 10,
-    marginHorizontal: 16,
-    paddingVertical: 16,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-  },
-  submitButtonDisabled: {
-    backgroundColor: Colors.textTertiary,
-  },
-  submitButtonText: {
-    fontSize: 17,
-    fontWeight: "700" as const,
-    color: Colors.textInverse,
-  },
-  securityNote: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    marginTop: 16,
-    paddingHorizontal: 16,
-  },
-  securityText: {
-    fontSize: 12,
-    color: Colors.textSecondary,
-  },
-
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingVertical: 60,
-  },
-  historyList: {
-    padding: 16,
-    gap: 12,
-  },
-  historyItem: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 14,
-    backgroundColor: Colors.surface,
-    borderRadius: 12,
-  },
-  historyItemLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    flex: 1,
-  },
-  historyIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  historyDetails: {
-    flex: 1,
-  },
-  historyType: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  historyDate: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-    marginTop: 2,
-  },
-  historyNote: {
-    fontSize: 12,
-    color: Colors.textTertiary,
-    marginTop: 2,
-  },
-  historyItemRight: {
-    alignItems: "flex-end",
-  },
-  historyAmount: {
-    fontSize: 16,
-    fontWeight: "700" as const,
-    color: Colors.text,
-  },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 6,
-    marginTop: 4,
-  },
-  statusText: {
-    fontSize: 11,
-    fontWeight: "600" as const,
-    textTransform: "capitalize" as const,
-  },
-  recurringList: {
-    padding: 16,
-    gap: 12,
-  },
-  recurringItem: {
-    backgroundColor: Colors.surface,
-    borderRadius: 14,
-    padding: 16,
-  },
-  recurringHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  recurringInfo: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  recurringIcon: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recurringType: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textTransform: "capitalize" as const,
-  },
-  recurringAmount: {
-    fontSize: 18,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginTop: 2,
-  },
-  cancelButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    backgroundColor: Colors.errorLight,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  recurringDetails: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  recurringDetail: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 8,
-  },
-  recurringDetailText: {
-    fontSize: 13,
-    color: Colors.textSecondary,
-  },
-  recurringNote: {
-    fontSize: 13,
-    color: Colors.textTertiary,
-    marginTop: 8,
-    fontStyle: "italic" as const,
-  },
-  emptyState: {
-    alignItems: "center",
-    paddingVertical: 60,
-    paddingHorizontal: 32,
-  },
-  emptyStateTitle: {
-    fontSize: 18,
-    fontWeight: "600" as const,
-    color: Colors.text,
-    marginTop: 16,
-  },
-  emptyStateText: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-    textAlign: "center" as const,
-    marginTop: 8,
-    lineHeight: 20,
-  },
-  emptyStateButton: {
-    marginTop: 20,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: Colors.primary,
-    borderRadius: 10,
-  },
-  emptyStateButtonText: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.textInverse,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: Colors.overlay,
-    justifyContent: "center",
-    alignItems: "center",
-    padding: 24,
-  },
-  modalContent: {
-    width: "100%",
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    overflow: "hidden",
-  },
-  modalHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-  },
-  modalTitle: {
-    fontSize: 18,
-    fontWeight: "700" as const,
-    color: Colors.text,
-  },
-  modalBody: {
-    padding: 20,
-    gap: 16,
-  },
-  confirmDetail: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  confirmLabel: {
-    fontSize: 14,
-    color: Colors.textSecondary,
-  },
-  confirmValue: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.text,
-  },
-  confirmValueLarge: {
-    fontSize: 24,
-    fontWeight: "700" as const,
-    color: Colors.primary,
-  },
-  modalActions: {
-    flexDirection: "row",
-    padding: 20,
-    gap: 12,
-    borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
-  },
-  modalCancelButton: {
-    flex: 1,
-    paddingVertical: 14,
-    alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
-    borderRadius: 12,
-  },
-  modalCancelText: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.textSecondary,
-  },
-  modalConfirmButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
-    gap: 8,
-    paddingVertical: 14,
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-  },
-  modalConfirmText: {
-    fontSize: 15,
-    fontWeight: "600" as const,
-    color: Colors.textInverse,
-  },
-  successModalContent: {
-    width: "100%",
-    backgroundColor: Colors.surface,
-    borderRadius: 20,
-    padding: 32,
-    alignItems: "center",
-  },
-  successIcon: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: Colors.successLight,
-    alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 20,
-  },
-  successTitle: {
-    fontSize: 24,
-    fontWeight: "700" as const,
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  successText: {
-    fontSize: 15,
-    color: Colors.textSecondary,
-    textAlign: "center" as const,
-    lineHeight: 22,
-  },
-  successRecurringNote: {
-    fontSize: 13,
-    color: Colors.secondary,
-    textAlign: "center" as const,
-    marginTop: 12,
-    fontWeight: "500" as const,
-  },
-  successButton: {
-    marginTop: 24,
-    paddingHorizontal: 40,
-    paddingVertical: 14,
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-  },
-  successButtonText: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: Colors.textInverse,
-  },
-  ministryDot: {
-    width: 10,
-    height: 10,
-    borderRadius: 5,
-    marginRight: 8,
-  },
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
+    }),
+  },
+  statsHeader: { flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 16 },
+  statsTitle: { fontSize: 16, fontWeight: "600" as const },
+  statsGrid: { flexDirection: "row", alignItems: "center" },
+  statItem: { flex: 1, alignItems: "center" },
+  statValue: { fontSize: 18, fontWeight: "700" as const },
+  statLabel: { fontSize: 12, marginTop: 4 },
+  statDivider: { width: 1, height: 40 },
+  section: { paddingHorizontal: 16, marginBottom: 24 },
+  sectionTitle: { fontSize: 16, fontWeight: "600" as const, marginBottom: 12 },
+  typeButtons: { flexDirection: "row", gap: 12 },
+  typeButton: { flex: 1, padding: 16, borderRadius: 12, alignItems: "center", borderWidth: 2 },
+  typeButtonText: { fontSize: 16, fontWeight: "600" as const, marginTop: 8 },
+  typeButtonTextActive: { color: Colors.textInverse },
+  typeButtonDescription: { fontSize: 12, marginTop: 4 },
+  typeButtonDescriptionActive: { color: Colors.textInverse, opacity: 0.9 },
+  amountGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
+  amountButton: { width: "31%", paddingVertical: 14, borderRadius: 10, alignItems: "center", borderWidth: 1 },
+  amountButtonText: { fontSize: 16, fontWeight: "600" as const },
+  customAmountContainer: { marginTop: 16 },
+  customAmountLabel: { fontSize: 14, marginBottom: 8 },
+  customAmountInput: { flexDirection: "row", alignItems: "center", borderRadius: 12, borderWidth: 1, paddingHorizontal: 16 },
+  currencySymbol: { fontSize: 20, fontWeight: "600" as const },
+  amountInput: { flex: 1, fontSize: 20, fontWeight: "600" as const, paddingVertical: 14, paddingLeft: 8 },
+  frequencyOptions: { gap: 10 },
+  frequencyOption: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", padding: 14, borderRadius: 12, borderWidth: 1 },
+  frequencyOptionContent: { flexDirection: "row", alignItems: "center" },
+  frequencyIcon: { marginRight: 10 },
+  frequencyLabel: { fontSize: 15, fontWeight: "600" as const },
+  frequencyDescription: { fontSize: 12, marginTop: 2 },
+  noteInput: { borderRadius: 12, borderWidth: 1, padding: 14, fontSize: 15, minHeight: 80, textAlignVertical: "top" as const },
+  submitButton: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, marginHorizontal: 16, paddingVertical: 16, borderRadius: 14 },
+  submitButtonDisabled: { backgroundColor: Colors.textTertiary },
+  submitButtonText: { fontSize: 17, fontWeight: "700" as const, color: Colors.textInverse },
+  securityNote: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16, paddingHorizontal: 16 },
+  securityText: { fontSize: 12 },
+  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 60 },
+  historyList: { padding: 16, gap: 12 },
+  historyItem: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 14, borderRadius: 12 },
+  historyItemLeft: { flexDirection: "row", alignItems: "center", gap: 12, flex: 1 },
+  historyIcon: { width: 40, height: 40, borderRadius: 20, alignItems: "center", justifyContent: "center" },
+  historyDetails: { flex: 1 },
+  historyType: { fontSize: 15, fontWeight: "600" as const },
+  historyDate: { fontSize: 13, marginTop: 2 },
+  historyNote: { fontSize: 12, marginTop: 2 },
+  historyItemRight: { alignItems: "flex-end" },
+  historyAmount: { fontSize: 16, fontWeight: "700" as const },
+  statusBadge: { paddingHorizontal: 8, paddingVertical: 4, borderRadius: 6, marginTop: 4 },
+  statusText: { fontSize: 11, fontWeight: "600" as const, textTransform: "capitalize" as const },
+  emptyState: { alignItems: "center", paddingVertical: 60, paddingHorizontal: 32 },
+  emptyStateTitle: { fontSize: 18, fontWeight: "600" as const, marginTop: 16 },
+  emptyStateText: { fontSize: 14, textAlign: "center" as const, marginTop: 8, lineHeight: 20 },
+  modalOverlay: { flex: 1, justifyContent: "center", alignItems: "center", padding: 24 },
+  modalContent: { width: "100%", borderRadius: 20, overflow: "hidden" },
+  modalHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", padding: 20, borderBottomWidth: 1 },
+  modalTitle: { fontSize: 18, fontWeight: "700" as const },
+  modalBody: { padding: 20, gap: 16 },
+  confirmDetail: { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  confirmLabel: { fontSize: 14 },
+  confirmValue: { fontSize: 15, fontWeight: "600" as const },
+  confirmValueLarge: { fontSize: 24, fontWeight: "700" as const },
+  modalActions: { flexDirection: "row", padding: 20, gap: 12, borderTopWidth: 1, borderTopColor: Colors.borderLight },
+  modalCancelButton: { flex: 1, paddingVertical: 14, alignItems: "center", borderRadius: 12 },
+  modalCancelText: { fontSize: 15, fontWeight: "600" as const },
+  modalConfirmButton: { flex: 1, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, paddingVertical: 14, borderRadius: 12 },
+  modalConfirmText: { fontSize: 15, fontWeight: "600" as const, color: Colors.textInverse },
+  successModalContent: { width: "100%", borderRadius: 20, padding: 32, alignItems: "center" },
+  successIcon: { width: 80, height: 80, borderRadius: 40, alignItems: "center", justifyContent: "center", marginBottom: 20 },
+  successTitle: { fontSize: 24, fontWeight: "700" as const, marginBottom: 8 },
+  successText: { fontSize: 15, textAlign: "center" as const, lineHeight: 22 },
+  successRecurringNote: { fontSize: 13, textAlign: "center" as const, marginTop: 12, fontWeight: "500" as const },
+  successButton: { marginTop: 24, paddingHorizontal: 40, paddingVertical: 14, borderRadius: 12 },
+  successButtonText: { fontSize: 16, fontWeight: "600" as const, color: Colors.textInverse },
+  ministryDot: { width: 10, height: 10, borderRadius: 5, marginRight: 8 },
 });

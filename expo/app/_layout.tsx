@@ -138,13 +138,7 @@ function RootLayoutNav() {
           presentation: "card",
         }} 
       />
-      <Stack.Screen 
-        name="giving" 
-        options={{ 
-          headerShown: false,
-          presentation: "card",
-        }} 
-      />
+
       <Stack.Screen 
         name="chat/[id]" 
         options={{ 
@@ -208,34 +202,7 @@ function RootLayoutNav() {
           presentation: "card",
         }} 
       />
-      <Stack.Screen 
-        name="worship/index" 
-        options={{ 
-          headerShown: false,
-          presentation: "card",
-        }} 
-      />
-      <Stack.Screen 
-        name="worship/player" 
-        options={{ 
-          headerShown: false,
-          presentation: "modal",
-        }} 
-      />
-      <Stack.Screen 
-        name="worship/manage" 
-        options={{ 
-          headerShown: false,
-          presentation: "modal",
-        }} 
-      />
-      <Stack.Screen 
-        name="worship/edit-song" 
-        options={{ 
-          headerShown: false,
-          presentation: "modal",
-        }} 
-      />
+
       <Stack.Screen 
         name="admin/requests" 
         options={{ 
