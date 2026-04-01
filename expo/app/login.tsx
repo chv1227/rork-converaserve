@@ -274,7 +274,7 @@ export default function LoginScreen() {
             <View style={styles.logoIconContainer}>
               <Sparkles size={32} color="#D4A843" />
             </View>
-            <Text style={styles.logo}>ConveraServe</Text>
+            <Text style={styles.logo}>ChurchConnect</Text>
             <Text style={styles.tagline}>United in faith, connected in love</Text>
           </Animated.View>
 

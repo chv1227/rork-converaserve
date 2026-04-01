@@ -134,8 +134,11 @@ function RootLayoutNav() {
       <Stack.Screen 
         name="announcements/index" 
         options={{ 
-          headerShown: false,
+          headerShown: true,
           presentation: "card",
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
+          headerShadowVisible: false,
         }} 
       />
 

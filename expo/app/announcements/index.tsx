@@ -107,7 +107,7 @@ export default function AnnouncementsScreen() {
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['announcements'] });
+      void queryClient.invalidateQueries({ queryKey: ['announcements'] });
       setShowCreateModal(false);
       resetCreateForm();
       Alert.alert('Success', 'Announcement created successfully');
@@ -310,7 +310,7 @@ export default function AnnouncementsScreen() {
               </TouchableOpacity>
             ) : null,
           headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text, fontWeight: '700' },
+          headerTitleStyle: { color: Colors.text, fontWeight: '700' as const },
           headerShadowVisible: false,
         }}
       />

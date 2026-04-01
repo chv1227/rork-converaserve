@@ -533,7 +533,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                void Linking.openURL("https://churchconnect.org/privacy");
+                void Linking.openURL("https://churchconnect.app/privacy");
               }}
             >
               <FileText size={20} color={Colors.primary} />
@@ -577,14 +577,14 @@ export default function ProfileScreen() {
               style={styles.privacyItem}
               onPress={() => {
                 if (Platform.OS !== "web") {
-                  void Linking.openURL("mailto:support@converaserve.com");
+                  void Linking.openURL("mailto:support@churchconnect.app");
                 }
               }}
             >
               <Mail size={20} color={Colors.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Email Support</Text>
-                <Text style={styles.privacyItemSubtitle}>support@converaserve.com</Text>
+                <Text style={styles.privacyItemSubtitle}>support@churchconnect.app</Text>
               </View>
               <ChevronRight size={18} color={Colors.textTertiary} />
             </TouchableOpacity>
@@ -592,7 +592,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                void Linking.openURL("https://converaserve.com/faq");
+                void Linking.openURL("https://churchconnect.app/faq");
               }}
             >
               <MessageCircle size={20} color={Colors.primary} />
@@ -606,7 +606,7 @@ export default function ProfileScreen() {
             <TouchableOpacity 
               style={styles.privacyItem}
               onPress={() => {
-                void Linking.openURL("https://converaserve.com/terms");
+                void Linking.openURL("https://churchconnect.app/terms");
               }}
             >
               <FileText size={20} color={Colors.primary} />

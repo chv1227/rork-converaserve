@@ -198,7 +198,7 @@ export default function HomeScreen() {
   return (
     <View style={styles.container}>
       <LinearGradient
-        colors={['#1B3A5C', '#162D48', '#0F2440']}
+        colors={[themeColors.gradientStart || '#1B3A5C', themeColors.gradientMiddle || '#162D48', themeColors.gradientEnd || '#0F2440']}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={[styles.headerGradient, { paddingTop: insets.top }]}
