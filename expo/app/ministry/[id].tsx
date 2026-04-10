@@ -747,6 +747,24 @@ export default function MinistryPageScreen() {
             </View>
           </View>
 
+          {isMember && (
+            <View style={styles.leaveSection}>
+              <TouchableOpacity
+                style={styles.leaveMinistryButton}
+                onPress={confirmLeaveMinistry}
+                disabled={isLeavingMinistry}
+                activeOpacity={0.8}
+                testID="leave-ministry-button"
+              >
+                {isLeavingMinistry ? (
+                  <ActivityIndicator size="small" color={Colors.error} />
+                ) : (
+                  <Text style={styles.leaveMinistryButtonText}>Leave Ministry</Text>
+                )}
+              </TouchableOpacity>
+            </View>
+          )}
+
           <View style={{ height: 120 }} />
         </View>
       </Animated.ScrollView>
@@ -758,19 +776,6 @@ export default function MinistryPageScreen() {
               <Check size={20} color={color} />
               <Text style={[styles.memberBadgeText, { color }]}>You are a Member</Text>
             </View>
-            <TouchableOpacity
-              style={styles.leaveMinistryButton}
-              onPress={confirmLeaveMinistry}
-              disabled={isLeavingMinistry}
-              activeOpacity={0.8}
-              testID="leave-ministry-button"
-            >
-              {isLeavingMinistry ? (
-                <ActivityIndicator size="small" color={Colors.error} />
-              ) : (
-                <Text style={styles.leaveMinistryButtonText}>Leave Ministry</Text>
-              )}
-            </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity 
@@ -1135,6 +1140,10 @@ const styles = StyleSheet.create({
   },
   memberActionsColumn: {
     gap: 12,
+  },
+  leaveSection: {
+    paddingHorizontal: 20,
+    paddingTop: 8,
   },
   leaveMinistryButton: {
     alignItems: "center",
