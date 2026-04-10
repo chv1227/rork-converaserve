@@ -312,10 +312,11 @@ export default function MinistryPageScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAdmin, currentOrganization } = useAuth();
-  const { isMinistryMember } = useData();
+  const { isMinistryMember, leaveMinistry } = useData();
 
   const scrollY = useRef(new Animated.Value(0)).current;
   const [settingsVisible, setSettingsVisible] = useState(false);
+  const [isLeavingMinistry, setIsLeavingMinistry] = useState<boolean>(false);
 
   const ministryQuery = useQuery<Ministry | null>({
     queryKey: ['ministry', id],
@@ -505,6 +506,64 @@ export default function MinistryPageScreen() {
     });
   }, [id, updateMutation.mutate]);
 
+  const confirmLeaveMinistry = useCallback(() => {
+    if (!id || isLeavingMinistry) return;
+
+    const runLeave = async () => {
+      setIsLeavingMinistry(true);
+      try {
+        const result = await leaveMinistry(id);
+        console.log("Leave ministry result:", result);
+        if (result.success) {
+          await Promise.all([ministryQuery.refetch(), membersQuery.refetch()]);
+          if (Platform.OS === "web") {
+            alert("You have left this ministry.");
+          } else {
+            Alert.alert("Left Ministry", "You have successfully left this ministry.");
+          }
+          router.back();
+        } else {
+          const message = result.message ?? "Failed to leave ministry";
+          if (Platform.OS === "web") {
+            alert(message);
+          } else {
+            Alert.alert("Error", message);
+          }
+        }
+      } catch (error) {
+        console.error("Leave ministry error:", error);
+        const message = error instanceof Error ? error.message : "Failed to leave ministry";
+        if (Platform.OS === "web") {
+          alert(message);
+        } else {
+          Alert.alert("Error", message);
+        }
+      } finally {
+        setIsLeavingMinistry(false);
+      }
+    };
+
+    if (Platform.OS === "web") {
+      runLeave().catch((error) => {
+        console.error("Leave ministry web error:", error);
+      });
+      return;
+    }
+
+    Alert.alert("Leave Ministry", "Are you sure you want to leave this ministry?", [
+      { text: "Cancel", style: "cancel" },
+      {
+        text: "Leave",
+        style: "destructive",
+        onPress: () => {
+          runLeave().catch((error) => {
+            console.error("Leave ministry confirm error:", error);
+          });
+        },
+      },
+    ]);
+  }, [id, isLeavingMinistry, leaveMinistry, membersQuery, ministryQuery, router]);
+
   if (ministryQuery.isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
@@ -692,11 +751,26 @@ export default function MinistryPageScreen() {
         </View>
       </Animated.ScrollView>
 
-      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]}>
+      <View style={[styles.bottomBar, { paddingBottom: insets.bottom + 16 }]} testID="ministry-action-bar">
         {isMember ? (
-          <View style={[styles.memberBadge, { backgroundColor: color + "15" }]}>
-            <Check size={20} color={color} />
-            <Text style={[styles.memberBadgeText, { color }]}>You are a Member</Text>
+          <View style={styles.memberActionsColumn}>
+            <View style={[styles.memberBadge, { backgroundColor: color + "15" }]}>
+              <Check size={20} color={color} />
+              <Text style={[styles.memberBadgeText, { color }]}>You are a Member</Text>
+            </View>
+            <TouchableOpacity
+              style={styles.leaveMinistryButton}
+              onPress={confirmLeaveMinistry}
+              disabled={isLeavingMinistry}
+              activeOpacity={0.8}
+              testID="leave-ministry-button"
+            >
+              {isLeavingMinistry ? (
+                <ActivityIndicator size="small" color={Colors.error} />
+              ) : (
+                <Text style={styles.leaveMinistryButtonText}>Leave Ministry</Text>
+              )}
+            </TouchableOpacity>
           </View>
         ) : (
           <TouchableOpacity 
@@ -704,6 +778,7 @@ export default function MinistryPageScreen() {
             onPress={handleJoin}
             disabled={joinMutation.isPending}
             activeOpacity={0.8}
+            testID="join-ministry-button"
           >
             {joinMutation.isPending ? (
               <ActivityIndicator size="small" color="#fff" />
@@ -1057,6 +1132,23 @@ const styles = StyleSheet.create({
   memberBadgeText: {
     fontSize: 16,
     fontWeight: "600" as const,
+  },
+  memberActionsColumn: {
+    gap: 12,
+  },
+  leaveMinistryButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 14,
+    backgroundColor: Colors.error + "10",
+    borderWidth: 1,
+    borderColor: Colors.error + "35",
+  },
+  leaveMinistryButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.error,
   },
   modalOverlay: {
     flex: 1,

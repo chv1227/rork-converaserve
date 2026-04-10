@@ -993,6 +993,7 @@ export default function GroupDetailScreen() {
               onPress={handleJoinLeave}
               disabled={isActionLoading}
               activeOpacity={0.7}
+              testID="join-group-button"
             >
               {isActionLoading ? (
                 <ActivityIndicator size="small" color={Colors.textInverse} />
@@ -1009,6 +1010,7 @@ export default function GroupDetailScreen() {
                 style={[styles.prayersButton, { backgroundColor: ministry.color + '15', borderColor: ministry.color }]}
                 onPress={() => setActiveTab('prayers')}
                 activeOpacity={0.7}
+                testID="ministry-prayers-button"
               >
                 <Heart size={18} color={ministry.color} />
                 <Text style={[styles.prayersButtonText, { color: ministry.color }]}>Prayers</Text>
@@ -1018,9 +1020,27 @@ export default function GroupDetailScreen() {
                 style={[styles.chatButton, { backgroundColor: ministry.color }]}
                 onPress={() => setShowPollsListModal(true)}
                 activeOpacity={0.7}
+                testID="group-poll-button"
               >
                 <BarChart3 size={18} color={Colors.textInverse} />
                 <Text style={styles.chatButtonText}>Group Poll</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.leaveButton}
+                onPress={handleJoinLeave}
+                disabled={isActionLoading}
+                activeOpacity={0.7}
+                testID="leave-ministry-button"
+              >
+                {isActionLoading ? (
+                  <ActivityIndicator size="small" color={Colors.error} />
+                ) : (
+                  <>
+                    <XCircle size={18} color={Colors.error} />
+                    <Text style={styles.leaveButtonText}>Leave</Text>
+                  </>
+                )}
               </TouchableOpacity>
             </>
           )}
@@ -1644,6 +1664,23 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "600" as const,
     color: Colors.textInverse,
+  },
+  leaveButton: {
+    flex: 1,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    paddingVertical: 14,
+    borderRadius: 12,
+    gap: 8,
+    backgroundColor: Colors.error + "10",
+    borderWidth: 1,
+    borderColor: Colors.error + "35",
+  },
+  leaveButtonText: {
+    fontSize: 16,
+    fontWeight: "600" as const,
+    color: Colors.error,
   },
   section: {
     marginBottom: 24,
