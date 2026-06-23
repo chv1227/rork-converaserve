@@ -1,6 +1,6 @@
 export const LightTheme = {
-  primary: '#1B3A5C',
-  primaryLight: '#2D5F8A',
+  primary: '#1B365D',
+  primaryLight: '#2E5A8A',
   primaryDark: '#0F2440',
 
   secondary: '#C8943E',
@@ -11,11 +11,11 @@ export const LightTheme = {
   accentLight: '#E8C972',
   accentDark: '#B08C30',
 
-  tertiary: '#6B8F71',
-  tertiaryLight: '#8DB493',
+  tertiary: '#4A8B6E',
+  tertiaryLight: '#6BAA8A',
 
-  highlight: '#5A8F8F',
-  highlightLight: '#7AB3B3',
+  highlight: '#3B82A0',
+  highlightLight: '#5DA0BE',
 
   coral: '#C76F54',
   sky: '#4A8BAF',
@@ -23,39 +23,39 @@ export const LightTheme = {
   peach: '#D4956A',
   lavender: '#E8E4DF',
 
-  background: '#F7F5F2',
+  background: '#FAFAFA',
   surface: '#FFFFFF',
-  surfaceSecondary: '#F0EDE8',
+  surfaceSecondary: '#F4F5F7',
   surfaceElevated: '#FFFFFF',
 
-  text: '#1A1D21',
-  textSecondary: '#5C6370',
-  textTertiary: '#8C919A',
+  text: '#111827',
+  textSecondary: '#6B7280',
+  textTertiary: '#9CA3AF',
   textInverse: '#FFFFFF',
 
-  border: '#E2DED8',
-  borderLight: '#EFECE7',
+  border: '#E5E7EB',
+  borderLight: '#F3F4F6',
 
-  success: '#4A8B6E',
-  successLight: '#EDF5F0',
-  warning: '#C8943E',
-  warningLight: '#FFF8EC',
-  error: '#C45050',
-  errorLight: '#FCF0F0',
-  info: '#4A7FAF',
-  infoLight: '#EDF3FA',
+  success: '#10B981',
+  successLight: '#ECFDF5',
+  warning: '#F59E0B',
+  warningLight: '#FFFBEB',
+  error: '#EF4444',
+  errorLight: '#FEF2F2',
+  info: '#3B82F6',
+  infoLight: '#EFF6FF',
 
-  overlay: 'rgba(15, 20, 30, 0.55)',
+  overlay: 'rgba(15, 23, 42, 0.5)',
 
-  gradientStart: '#1B3A5C',
+  gradientStart: '#1B365D',
   gradientMiddle: '#1E4A6E',
   gradientEnd: '#0F2440',
 
-  cardGradient1: '#1B3A5C',
-  cardGradient2: '#2D5F8A',
+  cardGradient1: '#1B365D',
+  cardGradient2: '#2E5A8A',
 
-  tabIconDefault: '#8C919A',
-  tabIconSelected: '#1B3A5C',
+  tabIconDefault: '#9CA3AF',
+  tabIconSelected: '#1B365D',
 };
 
 export const DarkTheme = {
@@ -71,50 +71,50 @@ export const DarkTheme = {
   accentLight: '#F0DA94',
   accentDark: '#D4A843',
 
-  tertiary: '#8DB493',
-  tertiaryLight: '#A8CCA8',
+  tertiary: '#6BAA8A',
+  tertiaryLight: '#8DC4A8',
 
-  highlight: '#7AB3B3',
-  highlightLight: '#9ACECE',
+  highlight: '#5DA0BE',
+  highlightLight: '#7DBBD4',
 
   coral: '#D4956A',
   sky: '#6AAFCF',
   mint: '#8DB49E',
   peach: '#E0AA82',
-  lavender: '#2E3038',
+  lavender: '#1F2937',
 
-  background: '#121418',
-  surface: '#1C1F25',
-  surfaceSecondary: '#262930',
-  surfaceElevated: '#22252C',
+  background: '#0F1724',
+  surface: '#1A2436',
+  surfaceSecondary: '#212D40',
+  surfaceElevated: '#243044',
 
-  text: '#ECEEF2',
-  textSecondary: '#9298A4',
-  textTertiary: '#5C6370',
-  textInverse: '#121418',
+  text: '#F1F5F9',
+  textSecondary: '#94A3B8',
+  textTertiary: '#64748B',
+  textInverse: '#0F1724',
 
-  border: '#2E3038',
-  borderLight: '#22252C',
+  border: '#2D3A50',
+  borderLight: '#243044',
 
-  success: '#6BAF8E',
-  successLight: '#1A2E24',
-  warning: '#DEBA6F',
-  warningLight: '#2E2618',
-  error: '#D47070',
-  errorLight: '#2E1A1A',
-  info: '#6AAFCF',
-  infoLight: '#1A2636',
+  success: '#34D399',
+  successLight: '#064E3B',
+  warning: '#FBBF24',
+  warningLight: '#451A03',
+  error: '#F87171',
+  errorLight: '#7F1D1D',
+  info: '#60A5FA',
+  infoLight: '#1E3A5F',
 
   overlay: 'rgba(0, 0, 0, 0.7)',
 
-  gradientStart: '#1B3A5C',
+  gradientStart: '#1B365D',
   gradientMiddle: '#1E4A6E',
   gradientEnd: '#0F2440',
 
-  cardGradient1: '#2D5F8A',
-  cardGradient2: '#1B3A5C',
+  cardGradient1: '#2E5A8A',
+  cardGradient2: '#1B365D',
 
-  tabIconDefault: '#5C6370',
+  tabIconDefault: '#64748B',
   tabIconSelected: '#5A9BD5',
 };
 

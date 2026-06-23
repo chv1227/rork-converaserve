@@ -1,30 +1,64 @@
 import { Tabs } from "expo-router";
 import { Home, MessageCircle, Heart, User } from "lucide-react-native";
 import React from "react";
-import { Platform } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 
 import { useTheme } from "@/providers/ThemeProvider";
 
 export default function TabLayout() {
-  const { colors } = useTheme();
-  
+  const { colors, isDark } = useTheme();
+
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: colors.primary,
-        tabBarInactiveTintColor: colors.textTertiary,
+        tabBarActiveTintColor: colors.tabIconSelected,
+        tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: colors.surface,
-          borderTopColor: colors.borderLight,
-          borderTopWidth: 0.5,
-          ...(Platform.OS === 'web' ? { height: 64 } : {}),
+          position: "absolute",
+          bottom: Platform.OS === "ios" ? 24 : 12,
+          left: 20,
+          right: 20,
+          borderRadius: 24,
+          borderTopWidth: 0,
+          paddingTop: 8,
+          paddingBottom: Platform.OS === "ios" ? 8 : 12,
+          height: Platform.OS === "ios" ? 80 : 72,
+          backgroundColor: isDark
+            ? "rgba(26, 36, 54, 0.85)"
+            : "rgba(255, 255, 255, 0.85)",
+          ...Platform.select({
+            ios: {
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 20,
+            },
+            android: {
+              elevation: 8,
+            },
+            web: {
+              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.08)",
+            },
+          }),
         },
+        tabBarBackground: () =>
+          Platform.OS === "ios" ? (
+            <BlurView
+              tint={isDark ? "dark" : "light"}
+              intensity={80}
+              style={StyleSheet.absoluteFill}
+            />
+          ) : null,
         tabBarLabelStyle: {
           fontSize: 11,
-          fontWeight: '600',
-          marginTop: 4,
+          fontWeight: "600" as const,
+          marginTop: 2,
           letterSpacing: 0.1,
+        },
+        tabBarItemStyle: {
+          paddingTop: 4,
         },
       }}
     >
@@ -32,54 +66,36 @@ export default function TabLayout() {
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Home size={size} color={color} strokeWidth={2.2} />,
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color, size }) => <MessageCircle size={size} color={color} fill={color} fillOpacity={0.15} />,
+          tabBarIcon: ({ color, size }) => (
+            <MessageCircle size={size} color={color} strokeWidth={2.2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="giving"
         options={{
           title: "Giving",
-          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} strokeWidth={2.2} />,
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} />,
+          tabBarIcon: ({ color, size }) => <User size={size} color={color} strokeWidth={2.2} />,
         }}
       />
-      <Tabs.Screen
-        name="groups"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="calendar"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="notifications"
-        options={{
-          href: null,
-        }}
-      />
-      <Tabs.Screen
-        name="more"
-        options={{
-          href: null,
-        }}
-      />
+      <Tabs.Screen name="groups" options={{ href: null }} />
+      <Tabs.Screen name="calendar" options={{ href: null }} />
+      <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="more" options={{ href: null }} />
     </Tabs>
   );
 }
