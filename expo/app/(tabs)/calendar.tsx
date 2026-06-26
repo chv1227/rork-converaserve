@@ -9,6 +9,7 @@ import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import EventCard from "@/components/EventCard";
 import { useRouter, Href } from "expo-router";
+import { useQueryClient } from "@tanstack/react-query";
 
 export default function CalendarScreen() {
   const insets = useSafeAreaInsets();
@@ -122,7 +123,7 @@ export default function CalendarScreen() {
           {isAdmin && currentOrganization && (
             <TouchableOpacity
               style={[styles.createButtonHeader, { backgroundColor: colors.primary }]}
-              onPress={() => router.push("/admin" as Href)}
+              onPress={() => router.push("/events/create" as Href)}
               activeOpacity={0.7}
               testID="calendar-create-button"
             >
@@ -213,7 +214,7 @@ export default function CalendarScreen() {
               <EventCard
                 key={event.id}
                 event={event}
-                onPress={() => {}}
+                onPress={() => router.push(`/events/${event.id}` as Href)}
               />
             ))
           ) : (

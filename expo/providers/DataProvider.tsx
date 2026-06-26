@@ -898,6 +898,128 @@ export const [DataProvider, useData] = createContextHook(() => {
     return queryClient.invalidateQueries({ queryKey: ['conversations', organizationId] });
   }, [queryClient, organizationId]);
 
+  // Event mutations
+  const createEventMutation = useMutation({
+    mutationFn: async (event: {
+      title: string;
+      description?: string;
+      event_type?: string;
+      start_datetime: string;
+      end_datetime?: string;
+      all_day?: boolean;
+      location_name?: string;
+      is_online?: boolean;
+      online_url?: string;
+      requires_registration?: boolean;
+      max_attendees?: number;
+      ministry_id?: string;
+    }) => {
+      const orgId = orgIdRef.current || organizationId;
+      if (!orgId) throw new Error("No organization selected");
+      if (!isChurchApproved) throw new Error("Church is pending approval");
+
+      const { data, error } = await (supabase as any)
+        .from("events")
+        .insert({
+          church_id: orgId,
+          title: event.title,
+          description: event.description || null,
+          event_type: event.event_type || "other",
+          status: "published",
+          start_datetime: event.start_datetime,
+          end_datetime: event.end_datetime || null,
+          all_day: event.all_day || false,
+          location_name: event.location_name || null,
+          is_online: event.is_online || false,
+          online_url: event.online_url || null,
+          requires_registration: event.requires_registration || false,
+          max_attendees: event.max_attendees || null,
+          ministry_id: event.ministry_id || null,
+          created_by_profile_id: user?.id,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+      return data;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["events", organizationId] });
+    },
+  });
+
+  const rsvoToEventMutation = useMutation({
+    mutationFn: async ({ eventId, status }: { eventId: string; status: string }) => {
+      if (!user?.id) throw new Error("Not logged in");
+
+      const orgId = orgIdRef.current || organizationId;
+      if (!orgId) throw new Error("No organization selected");
+      const { data: profileData } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("church_id", orgId)
+        .single();
+
+      if (!profileData) throw new Error("Profile not found");
+
+      const { error } = await (supabase as any)
+        .from("event_registrations")
+        .upsert({
+          event_id: eventId,
+          profile_id: (profileData as { id: string }).id,
+          status,
+          registered_at: new Date().toISOString(),
+        });
+
+      if (error) throw error;
+    },
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: ["events", organizationId] });
+    },
+  });
+
+  const { mutateAsync: createEventAsync } = createEventMutation;
+  const createEvent = useCallback(
+    async (event: {
+      title: string;
+      description?: string;
+      event_type?: string;
+      start_datetime: string;
+      end_datetime?: string;
+      all_day?: boolean;
+      location_name?: string;
+      is_online?: boolean;
+      online_url?: string;
+      requires_registration?: boolean;
+      max_attendees?: number;
+      ministry_id?: string;
+    }) => {
+      try {
+        const result = await createEventAsync(event);
+        return { success: true, event: result };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to create event";
+        return { success: false, message: msg };
+      }
+    },
+    [createEventAsync]
+  );
+
+  const { mutateAsync: rsvpToEventAsync } = rsvoToEventMutation;
+  const rsvpToEvent = useCallback(
+    async (eventId: string, status: string) => {
+      try {
+        await rsvpToEventAsync({ eventId, status });
+        return { success: true };
+      } catch (e) {
+        const msg = e instanceof Error ? e.message : "Failed to RSVP";
+        return { success: false, message: msg };
+      }
+    },
+    [rsvpToEventAsync]
+  );
+
   return useMemo(() => ({
     ministries,
     events,
@@ -922,6 +1044,8 @@ export const [DataProvider, useData] = createContextHook(() => {
     isMinistryMember,
     getMinistryRole,
     refetchConversations,
+    createEvent,
+    rsvpToEvent,
     prayerRequestsCount,
     membersCount,
     givingStats,
@@ -932,6 +1056,7 @@ export const [DataProvider, useData] = createContextHook(() => {
     getMinistryById, getEventsByDate, getTotalUnread, userMinistries,
     joinMinistry, leaveMinistry, createMinistry, updateMinistry, deleteMinistry,
     isMinistryMember, getMinistryRole, refetchConversations,
+    createEvent, rsvpToEvent,
     prayerRequestsCount, membersCount, givingStats,
   ]);
 });

@@ -2,7 +2,7 @@ import React, { useCallback, useState, useRef, useEffect, useMemo } from "react"
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
-import { Bell, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2, Heart, Pin, Globe, Users } from "lucide-react-native";
+import { Bell, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2, Heart, Pin, Globe, Users, Calendar, ClipboardList, FolderOpen } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
@@ -205,6 +205,9 @@ export default function HomeScreen() {
           <QuickActionCard icon={<MessageCircle size={22} color={colors.tertiary} />} title="Messages" subtitle={totalUnread > 0 ? `${totalUnread} unread` : "Chat"} colors={[]} onPress={() => router.push("/(tabs)/messages" as Href)} delay={50} />
           <QuickActionCard icon={<Heart size={22} color={colors.secondary} />} title="Giving" subtitle={givingStats.thisMonth > 0 ? `$${givingStats.thisMonth.toLocaleString()} this month` : "Tithes & Offerings"} colors={[]} onPress={() => router.push("/(tabs)/giving" as Href)} delay={100} />
           <QuickActionCard icon={<Users size={22} color={colors.highlight} />} title="Community" subtitle={`${membersCount} members`} colors={[]} onPress={() => router.push("/(tabs)/profile" as Href)} delay={150} />
+          <QuickActionCard icon={<Calendar size={22} color={colors.success} />} title="Events" subtitle="Calendar" colors={[]} onPress={() => router.push("/(tabs)/calendar" as Href)} delay={200} />
+          <QuickActionCard icon={<ClipboardList size={22} color={colors.warning} />} title="Forms" subtitle="Sign-ups & requests" colors={[]} onPress={() => router.push("/forms" as Href)} delay={250} />
+          <QuickActionCard icon={<FolderOpen size={22} color={colors.coral} />} title="Media" subtitle="Photos & files" colors={[]} onPress={() => router.push("/media" as Href)} delay={300} />
         </View>
 
         <Animated.View style={[styles.statsContainer, { opacity: contentAnim, transform: [{ translateY: contentAnim.interpolate({ inputRange: [0, 1], outputRange: [20, 0] }) }] }]}>

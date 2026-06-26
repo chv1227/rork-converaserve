@@ -262,6 +262,51 @@ function RootLayoutNav() {
           presentation: "card",
         }} 
       />
+      <Stack.Screen 
+        name="events/create" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="events/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="forms/index" 
+        options={{ 
+          headerShown: true,
+          presentation: "card",
+          headerStyle: { backgroundColor: colors.background },
+          headerTitleStyle: { color: colors.text, fontWeight: '700' as const },
+          headerShadowVisible: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="forms/create" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="forms/[id]" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
+      <Stack.Screen 
+        name="media/index" 
+        options={{ 
+          headerShown: false,
+          presentation: "card",
+        }} 
+      />
     </Stack>
   );
 }
