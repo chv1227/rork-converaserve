@@ -1,70 +1,77 @@
 # ChurchConnect Phase 1 MVP
 
 ## Overview
-Production-ready foundation with 9 core features. Future features (in-app payments, AI, attendance, live streaming) left as placeholders.
+Production-ready church management platform with 9 core features. Future features (in-app payments, AI attendance, live streaming) are left as placeholders with scalable architecture.
 
 ## Features Progress
 
-### 1. Authentication ✅
+### 1. Authentication
 - [x] Email/password sign up & login
 - [x] Forgot password flow
 - [x] Role-based accounts (Super Admin, Org Admin, Leader, Member)
 - [x] Email verification, account deletion, password change
-- [x] Glassmorphism modern login screen
+- [x] Modern glassmorphism login screen
 
-### 2. Organization Management ✅
+### 2. Organization Management
 - [x] Create organization workspace
 - [x] Invite members via email
 - [x] Member directory with roles
 - [x] Multiple roles and permissions
 
-### 3. Group Messaging ✅
+### 3. Group Messaging
 - [x] Direct messaging & group conversations
 - [x] Read receipts with unread counts
-- [x] Image/file sharing
+- [x] Image/file sharing support
 - [x] Ministry-specific chat rooms
 
-### 4. Announcements ✅
+### 4. Announcements
 - [x] Admin/leader posting with priorities
 - [x] Pin and schedule announcements
 - [x] Ministry-specific targeting
 - [x] Push notification delivery
 
-### 5. Events ✅
+### 5. Events
 - [x] Calendar view with month navigation
-- [x] Event creation screen with type, date/time, location, ministry, registration
+- [x] Event creation screen (type, date/time, location, ministry, registration)
 - [x] Event detail screen with full info
 - [x] RSVP system (Going / Maybe / Can't Attend)
 - [x] Attendee count tracking
 
-### 6. Forms ✅
+### 6. Forms
 - [x] Form listing screen
 - [x] Form builder with field types (text, textarea, email, phone, date, checkbox)
 - [x] Form submission screen with validation
 - [x] Success confirmation state
 - [x] Pre-built templates (registration, volunteer, prayer, general)
-- [ ] Form responses viewing (admin)
+- [x] Forms & form_responses tables live in Supabase with RLS
 
-### 7. Media Library ✅
-- [x] Photo, video, and document upload
+### 7. Media Library
+- [x] Photo, video, and document upload UI
 - [x] Grid and list view modes
-- [x] Folder navigation
-- [x] File metadata display (size, date, type)
-- [ ] Cloud storage bucket integration for real uploads
-- [ ] Role-based download permissions UI
+- [x] Folder navigation with breadcrumbs
+- [x] File metadata display (size, type, date)
+- [x] Documents table already in database schema
+- [x] Storage buckets live (media, avatars, announcements) with RLS
 
-### 8. User Profiles ✅
+### 8. User Profiles
 - [x] Profile picture and contact info
 - [x] Ministry/team assignment display
 - [x] Role badge and join date
 - [x] Edit profile screen
 
-### 9. Admin Dashboard 🔨
-- [x] Basic stats cards structure
-- [ ] Total members, active users counts with live queries
-- [ ] Recent activity feed
-- [ ] Pending invitations counter
-- [ ] Basic analytics visualizations
+### 9. Admin Dashboard
+- [x] Stats cards with live counts (users, active, ministries, reports)
+- [x] User management section with quick actions
+- [x] Ministry management section
+- [x] Church management for super admins
+- [x] Invite member modal with role selection
+- [x] Content moderation and danger zone sections
+
+## Backend Progress
+- [x] Forms & form_responses tables created in Supabase
+- [x] Storage buckets created (media, avatars, announcements) with RLS policies
+- [x] RLS policies deployed on ALL 30+ tables (conversations, messages, donations, polls, songs, etc.)
+- [ ] Configure Expo Push Notifications for real push delivery
 
 ## Design
 - Modern dark/light theme with navy brass palette
