@@ -28,7 +28,7 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Admin/leader posting with priorities
 - [x] Pin and schedule announcements
 - [x] Ministry-specific targeting
-- [x] Push notification delivery
+- [x] Push notification delivery (auto-queued via DB trigger)
 
 ### 5. Events
 - [x] Calendar view with month navigation
@@ -51,7 +51,7 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Folder navigation with breadcrumbs
 - [x] File metadata display (size, type, date)
 - [x] Documents table already in database schema
-- [x] Storage buckets live (media, avatars, announcements) with RLS
+- [x] Storage buckets live (media, avatars, documents, announcements, chat-files) with RLS
 
 ### 8. User Profiles
 - [x] Profile picture and contact info
@@ -67,11 +67,15 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Invite member modal with role selection
 - [x] Content moderation and danger zone sections
 
-## Backend Progress
-- [x] Forms & form_responses tables created in Supabase
-- [x] Storage buckets created (media, avatars, announcements) with RLS policies
-- [x] RLS policies deployed on ALL 30+ tables (conversations, messages, donations, polls, songs, etc.)
-- [ ] Configure Expo Push Notifications for real push delivery
+## Backend (All Deployed)
+- [x] Forms & form_responses tables with RLS
+- [x] All 35+ tables have RLS policies (no unprotected tables)
+- [x] Storage buckets: media, avatars, documents, announcements, chat-files (all with RLS)
+- [x] Push notification infrastructure:
+  - user_push_tokens table for Expo push tokens
+  - push_notification_queue table with DB triggers on announcements & events
+  - Edge function deployed: https://mrdefwwcvnepbepoelxz.supabase.co/functions/v1/send-push-notifications
+  - Call this function on a schedule (e.g., cron every minute) to deliver push notifications
 
 ## Design
 - Modern dark/light theme with navy brass palette

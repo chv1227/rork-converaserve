@@ -28,7 +28,7 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Admin/leader posting with priorities
 - [x] Pin and schedule announcements
 - [x] Ministry-specific targeting
-- [x] Push notification delivery
+- [x] Push notification delivery (auto-queued via DB trigger)
 
 ### 5. Events
 - [x] Calendar view with month navigation
@@ -43,14 +43,15 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Form submission screen with validation
 - [x] Success confirmation state
 - [x] Pre-built templates (registration, volunteer, prayer, general)
-- [x] SQL migrations documented, ready for Supabase deployment
+- [x] Forms & form_responses tables live in Supabase with RLS
 
 ### 7. Media Library
 - [x] Photo, video, and document upload UI
 - [x] Grid and list view modes
 - [x] Folder navigation with breadcrumbs
 - [x] File metadata display (size, type, date)
-- [x] Documents table already in database schema
+- [x] Documents table in database schema
+- [x] 5 Storage buckets live (media, avatars, documents, announcements, chat-files) with RLS
 
 ### 8. User Profiles
 - [x] Profile picture and contact info
@@ -66,11 +67,15 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Invite member modal with role selection
 - [x] Content moderation and danger zone sections
 
-## Next Steps (for Supabase deployment)
-- Run `sql/10_forms.sql` to create forms & form_responses tables
-- Set up Supabase Storage buckets for media uploads
-- Configure Expo Push Notifications for announcements/events
-- Deploy RLS policies for all tables
+## Backend (All Deployed)
+- [x] Forms & form_responses tables with RLS
+- [x] All 35+ tables have RLS policies (no unprotected data)
+- [x] 5 Storage buckets with RLS: media, avatars, documents, announcements, chat-files
+- [x] Push notification infrastructure:
+  - `user_push_tokens` table for Expo push tokens
+  - `push_notification_queue` with DB triggers on announcements & events
+  - Edge function: https://mrdefwwcvnepbepoelxz.supabase.co/functions/v1/send-push-notifications
+  - Call the edge function on a schedule (cron every 60s) to deliver push notifications
 
 ## Design
 - Modern dark/light theme with navy brass palette
@@ -80,7 +85,7 @@ Production-ready church management platform with 9 core features. Future feature
 
 ## Tech Stack
 - Expo/React Native with TypeScript
-- Supabase backend (auth, database, storage, realtime)
+- Supabase backend (auth, database, storage, realtime, edge functions)
 - React Query for server state
-- Push notifications via Expo Notifications
+- Push notifications via Expo Notifications + Supabase Edge Functions
 - Scalable multi-tenant architecture
