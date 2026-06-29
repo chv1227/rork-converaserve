@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
+import * as Linking from "expo-linking";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import {
   FolderOpen,
@@ -24,6 +25,7 @@ import {
   ChevronRight,
   Grid3x3,
   List,
+  ExternalLink,
 } from "lucide-react-native";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -331,7 +333,7 @@ export default function MediaLibraryScreen() {
                     {formatFileSize(item.file_size)} · {formatDate(item.created_at)}
                   </Text>
                 </View>
-                <TouchableOpacity style={styles.downloadBtn}>
+                <TouchableOpacity style={styles.downloadBtn} onPress={() => { void Linking.openURL(item.file_url); }}>
                   <Download size={16} color={colors.textTertiary} />
                 </TouchableOpacity>
               </View>

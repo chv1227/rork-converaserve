@@ -797,7 +797,6 @@ const styles = StyleSheet.create({
   pinnedCard: {
     borderWidth: 1,
     borderColor: Colors.primaryLight,
-    backgroundColor: '#FFF5F5',
   },
   pinnedBadge: {
     flexDirection: 'row',

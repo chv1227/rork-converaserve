@@ -181,15 +181,54 @@ export default function AdminDashboard() {
   }
 
   const ministriesQuery = useQuery({
-    queryKey: ['ministriesAdmin'],
-    queryFn: async () => [] as MinistryItem[],
-    enabled: false,
+    queryKey: ['ministriesAdmin', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [] as MinistryItem[];
+      const { data: churches } = await supabase
+        .from('user_church_roles')
+        .select('church_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .in('role', ['owner', 'admin']);
+      const churchIds = (churches || []).map((c: { church_id: string }) => c.church_id);
+      if (churchIds.length === 0) return [] as MinistryItem[];
+      const { data } = await supabase
+        .from('ministries')
+        .select('id, name, color')
+        .in('church_id', churchIds)
+        .order('name');
+      return (data || []) as MinistryItem[];
+    },
+    enabled: isAdmin && !!user?.id,
   });
   
   const pendingRequestsQuery = useQuery({
-    queryKey: ['pendingRequests'],
-    queryFn: async () => [],
-    enabled: isAdmin,
+    queryKey: ['pendingRequests', user?.id],
+    queryFn: async () => {
+      if (!user?.id) return [];
+      const { data: churches } = await supabase
+        .from('user_church_roles')
+        .select('church_id')
+        .eq('user_id', user.id)
+        .eq('is_active', true)
+        .in('role', ['owner', 'admin']);
+      const churchIds = (churches || []).map((c: { church_id: string }) => c.church_id);
+      if (churchIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('ministry_members')
+        .select('id, created_at, ministries!inner(name), profiles!inner(display_name)')
+        .in('ministries.church_id', churchIds)
+        .eq('status', 'pending')
+        .limit(20);
+      if (error) { console.log('Pending requests query error:', error); return []; }
+      return (data || []).map((r: any) => ({
+        id: r.id,
+        ministryName: r.ministries?.name || 'Unknown',
+        memberName: r.profiles?.display_name || 'Unknown',
+        requestedAt: r.created_at,
+      }));
+    },
+    enabled: isAdmin && !!user?.id,
   });
 
   const userChurchesQuery = useQuery({

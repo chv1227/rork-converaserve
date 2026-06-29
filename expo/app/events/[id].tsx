@@ -78,20 +78,37 @@ export default function EventDetailScreen() {
     enabled: !!id,
   });
 
-  const rsvpQuery = useQuery<{ status: RSVPStatus }>({
-    queryKey: ["event-rsvp", id, user?.id],
+  const profileQuery = useQuery<{ id: string } | null>({
+    queryKey: ["event-profile", currentOrganization?.id, user?.id],
     queryFn: async () => {
-      if (!id || !user?.id) return { status: null };
+      if (!currentOrganization?.id || !user?.id) return null;
+      const { data } = await supabase
+        .from("profiles")
+        .select("id")
+        .eq("user_id", user.id)
+        .eq("church_id", currentOrganization.id)
+        .maybeSingle();
+      return data as { id: string } | null;
+    },
+    enabled: !!currentOrganization?.id && !!user?.id,
+  });
+
+  const profileId = profileQuery.data?.id;
+
+  const rsvpQuery = useQuery<{ status: RSVPStatus }>({
+    queryKey: ["event-rsvp", id, profileId],
+    queryFn: async () => {
+      if (!id || !profileId) return { status: null };
       const { data } = await (supabase as any)
         .from("event_registrations")
         .select("status")
         .eq("event_id", id)
-        .eq("profile_id", user.id)
+        .eq("profile_id", profileId)
         .maybeSingle();
       const row = data as { status: string } | null;
       return { status: (row?.status || null) as RSVPStatus };
     },
-    enabled: !!id && !!user?.id,
+    enabled: !!id && !!profileId,
   });
 
   const attendeesQuery = useQuery<number>({
@@ -154,24 +171,25 @@ export default function EventDetailScreen() {
           return;
         }
 
+        if (!profileId) return;
         if (status === null) {
           await (supabase as any)
             .from("event_registrations")
             .delete()
             .eq("event_id", id)
-            .eq("profile_id", user.id);
+            .eq("profile_id", profileId);
         } else {
           await (supabase as any)
             .from("event_registrations")
             .upsert({
               event_id: id,
-              profile_id: user.id,
+              profile_id: profileId,
               status,
               registered_at: new Date().toISOString(),
             });
         }
 
-        await queryClient.invalidateQueries({ queryKey: ["event-rsvp", id, user.id] });
+        await queryClient.invalidateQueries({ queryKey: ["event-rsvp", id, profileId] });
         await queryClient.invalidateQueries({ queryKey: ["event-attendees", id] });
       } catch (err) {
         Alert.alert("Error", "Failed to update RSVP. Please try again.");
@@ -179,7 +197,7 @@ export default function EventDetailScreen() {
         setIsSubmittingRsvp(false);
       }
     },
-    [user?.id, id, currentOrganization, rsvpStatus, queryClient]
+    [profileId, id, currentOrganization, rsvpStatus, queryClient]
   );
 
   const handleShare = useCallback(async () => {

@@ -225,12 +225,13 @@ export default function ChatScreen() {
     },
   });
 
+  // Mark conversation as read when entering the chat
   useEffect(() => {
-    if (id && profileId && conversationQuery.data?.unreadCount) {
+    if (id && profileId) {
       markReadMutation.mutate({ conversationId: id, profileId });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [id, profileId, conversationQuery.data?.unreadCount]);
+  }, [id, profileId]);
 
   const conversation = conversationQuery.data;
   const messages = useMemo(() => messagesQuery.data || [], [messagesQuery.data]);

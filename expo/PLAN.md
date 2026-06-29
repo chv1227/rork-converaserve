@@ -62,10 +62,21 @@ Production-ready church management platform with 9 core features. Future feature
 ### 9. Admin Dashboard
 - [x] Stats cards with live counts (users, active, ministries, reports)
 - [x] User management section with quick actions
-- [x] Ministry management section
+- [x] Ministry management section with real ministry data
 - [x] Church management for super admins
-- [x] Invite member modal with role selection
+- [x] Invite member modal with role selection + real ministry picker
 - [x] Content moderation and danger zone sections
+- [x] Pending requests query fetches real data from DB
+
+## Bug Fixes (Audit Pass - 2026-06-29)
+- [x] Fixed admin dashboard ministries query (was disabled, always empty)
+- [x] Fixed pending requests query (now fetches real data from DB)
+- [x] Fixed event RSVP using incorrect ID (was user.id, now profile_id)
+- [x] Fixed chat mark-as-read behavior (now fires on screen enter)
+- [x] Modernized register screen (glassmorphism matching login design)
+- [x] Fixed announcements pinned card hardcoded color (#FFF5F5 removed)
+- [x] Fixed media download button (now opens file URL via Linking)
+- [x] TypeScript compiles cleanly (zero errors)
 
 ## Backend (All Deployed)
 - [x] Forms & form_responses tables with RLS
