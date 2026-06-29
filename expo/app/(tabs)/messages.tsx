@@ -10,7 +10,9 @@ import {
   TextInput,
   Modal,
   Animated,
+  Platform,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
@@ -432,6 +434,7 @@ export default function MessagesScreen() {
   const { refetch: refetchConversations } = conversationsQuery;
   
   const onRefresh = useCallback(() => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     void refetchConversations();
   }, [refetchConversations]);
 

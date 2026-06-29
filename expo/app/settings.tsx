@@ -5,10 +5,12 @@ import {
   StyleSheet,
   TouchableOpacity,
   ScrollView,
+  Linking,
+  Platform,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, Sun, Moon, Smartphone, Check } from 'lucide-react-native';
+import { ArrowLeft, Sun, Moon, Smartphone, Check, FileText, Shield, ExternalLink } from 'lucide-react-native';
 import { useTheme, ThemeMode } from '@/providers/ThemeProvider';
 
 export default function SettingsScreen() {
@@ -33,6 +35,19 @@ export default function SettingsScreen() {
       label: 'System',
       icon: <Smartphone size={24} color={colors.text} />,
       description: 'Follow system settings',
+    },
+  ];
+
+  const legalItems = [
+    {
+      label: 'Privacy Policy',
+      icon: <Shield size={20} color={colors.primary} />,
+      url: 'https://churchconnect.app/privacy',
+    },
+    {
+      label: 'Terms of Service',
+      icon: <FileText size={20} color={colors.primary} />,
+      url: 'https://churchconnect.app/terms',
     },
   ];
 
@@ -96,6 +111,46 @@ export default function SettingsScreen() {
             </View>
           </View>
 
+          <View style={styles.section}>
+            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+              LEGAL
+            </Text>
+            <View style={[styles.optionsContainer, { backgroundColor: colors.surface }]}>
+              {legalItems.map((item, index) => (
+                <TouchableOpacity
+                  key={item.label}
+                  style={[
+                    styles.optionRow,
+                    index !== legalItems.length - 1 && [
+                      styles.optionBorder,
+                      { borderBottomColor: colors.border },
+                    ],
+                  ]}
+                  onPress={() => {
+                    void Linking.openURL(item.url);
+                  }}
+                >
+                  <View style={styles.optionLeft}>
+                    <View
+                      style={[
+                        styles.iconContainer,
+                        { backgroundColor: colors.surfaceSecondary },
+                      ]}
+                    >
+                      {item.icon}
+                    </View>
+                    <View style={styles.optionText}>
+                      <Text style={[styles.optionLabel, { color: colors.text }]}>
+                        {item.label}
+                      </Text>
+                    </View>
+                  </View>
+                  <ExternalLink size={18} color={colors.textTertiary} />
+                </TouchableOpacity>
+              ))}
+            </View>
+          </View>
+
           <View style={styles.previewSection}>
             <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
               PREVIEW
@@ -131,6 +186,8 @@ export default function SettingsScreen() {
               </View>
             </View>
           </View>
+
+          <View style={{ height: 40 }} />
         </ScrollView>
       </SafeAreaView>
     </View>

@@ -1,4 +1,4 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Modal, Linking, TextInput } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Alert, Platform, ActivityIndicator, Modal, Linking, TextInput, Share } from "react-native";
 import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import {
@@ -25,6 +25,7 @@ import {
   Pencil,
   Trash2,
   AlertTriangle,
+  Link,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import Colors from "@/constants/colors";
@@ -385,6 +386,23 @@ export default function ProfileScreen() {
             title="Help & Support"
             subtitle="Get help and contact support"
             onPress={() => setHelpModalVisible(true)}
+          />
+          <MenuItem
+            icon={<Link size={20} color={themeColors.primary} />}
+            title="Invite to Church"
+            subtitle="Share an invite link with others"
+            onPress={async () => {
+              const orgName = currentOrganization?.name ?? 'our church';
+              const inviteLink = currentOrganization?.id
+                ? `https://churchconnect.app/join/${currentOrganization.id}`
+                : 'https://churchconnect.app';
+              try {
+                await Share.share({
+                  message: `Join me on ChurchConnect — ${orgName}! ${inviteLink}`,
+                  title: `Join ${orgName} on ChurchConnect`,
+                });
+              } catch { /* user cancelled */ }
+            }}
             showBorder={false}
           />
         </View>

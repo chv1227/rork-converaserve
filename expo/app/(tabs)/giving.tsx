@@ -12,6 +12,7 @@ import {
   RefreshControl,
   Platform,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import * as Linking from "expo-linking";
 import {
   Heart,
@@ -319,6 +320,7 @@ export default function GivingTabScreen() {
   };
 
   const onRefresh = useCallback(() => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     void queryClient.invalidateQueries({ queryKey: ["giving"] });
   }, [queryClient]);
 

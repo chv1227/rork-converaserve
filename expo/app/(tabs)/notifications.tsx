@@ -8,7 +8,9 @@ import {
   TouchableOpacity,
   ActivityIndicator,
   Animated,
+  Platform,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
 import {
@@ -219,6 +221,7 @@ export default function NotificationsScreen() {
   }, [notifications]);
 
   const onRefresh = useCallback(() => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log('Refreshing notifications...');
     void notificationsQuery.refetch();
   }, [notificationsQuery]);

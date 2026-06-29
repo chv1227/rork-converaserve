@@ -50,8 +50,8 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Grid and list view modes
 - [x] Folder navigation with breadcrumbs
 - [x] File metadata display (size, type, date)
-- [x] Documents table already in database schema
-- [x] Storage buckets live (media, avatars, documents, announcements, chat-files) with RLS
+- [x] Documents table in database schema
+- [x] 5 Storage buckets live (media, avatars, documents, announcements, chat-files) with RLS
 
 ### 8. User Profiles
 - [x] Profile picture and contact info
@@ -62,31 +62,29 @@ Production-ready church management platform with 9 core features. Future feature
 ### 9. Admin Dashboard
 - [x] Stats cards with live counts (users, active, ministries, reports)
 - [x] User management section with quick actions
-- [x] Ministry management section with real ministry data
+- [x] Ministry management section
 - [x] Church management for super admins
-- [x] Invite member modal with role selection + real ministry picker
+- [x] Invite member modal with role selection
 - [x] Content moderation and danger zone sections
-- [x] Pending requests query fetches real data from DB
 
-## Bug Fixes (Audit Pass - 2026-06-29)
-- [x] Fixed admin dashboard ministries query (was disabled, always empty)
-- [x] Fixed pending requests query (now fetches real data from DB)
-- [x] Fixed event RSVP using incorrect ID (was user.id, now profile_id)
-- [x] Fixed chat mark-as-read behavior (now fires on screen enter)
-- [x] Modernized register screen (glassmorphism matching login design)
-- [x] Fixed announcements pinned card hardcoded color (#FFF5F5 removed)
-- [x] Fixed media download button (now opens file URL via Linking)
-- [x] TypeScript compiles cleanly (zero errors)
+## Polish & Launch Readiness
+- [x] Edge function deployed (send-push-notifications)
+- [x] pg_cron job scheduled every 60 seconds for push delivery
+- [x] App icons generated for all device sizes (iOS, Android, web)
+- [x] Privacy Policy & Terms of Service links in Settings screen
+- [x] Onboarding carousel (3 slides: Stay Connected, Give Easily, Join Ministries) after first login
+- [x] Pull-to-refresh haptic feedback on all tab screens
+- [x] Share church invite link button on Profile screen
 
 ## Backend (All Deployed)
 - [x] Forms & form_responses tables with RLS
-- [x] All 35+ tables have RLS policies (no unprotected tables)
-- [x] Storage buckets: media, avatars, documents, announcements, chat-files (all with RLS)
+- [x] All 35+ tables have RLS policies (no unprotected data)
+- [x] 5 Storage buckets with RLS: media, avatars, documents, announcements, chat-files
 - [x] Push notification infrastructure:
-  - user_push_tokens table for Expo push tokens
-  - push_notification_queue table with DB triggers on announcements & events
-  - Edge function deployed: https://mrdefwwcvnepbepoelxz.supabase.co/functions/v1/send-push-notifications
-  - Call this function on a schedule (e.g., cron every minute) to deliver push notifications
+  - `user_push_tokens` table for Expo push tokens
+  - `push_notification_queue` with DB triggers on announcements & events
+  - Edge function deployed at send-push-notifications
+  - pg_cron job scheduled every 60 seconds to deliver push notifications
 
 ## Design
 - Modern dark/light theme with navy brass palette
@@ -96,7 +94,7 @@ Production-ready church management platform with 9 core features. Future feature
 
 ## Tech Stack
 - Expo/React Native with TypeScript
-- Supabase backend (auth, database, storage, realtime)
+- Supabase backend (auth, database, storage, realtime, edge functions)
 - React Query for server state
-- Push notifications via Expo Notifications
+- Push notifications via Expo Notifications + Supabase Edge Functions
 - Scalable multi-tenant architecture

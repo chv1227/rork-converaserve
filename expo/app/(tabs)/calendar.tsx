@@ -1,5 +1,6 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Animated, Easing } from "react-native";
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Animated, Easing, Platform } from "react-native";
+import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 
@@ -42,6 +43,7 @@ export default function CalendarScreen() {
   }, [calendarAnim, eventsAnim]);
 
   const onRefresh = useCallback(async () => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log("Refreshing calendar...");
     setLocalRefreshing(true);
     try {

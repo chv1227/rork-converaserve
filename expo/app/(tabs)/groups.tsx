@@ -16,6 +16,7 @@ import {
   Easing,
   Dimensions,
 } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href } from "expo-router";
@@ -359,6 +360,7 @@ export default function GroupsScreen() {
   }, [headerAnim]);
 
   const onRefresh = useCallback(async () => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     console.log("Refreshing ministries...");
     setLocalRefreshing(true);
     try {

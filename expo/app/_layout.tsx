@@ -29,6 +29,21 @@ const queryClient = new QueryClient({
   },
 });
 
+const ONBOARDING_KEY = "onboarding_complete_v1";
+
+async function hasCompletedOnboarding(): Promise<boolean> {
+  try {
+    if (Platform.OS === "web") {
+      return localStorage.getItem(ONBOARDING_KEY) === "true";
+    }
+    const SecureStore = await import("expo-secure-store");
+    const value = await SecureStore.getItemAsync(ONBOARDING_KEY);
+    return value === "true";
+  } catch {
+    return false;
+  }
+}
+
 function AuthGate({ children }: { children: ReactNode }) {
   const { isLoading, isAuthenticated, emailVerified } = useAuth();
   const segments = useSegments();
@@ -41,6 +56,7 @@ function AuthGate({ children }: { children: ReactNode }) {
     const inAuthGroup = segments[0] === "login" as string || segments[0] === "register" as string;
     const inOrganizationGroup = segments[0] === "organization" as string;
     const inVerifyEmail = segments[0] === "verify-email" as string;
+    const inOnboarding = segments[0] === "onboarding" as string;
 
     if (!isAuthenticated && !inAuthGroup && !inOrganizationGroup) {
       setIsNavigating(true);
@@ -57,8 +73,14 @@ function AuthGate({ children }: { children: ReactNode }) {
     } else if (isAuthenticated && emailVerified && (segments[0] === "login" as string || inVerifyEmail)) {
       setIsNavigating(true);
       setTimeout(() => {
-        router.replace("/(tabs)");
-        setIsNavigating(false);
+        void hasCompletedOnboarding().then((completed) => {
+          if (!completed && !inOnboarding) {
+            router.replace("/onboarding" as any);
+          } else {
+            router.replace("/(tabs)");
+          }
+          setIsNavigating(false);
+        });
       }, 100);
     }
   }, [isLoading, isAuthenticated, emailVerified, segments, router, isNavigating]);
@@ -97,6 +119,13 @@ function RootLayoutNav() {
         name="register" 
         options={{ 
           headerShown: false,
+        }} 
+      />
+      <Stack.Screen 
+        name="onboarding" 
+        options={{ 
+          headerShown: false,
+          gestureEnabled: false,
         }} 
       />
       <Stack.Screen 

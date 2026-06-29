@@ -1,5 +1,6 @@
 import React, { useCallback, useState, useRef, useEffect, useMemo } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, RefreshControl, ActivityIndicator, Platform, Animated, Easing, Dimensions } from "react-native";
+import * as Haptics from "expo-haptics";
 import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
 import { Bell, MessageCircle, ChevronRight, Megaphone, Sparkles, Building2, Heart, Pin, Globe, Users, Calendar, ClipboardList, FolderOpen } from "lucide-react-native";
@@ -100,6 +101,7 @@ export default function HomeScreen() {
   const firstName = user?.name?.split(" ")[0] || "Friend";
 
   const onRefresh = useCallback(async () => {
+    if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
     setLocalRefreshing(true);
     try { await refresh(); } catch { /* handled silently */ }
     finally { setLocalRefreshing(false); }
