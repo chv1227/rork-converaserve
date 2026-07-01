@@ -303,6 +303,8 @@ export type Database = {
           slug: string | null
           state: string | null
           status: Database["public"]["Enums"]["church_status"] | null
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
           subscription_expires_at: string | null
           subscription_plan:
             | Database["public"]["Enums"]["subscription_plan"]
@@ -332,6 +334,8 @@ export type Database = {
           slug?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["church_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]
@@ -361,6 +365,8 @@ export type Database = {
           slug?: string | null
           state?: string | null
           status?: Database["public"]["Enums"]["church_status"] | null
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
           subscription_expires_at?: string | null
           subscription_plan?:
             | Database["public"]["Enums"]["subscription_plan"]

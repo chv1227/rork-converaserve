@@ -7,50 +7,113 @@ import {
   ScrollView,
   Linking,
   Platform,
+  ActivityIndicator,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
-import { ArrowLeft, FileText, Shield, ExternalLink } from 'lucide-react-native';
+import {
+  ArrowLeft,
+  FileText,
+  Shield,
+  Crown,
+  ChevronRight,
+  CreditCard,
+  ExternalLink,
+} from 'lucide-react-native';
+import { useQuery } from '@tanstack/react-query';
 import { useTheme } from '@/providers/ThemeProvider';
+import { useAuth } from '@/providers/AuthProvider';
+import { trpcClient } from '@/lib/trpc';
 
 export default function SettingsScreen() {
   const router = useRouter();
-  const { colors } = useTheme();
+  const { colors: tc } = useTheme();
+  const { currentOrganization, isOrganizationAdmin } = useAuth();
+
+  const orgId = currentOrganization?.id ?? '';
+
+  const subscriptionQuery = useQuery({
+    queryKey: ['subscription', orgId],
+    queryFn: () => trpcClient.stripe.getSubscription.query({ churchId: orgId }),
+    enabled: !!orgId,
+  });
+
+  const sub = subscriptionQuery.data;
 
   const legalItems = [
     {
       label: 'Privacy Policy',
-      icon: <Shield size={20} color={colors.primary} />,
+      icon: <Shield size={20} color={tc.primary} />,
       url: 'https://churchconnect.app/privacy',
     },
     {
       label: 'Terms of Service',
-      icon: <FileText size={20} color={colors.primary} />,
+      icon: <FileText size={20} color={tc.primary} />,
       url: 'https://churchconnect.app/terms',
     },
   ];
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={[styles.container, { backgroundColor: tc.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <View style={[styles.header, { borderBottomColor: colors.border }]}>
+        <View style={[styles.header, { borderBottomColor: tc.borderLight }]}>
           <TouchableOpacity
-            style={[styles.backButton, { backgroundColor: colors.surfaceSecondary }]}
+            style={[styles.backButton, { backgroundColor: tc.surfaceSecondary }]}
             onPress={() => router.back()}
             testID="back-button"
           >
-            <ArrowLeft size={20} color={colors.text} />
+            <ArrowLeft size={20} color={tc.text} />
           </TouchableOpacity>
-          <Text style={[styles.headerTitle, { color: colors.text }]}>Settings</Text>
+          <Text style={[styles.headerTitle, { color: tc.text }]}>Settings</Text>
           <View style={styles.headerRight} />
         </View>
 
         <ScrollView style={styles.content} showsVerticalScrollIndicator={false}>
+          {/* Subscription Section */}
+          {currentOrganization && (
+            <View style={styles.section}>
+              <Text style={[styles.sectionTitle, { color: tc.textSecondary }]}>
+                SUBSCRIPTION
+              </Text>
+              <View style={[styles.optionsContainer, { backgroundColor: tc.surface }]}>
+                <TouchableOpacity
+                  style={styles.optionRow}
+                  onPress={() => router.push('/pricing')}
+                >
+                  <View style={styles.optionLeft}>
+                    <View style={[styles.iconContainer, { backgroundColor: tc.surfaceSecondary }]}>
+                      <Crown size={20} color={tc.primary} />
+                    </View>
+                    <View style={styles.optionText}>
+                      <Text style={[styles.optionLabel, { color: tc.text }]}>
+                        Manage Subscription
+                      </Text>
+                      {subscriptionQuery.isLoading ? (
+                        <ActivityIndicator size="small" color={tc.primary} style={{ marginTop: 2 }} />
+                      ) : sub ? (
+                        <Text style={[styles.optionDescription, { color: tc.textSecondary }]}>
+                          {sub.planName} · {sub.status === 'active' ? 'Active' : 'Inactive'}
+                          {sub.cancelAtPeriodEnd ? ' · Ending soon' : ''}
+                        </Text>
+                      ) : (
+                        <Text style={[styles.optionDescription, { color: tc.textSecondary }]}>
+                          Free Plan
+                        </Text>
+                      )}
+                    </View>
+                  </View>
+                  <ChevronRight size={18} color={tc.textTertiary} />
+                </TouchableOpacity>
+              </View>
+            </View>
+          )}
+
+          {/* Legal Section */}
           <View style={styles.section}>
-            <Text style={[styles.sectionTitle, { color: colors.textSecondary }]}>
+            <Text style={[styles.sectionTitle, { color: tc.textSecondary }]}>
               LEGAL
             </Text>
-            <View style={[styles.optionsContainer, { backgroundColor: colors.surface }]}>
+            <View style={[styles.optionsContainer, { backgroundColor: tc.surface }]}>
               {legalItems.map((item, index) => (
                 <TouchableOpacity
                   key={item.label}
@@ -58,7 +121,7 @@ export default function SettingsScreen() {
                     styles.optionRow,
                     index !== legalItems.length - 1 && [
                       styles.optionBorder,
-                      { borderBottomColor: colors.border },
+                      { borderBottomColor: tc.borderLight },
                     ],
                   ]}
                   onPress={() => {
@@ -69,18 +132,18 @@ export default function SettingsScreen() {
                     <View
                       style={[
                         styles.iconContainer,
-                        { backgroundColor: colors.surfaceSecondary },
+                        { backgroundColor: tc.surfaceSecondary },
                       ]}
                     >
                       {item.icon}
                     </View>
                     <View style={styles.optionText}>
-                      <Text style={[styles.optionLabel, { color: colors.text }]}>
+                      <Text style={[styles.optionLabel, { color: tc.text }]}>
                         {item.label}
                       </Text>
                     </View>
                   </View>
-                  <ExternalLink size={18} color={colors.textTertiary} />
+                  <ExternalLink size={18} color={tc.textTertiary} />
                 </TouchableOpacity>
               ))}
             </View>

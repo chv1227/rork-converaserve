@@ -1,6 +1,7 @@
 import { trpcServer } from "@hono/trpc-server";
 import { Hono } from "hono";
 import { cors } from "hono/cors";
+import Stripe from "stripe";
 
 import { appRouter } from "./trpc/app-router";
 import { createContext } from "./trpc/create-context";
@@ -59,6 +60,128 @@ app.get("/payment-cancel", (c) => {
   </div>
 </body>
 </html>`);
+});
+
+// ─── Stripe Webhook ──────────────────────────────────────────────────────────
+
+app.post("/api/stripe/webhook", async (c) => {
+  const sig = c.req.header("stripe-signature");
+  const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+
+  if (!sig || !webhookSecret) {
+    console.error("Stripe Webhook: Missing signature or webhook secret");
+    return c.json({ error: "Missing signature or webhook secret" }, 400);
+  }
+
+  let event: Stripe.Event;
+  try {
+    const body = await c.req.text();
+    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!);
+    event = await stripe.webhooks.constructEventAsync(body, sig, webhookSecret);
+  } catch (err: any) {
+    console.error("Stripe Webhook: Signature verification failed:", err.message);
+    return c.json({ error: `Webhook signature verification failed: ${err.message}` }, 400);
+  }
+
+  console.log("Stripe Webhook: Received event", event.type);
+
+  try {
+    const { createClient } = await import("@supabase/supabase-js");
+    const supabase = createClient(
+      process.env.EXPO_PUBLIC_SUPABASE_URL!,
+      process.env.EXPO_PUBLIC_SUPABASE_ANON_KEY!
+    );
+
+    switch (event.type) {
+      case "checkout.session.completed": {
+        const session = event.data.object as Stripe.Checkout.Session;
+        const metadata = session.metadata ?? {};
+        const type = metadata.type;
+
+        if (type === "subscription" && session.subscription) {
+          const churchId = metadata.churchId;
+          const planId = metadata.planId || "basic";
+
+          console.log("Stripe Webhook: Subscription checkout completed for church", churchId, "plan:", planId);
+
+          await supabase
+            .from("churches")
+            .update({
+              subscription_plan: planId,
+              stripe_subscription_id: session.subscription as string,
+              subscription_expires_at: null,
+            })
+            .eq("id", churchId);
+        }
+        break;
+      }
+
+      case "customer.subscription.updated": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const churchId = subscription.metadata?.churchId;
+
+        if (!churchId) {
+          console.log("Stripe Webhook: No churchId in subscription metadata, skipping");
+          break;
+        }
+
+        const planId = subscription.metadata?.planId || "basic";
+        const status = subscription.status;
+
+        console.log("Stripe Webhook: Subscription updated for church", churchId, "status:", status, "plan:", planId);
+
+        if (status === "active" || status === "trialing") {
+          const periodEnd = (subscription as any).current_period_end
+            ? new Date((subscription as any).current_period_end * 1000).toISOString()
+            : null;
+
+          await supabase
+            .from("churches")
+            .update({
+              subscription_plan: planId,
+              stripe_subscription_id: subscription.id,
+              subscription_expires_at: periodEnd,
+            })
+            .eq("id", churchId);
+        } else if (status === "past_due" || status === "unpaid") {
+          await supabase
+            .from("churches")
+            .update({
+              subscription_plan: "free",
+              subscription_expires_at: null,
+            })
+            .eq("id", churchId);
+        }
+        break;
+      }
+
+      case "customer.subscription.deleted": {
+        const subscription = event.data.object as Stripe.Subscription;
+        const churchId = subscription.metadata?.churchId;
+
+        if (churchId) {
+          console.log("Stripe Webhook: Subscription deleted for church", churchId);
+          await supabase
+            .from("churches")
+            .update({
+              subscription_plan: "free",
+              stripe_subscription_id: null,
+              subscription_expires_at: null,
+            })
+            .eq("id", churchId);
+        }
+        break;
+      }
+
+      default:
+        console.log("Stripe Webhook: Unhandled event type:", event.type);
+    }
+  } catch (err: any) {
+    console.error("Stripe Webhook: Error processing event:", err.message);
+    return c.json({ error: "Internal error processing webhook" }, 500);
+  }
+
+  return c.json({ received: true });
 });
 
 export default app;

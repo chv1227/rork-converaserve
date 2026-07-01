@@ -34,6 +34,8 @@ CREATE TABLE public.churches (
     -- Subscription & billing
     subscription_plan subscription_plan DEFAULT 'free',
     subscription_expires_at TIMESTAMPTZ,
+    stripe_customer_id TEXT,
+    stripe_subscription_id TEXT,
     
     -- Ownership
     owner_user_id UUID REFERENCES public.users(id) ON DELETE SET NULL,
