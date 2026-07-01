@@ -62,7 +62,7 @@ app.get("/payment-cancel", (c) => {
 
 // ─── Stripe Webhook ──────────────────────────────────────────────────────────
 
-app.post("/api/stripe/webhook", async (c) => {
+app.post("/stripe/webhook", async (c) => {
   const sig = c.req.header("stripe-signature");
   const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
 
