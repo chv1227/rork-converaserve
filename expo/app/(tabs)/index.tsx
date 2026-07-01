@@ -8,7 +8,7 @@ import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
 import {
   Bell, MessageCircle, Heart, Users, Calendar, ClipboardList,
-  FolderOpen, Megaphone, Pin, Globe, ChevronRight, Sparkles,
+  Megaphone, Pin, Globe, ChevronRight, Sparkles,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -255,7 +255,6 @@ export default function HomeScreen() {
               { icon: <Users size={20} color={colors.highlight} />, label: "Community", sub: `${membersCount} members`, href: "/(tabs)/profile" as Href, bg: colors.highlight + "15" },
               { icon: <Calendar size={20} color={colors.success} />, label: "Events", sub: "Calendar", href: "/(tabs)/calendar" as Href, bg: colors.success + "15" },
               { icon: <ClipboardList size={20} color={colors.warning} />, label: "Forms", sub: "Sign-ups", href: "/forms" as Href, bg: colors.warning + "15" },
-              { icon: <FolderOpen size={20} color={colors.coral} />, label: "Media", sub: "Photos & files", href: "/media" as Href, bg: colors.coral + "15" },
             ] as const).map((item, idx) => (
               <TouchableOpacity
                 key={item.label}
