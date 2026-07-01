@@ -2,7 +2,6 @@ import { Tabs } from "expo-router";
 import { House, MessageCircle, Heart, UserPlus, Church } from "lucide-react-native";
 import React from "react";
 import { Platform, View, StyleSheet } from "react-native";
-import { BlurView } from "expo-blur";
 import { LinearGradient } from "expo-linear-gradient";
 
 import { useTheme } from "@/providers/ThemeProvider";
@@ -26,7 +25,8 @@ export default function TabLayout() {
           paddingTop: 6,
           paddingBottom: Platform.OS === "ios" ? 6 : 10,
           height: Platform.OS === "ios" ? 82 : 70,
-          backgroundColor: Platform.OS === "ios" ? "rgba(255, 255, 255, 0.88)" : "rgba(255, 255, 255, 0.95)",
+          backgroundColor: "rgba(255, 255, 255, 0.92)",
+          zIndex: 100,
           ...Platform.select({
             ios: {
               shadowColor: "#000",
@@ -42,16 +42,6 @@ export default function TabLayout() {
             },
           }),
         },
-        tabBarBackground: () =>
-          Platform.OS === "ios" ? (
-            <BlurView
-              tint="light"
-              intensity={85}
-              style={StyleSheet.absoluteFill}
-            />
-          ) : (
-            <View style={[StyleSheet.absoluteFill, { borderRadius: 28, backgroundColor: "rgba(255,255,255,0.95)" }]} />
-          ),
         tabBarLabelStyle: {
           fontSize: 10,
           fontWeight: "700" as const,
