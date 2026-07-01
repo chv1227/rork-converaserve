@@ -27,7 +27,7 @@ export const SUBSCRIPTION_PLANS = {
   basic: {
     id: "basic" as const,
     name: "Basic",
-    price: 29,
+    price: 9.99,
     features: [
       "Up to 200 members",
       "Announcements & events",
@@ -40,7 +40,7 @@ export const SUBSCRIPTION_PLANS = {
   standard: {
     id: "standard" as const,
     name: "Standard",
-    price: 79,
+    price: 19.99,
     features: [
       "Up to 1,000 members",
       "Announcements & events",
@@ -54,7 +54,7 @@ export const SUBSCRIPTION_PLANS = {
   premium: {
     id: "premium" as const,
     name: "Premium",
-    price: 149,
+    price: 29.99,
     features: [
       "Unlimited members",
       "Everything in Standard",
