@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { House, MessageCircle, Heart, CircleUser } from "lucide-react-native";
+import { House, MessageCircle, Heart, CircleUser, UserPlus } from "lucide-react-native";
 import React from "react";
 import { Platform, View, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
@@ -94,6 +94,27 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
+        name="signup"
+        options={{
+          title: "Signup",
+          tabBarIcon: ({ focused }) => (
+            <View style={styles.centerTabButton}>
+              <LinearGradient
+                colors={["#1A7B74", "#0E5E58", "#084D47"]}
+                start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
+                style={[
+                  styles.centerTabGradient,
+                  focused && styles.centerTabFocused,
+                ]}
+              >
+                <UserPlus size={26} color="#FFFFFF" strokeWidth={2.5} />
+              </LinearGradient>
+            </View>
+          ),
+          tabBarLabel: () => null,
+        }}
+      />
+      <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
@@ -109,3 +130,28 @@ export default function TabLayout() {
     </Tabs>
   );
 }
+
+const styles = StyleSheet.create({
+  centerTabButton: {
+    alignItems: "center",
+    justifyContent: "center",
+    marginBottom: Platform.OS === "ios" ? 0 : -4,
+  },
+  centerTabGradient: {
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    alignItems: "center",
+    justifyContent: "center",
+    shadowColor: "#0E5E58",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.35,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  centerTabFocused: {
+    transform: [{ scale: 1.08 }],
+    shadowOpacity: 0.45,
+    shadowRadius: 12,
+  },
+});

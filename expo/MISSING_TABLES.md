@@ -19,6 +19,7 @@ All required tables now have SQL migration files in `expo/sql/`. Below is the cu
 | 11_polls.sql | polls, poll_options, poll_votes |
 | 12_discussions.sql | discussions, discussion_comments, discussion_likes |
 | 13_songs.sql | songs, song_audio_parts, song_lyrics, worship_sets, worship_set_songs |
+| 14_signups.sql | church_membership_signups, childrens_ministry_children |
 
 ## App Screens (all linked from home screen)
 
@@ -40,9 +41,16 @@ All required tables now have SQL migration files in `expo/sql/`. Below is the cu
 | New Here? | /church/welcome | ✅ Live |
 | Service Times | /church/service-times | ✅ Live |
 | Contact Church | /church/contact | ✅ Live |
+| Signup | /(tabs)/signup | ✅ Live |
+| Church Membership | /(tabs)/signup | ✅ Live |
+| Children's Ministry | /(tabs)/signup | ✅ Live |
+| Youth Ministry | /(tabs)/signup | ✅ Live |
+| Volunteer Signup | /(tabs)/signup | ✅ Live |
+| Small Groups | /(tabs)/signup | ✅ Live |
+| Baptism | /(tabs)/signup | ✅ Live |
 
 ## Next Steps
 
-1. Run all SQL files in Supabase SQL editor (files 01 through 13 in order)
+1. Run all SQL files in Supabase SQL editor (files 01 through 14 in order)
 2. Verify all RLS policies are applied (07_rls.sql should be run after all table creation)
 3. Verify all screens render properly in the app
