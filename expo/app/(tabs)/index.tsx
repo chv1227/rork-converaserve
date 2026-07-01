@@ -9,9 +9,9 @@ import { useRouter, Href } from "expo-router";
 import {
   Bell, MessageCircle, Heart, Users, Calendar, ClipboardList,
   Megaphone, Pin, Globe, ChevronRight, Sparkles, ArrowUpRight,
-  MapPin, Clock, BookOpen, Video, Headphones, Radio,
-  QrCode, HandHeart, UserCheck, UserPlus, CalendarDays,
-  Play, ExternalLink, Church,
+  MapPin, Clock, Video, Headphones, Radio,
+  HandHeart, UserCheck, UserPlus, CalendarDays,
+  Play, Church,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
@@ -467,7 +467,7 @@ export default function HomeScreen() {
       icon: <HandHeart size={20} color="#FFFFFF" />,
       label: "Prayer Requests",
       subtitle: `${prayerRequestsCount.active} active requests`,
-      href: "/(tabs)/more" as Href,
+      href: "/forms" as Href,
       gradient: ["rgba(99,102,241,0.55)", "rgba(79,70,229,0.88)"],
       bgImage: "https://images.unsplash.com/photo-1506784983877-45594efa4cbe?w=800&h=300&fit=crop",
     },
@@ -483,7 +483,7 @@ export default function HomeScreen() {
       icon: <CalendarDays size={20} color="#FFFFFF" />,
       label: "Upcoming Events",
       subtitle: `${events.length} event${events.length !== 1 ? "s" : ""} coming up`,
-      href: "/(tabs)/calendar" as Href,
+      href: "/events" as Href,
       gradient: ["rgba(14,165,233,0.50)", "rgba(2,132,199,0.88)"],
       bgImage: "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&h=300&fit=crop",
     },
@@ -504,22 +504,6 @@ export default function HomeScreen() {
       bgImage: "https://images.unsplash.com/photo-1490127252417-7c393f993ee3?w=800&h=300&fit=crop",
     },
     {
-      icon: <BookOpen size={20} color="#FFFFFF" />,
-      label: "Daily Devotional",
-      subtitle: "Today's reading",
-      href: "/worship" as Href,
-      gradient: ["rgba(251,191,36,0.50)", "rgba(217,119,6,0.88)"],
-      bgImage: "https://images.unsplash.com/photo-1504052434569-70ad5836ab65?w=800&h=300&fit=crop",
-    },
-    {
-      icon: <Users size={20} color="#FFFFFF" />,
-      label: "Community Feed",
-      subtitle: "Connect & share",
-      href: "/(tabs)/profile" as Href,
-      gradient: ["rgba(6,182,212,0.50)", "rgba(8,145,178,0.88)"],
-      bgImage: "https://images.unsplash.com/photo-1529156069898-49953e39b3ac?w=800&h=300&fit=crop",
-    },
-    {
       icon: <Heart size={20} color="#FFFFFF" />,
       label: "Give",
       subtitle: givingStats.thisMonth > 0 ? `$${givingStats.thisMonth.toLocaleString()} this mo` : "Support our mission",
@@ -527,32 +511,16 @@ export default function HomeScreen() {
       gradient: ["rgba(225,29,72,0.50)", "rgba(190,18,60,0.88)"],
       bgImage: "https://images.unsplash.com/photo-1532629345422-7515f3d16bb6?w=800&h=300&fit=crop",
     },
-    {
-      icon: <Clock size={20} color="#FFFFFF" />,
-      label: "Service Times",
-      subtitle: "Sundays 9AM & 11AM",
-      href: "/church/service-times" as Href,
-      gradient: ["rgba(59,130,246,0.50)", "rgba(37,99,235,0.88)"],
-      bgImage: "https://images.unsplash.com/photo-1438032005730-c779502df39b?w=800&h=300&fit=crop",
-    },
-    {
-      icon: <ExternalLink size={20} color="#FFFFFF" />,
-      label: "Contact Church",
-      subtitle: "Get in touch",
-      href: "/church/contact" as Href,
-      gradient: ["rgba(107,114,128,0.50)", "rgba(55,65,81,0.88)"],
-      bgImage: "https://images.unsplash.com/photo-1423666639041-f56000c27a9a?w=800&h=300&fit=crop",
-    },
   ], [prayerRequestsCount.active, events.length, announcementCountLabel, givingStats.thisMonth]);
 
   // ── Quick Actions ──
   const quickActions: QuickActionItem[] = useMemo(() => [
     {
-      icon: <QrCode size={22} color="#1B365D" />,
-      label: "Scan QR",
-      href: "/(tabs)/more" as Href,
-      gradient: ["#F0F4FF", "#E0E7FF"],
-      iconBg: "#EEF2FF",
+      icon: <Heart size={22} color="#DC2626" />,
+      label: "Give",
+      href: "/(tabs)/giving" as Href,
+      gradient: ["#FEF2F2", "#FEE2E2"],
+      iconBg: "#FEF2F2",
     },
     {
       icon: <HandHeart size={22} color="#059669" />,
@@ -564,28 +532,28 @@ export default function HomeScreen() {
     {
       icon: <UserCheck size={22} color="#0EA5E9" />,
       label: "Check In",
-      href: "/(tabs)/calendar" as Href,
+      href: "/forms" as Href,
       gradient: ["#F0F9FF", "#E0F2FE"],
       iconBg: "#F0F9FF",
     },
     {
       icon: <UserPlus size={22} color="#8B5CF6" />,
       label: "Join Group",
-      href: "/(tabs)/profile" as Href,
+      href: "/(tabs)/ministries" as Href,
       gradient: ["#F5F3FF", "#EDE9FE"],
       iconBg: "#F5F3FF",
     },
     {
       icon: <HandHeart size={22} color="#F59E0B" />,
       label: "Submit Prayer",
-      href: "/(tabs)/more" as Href,
+      href: "/forms" as Href,
       gradient: ["#FFFBEB", "#FEF3C7"],
       iconBg: "#FFFBEB",
     },
     {
       icon: <CalendarDays size={22} color="#EF4444" />,
       label: "View Calendar",
-      href: "/(tabs)/calendar" as Href,
+      href: "/events" as Href,
       gradient: ["#FEF2F2", "#FEE2E2"],
       iconBg: "#FEF2F2",
     },
@@ -668,7 +636,7 @@ export default function HomeScreen() {
                 </TouchableOpacity>
 
                 <TouchableOpacity
-                  onPress={() => router.push("/(tabs)/profile" as Href)}
+                  onPress={() => router.push("/settings" as Href)}
                   style={styles.avatarButton}
                   activeOpacity={0.8}
                 >
@@ -835,7 +803,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.statCard, { backgroundColor: colors.surface }]}
-              onPress={() => router.push("/(tabs)/profile" as Href)}
+              onPress={() => router.push("/church-management" as Href)}
               activeOpacity={0.7}
             >
               <View style={[styles.statIconCircle, { backgroundColor: "#0EA5E9" + "0F" }]}>
@@ -1165,7 +1133,7 @@ const styles = StyleSheet.create({
     marginTop: -6,
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 16,
   },
 
   // ── Banner ──
@@ -1230,7 +1198,7 @@ const styles = StyleSheet.create({
   // ── Section ──
   section: {
     paddingHorizontal: 20,
-    marginTop: 28,
+    marginTop: 22,
   },
   sectionHeader: {
     flexDirection: "row",
