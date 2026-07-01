@@ -1,8 +1,9 @@
 import { Tabs } from "expo-router";
-import { Home, MessageCircle, Heart, User } from "lucide-react-native";
+import { House, MessageCircle, Heart, CircleUser } from "lucide-react-native";
 import React from "react";
 import { Platform, View, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
+import { LinearGradient } from "expo-linear-gradient";
 
 import { useTheme } from "@/providers/ThemeProvider";
 
@@ -17,27 +18,27 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          bottom: Platform.OS === "ios" ? 24 : 12,
-          left: 20,
-          right: 20,
-          borderRadius: 24,
+          bottom: Platform.OS === "ios" ? 20 : 10,
+          left: 16,
+          right: 16,
+          borderRadius: 28,
           borderTopWidth: 0,
-          paddingTop: 8,
-          paddingBottom: Platform.OS === "ios" ? 8 : 12,
-          height: Platform.OS === "ios" ? 80 : 72,
-          backgroundColor: "rgba(255, 255, 255, 0.85)",
+          paddingTop: 6,
+          paddingBottom: Platform.OS === "ios" ? 6 : 10,
+          height: Platform.OS === "ios" ? 82 : 70,
+          backgroundColor: Platform.OS === "ios" ? "rgba(255, 255, 255, 0.88)" : "rgba(255, 255, 255, 0.95)",
           ...Platform.select({
             ios: {
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 4 },
-              shadowOpacity: 0.08,
-              shadowRadius: 20,
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.10,
+              shadowRadius: 24,
             },
             android: {
-              elevation: 8,
+              elevation: 10,
             },
             web: {
-              boxShadow: "0 4px 24px rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
             },
           }),
         },
@@ -45,34 +46,41 @@ export default function TabLayout() {
           Platform.OS === "ios" ? (
             <BlurView
               tint="light"
-              intensity={80}
+              intensity={85}
               style={StyleSheet.absoluteFill}
             />
-          ) : null,
+          ) : (
+            <View style={[StyleSheet.absoluteFill, { borderRadius: 28, backgroundColor: "rgba(255,255,255,0.95)" }]} />
+          ),
         tabBarLabelStyle: {
-          fontSize: 11,
-          fontWeight: "600" as const,
-          marginTop: 2,
-          letterSpacing: 0.1,
+          fontSize: 10,
+          fontWeight: "700" as const,
+          marginTop: 1,
+          letterSpacing: 0.2,
         },
         tabBarItemStyle: {
-          paddingTop: 4,
+          paddingTop: 2,
         },
+
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
           title: "Home",
-          tabBarIcon: ({ color, size }) => <Home size={size} color={color} strokeWidth={2.2} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <View style={focused ? { alignItems: "center", justifyContent: "center" } : undefined}>
+              <House size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
+          ),
         }}
       />
       <Tabs.Screen
         name="messages"
         options={{
           title: "Messages",
-          tabBarIcon: ({ color, size }) => (
-            <MessageCircle size={size} color={color} strokeWidth={2.2} />
+          tabBarIcon: ({ color, size, focused }) => (
+            <MessageCircle size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
           ),
         }}
       />
@@ -80,14 +88,18 @@ export default function TabLayout() {
         name="giving"
         options={{
           title: "Giving",
-          tabBarIcon: ({ color, size }) => <Heart size={size} color={color} strokeWidth={2.2} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <Heart size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       <Tabs.Screen
         name="profile"
         options={{
           title: "Profile",
-          tabBarIcon: ({ color, size }) => <User size={size} color={color} strokeWidth={2.2} />,
+          tabBarIcon: ({ color, size, focused }) => (
+            <CircleUser size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
+          ),
         }}
       />
       <Tabs.Screen name="groups" options={{ href: null }} />
