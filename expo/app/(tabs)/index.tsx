@@ -8,20 +8,20 @@ import { Image } from "expo-image";
 import { useRouter, Href } from "expo-router";
 import {
   Bell, MessageCircle, Heart, Users, Calendar, ClipboardList,
-  Megaphone, Pin, Globe, ChevronRight, Sparkles, ArrowUpRight,
+  Megaphone, Church, HandHelping, PlayCircle, Ellipsis,
+  ChevronRight, MapPin, Clock,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import PendingApprovalBanner from "@/components/PendingApprovalBanner";
-import { useScalePress, usePulse } from "@/hooks/useAnimations";
+import { useScalePress } from "@/hooks/useAnimations";
 import { Announcement } from "@/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
-const CARD_GAP = 12 as const;
+const CARD_GAP = 12;
 
 // ── Helpers ──
 
@@ -31,21 +31,6 @@ function getTimeBasedGreeting(): string {
   if (hour >= 12 && hour < 17) return "Good afternoon";
   if (hour >= 17 && hour < 21) return "Good evening";
   return "Good night";
-}
-
-function formatAnnouncementDate(dateStr: string): string {
-  try {
-    const date = new Date(dateStr);
-    const now = new Date();
-    const diffMs = now.getTime() - date.getTime();
-    const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays}d ago`;
-    return date.toLocaleDateString(undefined, { month: "short", day: "numeric" });
-  } catch {
-    return "";
-  }
 }
 
 function getRelativeTime(dateStr: string): string {
@@ -66,14 +51,12 @@ function getRelativeTime(dateStr: string): string {
   }
 }
 
-// ── Quick Action Config ──
+// ── Grid Card Config ──
 
-interface QuickAction {
+interface GridCard {
   icon: React.ReactNode;
   label: string;
-  sub: string;
   href: Href;
-  gradient: readonly [string, string, ...string[]];
   iconBg: string;
 }
 
@@ -91,21 +74,21 @@ const AnnouncementCardItem = React.memo(function AnnouncementCardItem({
   onPress: () => void;
 }) {
   const priorityColor =
-    announcement.priority === "high" ? colors.error
-    : announcement.priority === "low" ? colors.textTertiary
-    : colors.primary;
+    announcement.priority === "high" ? "#EF4444"
+    : announcement.priority === "low" ? colors.border
+    : "#F59E0B";
 
   const fadeAnim = useRef(new Animated.Value(0)).current;
-  const slideAnim = useRef(new Animated.Value(20)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnim, {
-        toValue: 1, duration: 400, delay: 120 + index * 80,
+        toValue: 1, duration: 350, delay: 100 + index * 70,
         useNativeDriver: true, easing: Easing.out(Easing.cubic),
       }),
       Animated.timing(slideAnim, {
-        toValue: 0, duration: 400, delay: 120 + index * 80,
+        toValue: 0, duration: 350, delay: 100 + index * 70,
         useNativeDriver: true, easing: Easing.out(Easing.cubic),
       }),
     ]).start();
@@ -121,31 +104,25 @@ const AnnouncementCardItem = React.memo(function AnnouncementCardItem({
         onPress={onPress}
         activeOpacity={0.85}
       >
-        {/* Top row: chips */}
-        <View style={styles.announcementCardTop}>
-          {announcement.isPinned && (
-            <View style={[styles.chip, { backgroundColor: colors.primary + "12" }]}>
-              <Pin size={10} color={colors.primary} />
-              <Text style={[styles.chipText, { color: colors.primary }]}>Pinned</Text>
-            </View>
-          )}
-          <View style={[styles.chip, {
-            backgroundColor: announcement.ministryId
-              ? colors.secondary + "14"
-              : colors.tertiary + "14",
-          }]}>
-            {announcement.ministryId
-              ? <Users size={10} color={colors.secondary} />
-              : <Globe size={10} color={colors.tertiary} />}
-            <Text style={[styles.chipText, {
-              color: announcement.ministryId ? colors.secondary : colors.tertiary,
+        <View style={styles.announcementHeader}>
+          <View style={styles.announcementHeaderLeft}>
+            <View style={[styles.announcementDot, { backgroundColor: priorityColor }]} />
+            <Text style={[styles.announcementChip, {
+              color: announcement.ministryId ? colors.secondary : colors.highlight,
+              backgroundColor: announcement.ministryId
+                ? colors.secondary + "14"
+                : colors.highlight + "12",
             }]}>
               {announcement.ministryId ? (announcement.ministryName || "Ministry") : "Church-wide"}
             </Text>
           </View>
+          {announcement.isPinned && (
+            <View style={[styles.pinnedBadge, { backgroundColor: colors.warning + "14" }]}>
+              <Text style={[styles.pinnedBadgeText, { color: colors.secondary }]}>Pinned</Text>
+            </View>
+          )}
         </View>
 
-        {/* Title & excerpt */}
         <Text style={[styles.announcementTitle, { color: colors.text }]} numberOfLines={2}>
           {announcement.title}
         </Text>
@@ -155,7 +132,6 @@ const AnnouncementCardItem = React.memo(function AnnouncementCardItem({
           </Text>
         ) : null}
 
-        {/* Footer */}
         <View style={styles.announcementFooter}>
           <View style={styles.announcementFooterLeft}>
             {announcement.authorAvatar ? (
@@ -168,10 +144,12 @@ const AnnouncementCardItem = React.memo(function AnnouncementCardItem({
             <Text style={[styles.announcementAuthor, { color: colors.textTertiary }]}>
               {announcement.author || "Church"}
             </Text>
+            <View style={[styles.dotSeparator, { backgroundColor: colors.border }]} />
+            <Text style={[styles.announcementDate, { color: colors.textTertiary }]}>
+              {getRelativeTime(announcement.date)}
+            </Text>
           </View>
-          <Text style={[styles.announcementDate, { color: colors.textTertiary }]}>
-            {getRelativeTime(announcement.date)}
-          </Text>
+          <ChevronRight size={15} color={colors.textTertiary} />
         </View>
       </TouchableOpacity>
     </Animated.View>
@@ -198,18 +176,14 @@ export default function HomeScreen() {
   useEffect(() => {
     Animated.parallel([
       Animated.timing(headerAnim, { toValue: 1, duration: 500, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
-      Animated.timing(bodyFade, { toValue: 1, duration: 600, delay: 150, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
+      Animated.timing(bodyFade, { toValue: 1, duration: 500, delay: 120, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
     ]).start();
   }, [headerAnim, bodyFade]);
 
-  const announcements = getGeneralAnnouncements(4);
+  const announcements = getGeneralAnnouncements(3);
   const totalUnread = getTotalUnread();
   const greeting = useMemo(() => getTimeBasedGreeting(), []);
   const firstName = user?.name?.split(" ")[0] || "Friend";
-  const today = useMemo(() => {
-    const d = new Date();
-    return d.toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
-  }, []);
 
   const onRefresh = useCallback(async () => {
     if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
@@ -219,89 +193,97 @@ export default function HomeScreen() {
   }, [refresh]);
 
   const notificationAnim = useScalePress();
-  const pulseStyle = usePulse(2000);
-
-  const announcementCountLabel = useMemo(() => {
-    const count = allAnnouncements.length;
-    if (count === 0) return "No announcements yet";
-    return `${count} announcement${count !== 1 ? "s" : ""}`;
-  }, [allAnnouncements.length]);
 
   const handleAnnouncementPress = useCallback(() => {
     router.push("/announcements" as Href);
   }, [router]);
 
-  // ── Quick Actions data ──
-  const quickActions: QuickAction[] = useMemo(() => [
+  // ── Grid Cards ──
+  const gridCards: GridCard[] = useMemo(() => [
     {
-      icon: <MessageCircle size={22} color="#FFFFFF" />,
-      label: "Messages",
-      sub: totalUnread > 0 ? `${totalUnread} unread` : "Start a chat",
-      href: "/(tabs)/messages" as Href,
-      gradient: ["#6366F1", "#8B5CF6", "#A78BFA"] as const,
-      iconBg: "rgba(255,255,255,0.18)",
-    },
-    {
-      icon: <Heart size={22} color="#FFFFFF" />,
-      label: "Giving",
-      sub: givingStats.thisMonth > 0 ? `$${givingStats.thisMonth.toLocaleString()} this mo` : "Give now",
-      href: "/(tabs)/giving" as Href,
-      gradient: ["#EC4899", "#F43F5E", "#FB7185"] as const,
-      iconBg: "rgba(255,255,255,0.18)",
-    },
-    {
-      icon: <Users size={22} color="#FFFFFF" />,
-      label: "Community",
-      sub: `${membersCount} member${membersCount !== 1 ? "s" : ""}`,
+      icon: <Church size={22} color="#FFFFFF" />,
+      label: "My Church",
       href: "/(tabs)/profile" as Href,
-      gradient: ["#06B6D4", "#0EA5E9", "#38BDF8"] as const,
-      iconBg: "rgba(255,255,255,0.18)",
+      iconBg: "#3B82F6",
     },
     {
       icon: <Calendar size={22} color="#FFFFFF" />,
       label: "Events",
-      sub: "View calendar",
       href: "/(tabs)/calendar" as Href,
-      gradient: ["#10B981", "#34D399", "#6EE7B7"] as const,
-      iconBg: "rgba(255,255,255,0.18)",
+      iconBg: "#F59E0B",
+    },
+    {
+      icon: <Heart size={22} color="#FFFFFF" />,
+      label: "Give",
+      href: "/(tabs)/giving" as Href,
+      iconBg: "#10B981",
+    },
+    {
+      icon: <HandHelping size={22} color="#FFFFFF" />,
+      label: "Prayer",
+      href: "/forms" as Href,
+      iconBg: "#8B5CF6",
+    },
+    {
+      icon: <PlayCircle size={22} color="#FFFFFF" />,
+      label: "Sermons",
+      href: "/media" as Href,
+      iconBg: "#06B6D4",
+    },
+    {
+      icon: <Users size={22} color="#FFFFFF" />,
+      label: "Groups",
+      href: "/group" as Href,
+      iconBg: "#EC4899",
     },
     {
       icon: <ClipboardList size={22} color="#FFFFFF" />,
-      label: "Forms",
-      sub: "Sign-ups & more",
+      label: "Volunteer",
       href: "/forms" as Href,
-      gradient: ["#F59E0B", "#F97316", "#FB923C"] as const,
-      iconBg: "rgba(255,255,255,0.18)",
+      iconBg: "#22C55E",
     },
-  ], [totalUnread, givingStats.thisMonth, membersCount]);
+    {
+      icon: <Ellipsis size={22} color="#FFFFFF" />,
+      label: "More",
+      href: "/church-management" as Href,
+      iconBg: "#6B7280",
+    },
+  ], []);
+
+  // ── Upcoming event (mock / first from data) ──
+  const upcomingEvent = useMemo(() => {
+    // In a real app this would come from events data
+    return {
+      title: "Sunday Worship Service",
+      time: "Tomorrow at 10:00 AM",
+      location: "Main Sanctuary",
+    };
+  }, []);
 
   return (
-    <View style={[styles.container, { backgroundColor: colors.background }]}>
+    <View style={styles.container}>
       {/* ── Header ── */}
-      <View style={[styles.headerWrapper]}>
+      <View style={styles.headerWrapper}>
         <LinearGradient
-          colors={["#0F2440", "#1B365D", "#1E4A6E", "#2A5F8A"]}
-          locations={[0, 0.3, 0.7, 1]}
-          start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-          style={[styles.headerGradient, { paddingTop: insets.top }]}
+          colors={["#E07A3D", "#D4695A", "#C55A7A", "#A8558E"]}
+          locations={[0, 0.35, 0.7, 1]}
+          start={{ x: 0, y: 0 }} end={{ x: 1, y: 0.8 }}
+          style={[styles.headerGradient, { paddingTop: insets.top + 8 }]}
         >
-          {/* Subtle overlay pattern */}
-          <View style={styles.headerPattern} pointerEvents="none" />
-
           <Animated.View style={[
             styles.headerContent,
-            { opacity: headerAnim, transform: [{ translateY: headerAnim.interpolate({ inputRange: [0, 1], outputRange: [-10, 0] }) }] },
+            { opacity: headerAnim, transform: [{ translateY: headerAnim.interpolate({ inputRange: [0, 1], outputRange: [-8, 0] }) }] },
           ]}>
-            {/* Top bar: org badge + actions */}
+            {/* Top row: branding + icons */}
             <View style={styles.headerTopRow}>
-              {currentOrganization ? (
-                <BlurView intensity={20} tint="light" style={styles.orgBadgeBlur}>
-                  <Sparkles size={12} color="rgba(255,255,255,0.9)" />
-                  <Text style={styles.orgBadgeText} numberOfLines={1}>
-                    {currentOrganization.name}
-                  </Text>
-                </BlurView>
-              ) : <View style={{ flex: 1 }} />}
+              <View style={styles.brandingRow}>
+                <View style={styles.logoCircle}>
+                  <Church size={18} color="#E07A3D" />
+                </View>
+                <Text style={styles.brandingText} numberOfLines={1}>
+                  {currentOrganization?.name || "ChurchConnect"}
+                </Text>
+              </View>
 
               <View style={styles.headerActions}>
                 <TouchableOpacity
@@ -314,42 +296,34 @@ export default function HomeScreen() {
                   <Animated.View style={{ transform: [{ scale: notificationAnim.scale }] }}>
                     <Bell size={20} color="#FFFFFF" />
                     {totalUnread > 0 && (
-                      <Animated.View style={[styles.notifBadge, totalUnread > 0 ? pulseStyle : undefined]}>
+                      <View style={styles.notifBadge}>
                         <Text style={styles.notifBadgeText}>
                           {totalUnread > 99 ? "99+" : totalUnread}
                         </Text>
-                      </Animated.View>
+                      </View>
                     )}
                   </Animated.View>
                 </TouchableOpacity>
 
                 <TouchableOpacity
                   onPress={() => router.push("/(tabs)/profile" as Href)}
-                  style={styles.avatarButton}
                   activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={["#D4A843", "#C8943E", "#B8862D"]}
-                    style={styles.avatarRing}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                  >
-                    <Image
-                      source={{
-                        uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=1B365D&color=fff&bold=true`,
-                      }}
-                      style={styles.avatar}
-                      contentFit="cover"
-                    />
-                  </LinearGradient>
+                  <Image
+                    source={{
+                      uri: user?.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(firstName)}&background=E07A3D&color=fff&bold=true`,
+                    }}
+                    style={styles.avatarImage}
+                    contentFit="cover"
+                  />
                 </TouchableOpacity>
               </View>
             </View>
 
             {/* Greeting */}
             <View style={styles.greetingBlock}>
-              <Text style={styles.greetingLabel}>{greeting}</Text>
+              <Text style={styles.greetingLabel}>Welcome Back!</Text>
               <Text style={styles.userNameText}>{firstName}</Text>
-              <Text style={styles.dateLabel}>{today}</Text>
             </View>
           </Animated.View>
         </LinearGradient>
@@ -364,121 +338,109 @@ export default function HomeScreen() {
           <RefreshControl
             refreshing={localRefreshing || isRefreshing}
             onRefresh={onRefresh}
-            tintColor={colors.primary}
+            tintColor="#E07A3D"
             progressViewOffset={8}
           />
         }
       >
-        {/* Status banners */}
         {isChurchPending && <PendingApprovalBanner type="pending" />}
         {churchStatus === "suspended" && <PendingApprovalBanner type="suspended" />}
 
         <Animated.View style={{ opacity: bodyFade }}>
 
-          {/* ── Quick Actions — horizontal scrollable cards ── */}
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
-            </View>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.quickActionsScroll}
-              decelerationRate="fast"
-              snapToInterval={SCREEN_WIDTH * 0.42 + 12}
-            >
-              {quickActions.map((action, idx) => (
+          {/* ── Quick Actions Grid ── */}
+          <View style={styles.gridSection}>
+            <Text style={[styles.sectionTitle, { color: colors.text }]}>Quick Actions</Text>
+            <View style={styles.gridContainer}>
+              {gridCards.map((card) => (
                 <TouchableOpacity
-                  key={action.label}
-                  style={styles.quickActionCard}
+                  key={card.label}
+                  style={[styles.gridCard, {
+                    backgroundColor: colors.surface,
+                  }]}
                   onPress={() => {
                     if (Platform.OS !== "web") void Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-                    router.push(action.href);
+                    router.push(card.href);
                   }}
-                  activeOpacity={0.9}
+                  activeOpacity={0.8}
                 >
-                  <LinearGradient
-                    colors={[...action.gradient]}
-                    start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }}
-                    style={styles.quickActionGradient}
-                  >
-                    <View style={[styles.quickActionIcon, { backgroundColor: action.iconBg }]}>
-                      {action.icon}
-                    </View>
-                    <Text style={styles.quickActionLabel} numberOfLines={1}>
-                      {action.label}
-                    </Text>
-                    <Text style={styles.quickActionSub} numberOfLines={1}>
-                      {action.sub}
-                    </Text>
-                  </LinearGradient>
+                  <View style={[styles.gridCardIcon, { backgroundColor: card.iconBg }]}>
+                    {card.icon}
+                  </View>
+                  <Text style={[styles.gridCardLabel, { color: colors.text }]} numberOfLines={1}>
+                    {card.label}
+                  </Text>
                 </TouchableOpacity>
               ))}
-            </ScrollView>
+            </View>
           </View>
 
-          {/* ── Stats Row ── */}
-          <View style={styles.statsRow}>
+          {/* ── Upcoming Event ── */}
+          <View style={styles.section}>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Upcoming</Text>
+              <TouchableOpacity
+                onPress={() => router.push("/(tabs)/calendar" as Href)}
+                activeOpacity={0.7}
+              >
+                <Text style={[styles.viewAllLink, { color: colors.highlight }]}>View all</Text>
+              </TouchableOpacity>
+            </View>
             <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.surface }]}
-              onPress={() => router.push("/(tabs)/messages" as Href)}
-              activeOpacity={0.7}
+              style={[styles.eventCard, { backgroundColor: colors.surface }]}
+              onPress={() => router.push("/(tabs)/calendar" as Href)}
+              activeOpacity={0.85}
             >
-              <View style={[styles.statIconCircle, { backgroundColor: "#6366F1" + "12" }]}>
-                <MessageCircle size={16} color="#6366F1" />
+              <View style={styles.eventCardLeft}>
+                <View style={[styles.eventDateBadge, { backgroundColor: "#E07A3D" }]}>
+                  <Text style={styles.eventDateDay}>
+                    {new Date().getDate() + 1}
+                  </Text>
+                  <Text style={styles.eventDateMonth}>
+                    {new Date().toLocaleDateString(undefined, { month: "short" }).toUpperCase()}
+                  </Text>
+                </View>
+                <View style={styles.eventInfo}>
+                  <Text style={[styles.eventTitle, { color: colors.text }]}>
+                    {upcomingEvent.title}
+                  </Text>
+                  <View style={styles.eventMeta}>
+                    <View style={styles.eventMetaItem}>
+                      <Clock size={12} color={colors.secondary} />
+                      <Text style={[styles.eventMetaText, { color: colors.textSecondary }]}>
+                        {upcomingEvent.time}
+                      </Text>
+                    </View>
+                    <View style={styles.eventMetaItem}>
+                      <MapPin size={12} color={colors.secondary} />
+                      <Text style={[styles.eventMetaText, { color: colors.textSecondary }]}>
+                        {upcomingEvent.location}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
               </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{totalUnread}</Text>
-              <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Unread</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.surface }]}
-              onPress={() => router.push("/(tabs)/profile" as Href)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: "#06B6D4" + "12" }]}>
-                <Users size={16} color="#06B6D4" />
-              </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{membersCount}</Text>
-              <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Members</Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.statCard, { backgroundColor: colors.surface }]}
-              onPress={() => router.push("/announcements" as Href)}
-              activeOpacity={0.7}
-            >
-              <View style={[styles.statIconCircle, { backgroundColor: "#EC4899" + "12" }]}>
-                <Megaphone size={16} color="#EC4899" />
-              </View>
-              <Text style={[styles.statValue, { color: colors.text }]}>{allAnnouncements.length}</Text>
-              <Text style={[styles.statLabel, { color: colors.textTertiary }]}>Posts</Text>
+              <ChevronRight size={18} color={colors.textTertiary} />
             </TouchableOpacity>
           </View>
 
           {/* ── Announcements ── */}
           <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <View style={styles.sectionHeaderLeft}>
-                <View style={[styles.sectionIconDot, { backgroundColor: colors.primary }]} />
-                <Text style={[styles.sectionTitle, { color: colors.text }]}>Announcements</Text>
-              </View>
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionTitle, { color: colors.text }]}>Announcements</Text>
               <TouchableOpacity
                 onPress={() => router.push("/announcements" as Href)}
-                style={[styles.viewAllBtn, { backgroundColor: colors.primary + "08" }]}
                 activeOpacity={0.7}
               >
-                <Text style={[styles.viewAllText, { color: colors.primary }]}>View all</Text>
-                <ArrowUpRight size={13} color={colors.primary} />
+                <Text style={[styles.viewAllLink, { color: colors.highlight }]}>
+                  {allAnnouncements.length > 0 ? `View all (${allAnnouncements.length})` : "View all"}
+                </Text>
               </TouchableOpacity>
             </View>
-            <Text style={[styles.sectionSubtitle, { color: colors.textTertiary }]}>
-              {announcementCountLabel}
-            </Text>
 
             {isLoading && announcements.length === 0 ? (
               <View style={styles.loadingState}>
-                <ActivityIndicator size="small" color={colors.primary} />
+                <ActivityIndicator size="small" color="#E07A3D" />
               </View>
             ) : announcements.length > 0 ? (
               <View style={styles.announcementsList}>
@@ -494,8 +456,8 @@ export default function HomeScreen() {
               </View>
             ) : (
               <View style={[styles.emptyState, { backgroundColor: colors.surface }]}>
-                <View style={[styles.emptyIconCircle, { backgroundColor: colors.primary + "08" }]}>
-                  <Megaphone size={26} color={colors.primary} />
+                <View style={[styles.emptyIconCircle, { backgroundColor: "#E07A3D" + "12" }]}>
+                  <Megaphone size={24} color="#E07A3D" />
                 </View>
                 <Text style={[styles.emptyTitle, { color: colors.text }]}>No announcements yet</Text>
                 <Text style={[styles.emptySubtitle, { color: colors.textSecondary }]}>
@@ -505,7 +467,7 @@ export default function HomeScreen() {
             )}
           </View>
 
-          <View style={{ height: 24 }} />
+          <View style={{ height: 32 }} />
         </Animated.View>
       </ScrollView>
     </View>
@@ -514,24 +476,19 @@ export default function HomeScreen() {
 
 // ── Styles ──
 
+const CARD_WIDTH = (SCREEN_WIDTH - 40 - CARD_GAP) / 2;
+
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { flex: 1, backgroundColor: "#F8F6F3" },
 
   // ── Header ──
   headerWrapper: {
     overflow: "hidden",
-    borderBottomLeftRadius: 32,
-    borderBottomRightRadius: 32,
+    borderBottomLeftRadius: 36,
+    borderBottomRightRadius: 36,
   },
   headerGradient: {
-    paddingBottom: 36,
-    position: "relative",
-  },
-  headerPattern: {
-    ...StyleSheet.absoluteFillObject,
-    opacity: 0.03,
-    backgroundColor: "#FFFFFF",
-    // Subtle radial-like overlay created via gradient
+    paddingBottom: 32,
   },
   headerContent: {
     paddingHorizontal: 20,
@@ -540,51 +497,55 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    paddingTop: 8,
-    marginBottom: 18,
+    marginBottom: 22,
   },
-  orgBadgeBlur: {
+  brandingRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 5,
-    paddingHorizontal: 12,
-    paddingVertical: 6,
-    borderRadius: 20,
-    overflow: "hidden",
-    alignSelf: "flex-start",
-    backgroundColor: "rgba(255,255,255,0.08)",
+    gap: 10,
+    flex: 1,
+    marginRight: 12,
   },
-  orgBadgeText: {
-    fontSize: 12,
-    fontWeight: "600" as const,
-    color: "rgba(255,255,255,0.92)",
-    maxWidth: 160,
+  logoCircle: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    backgroundColor: "#FFFFFF",
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  brandingText: {
+    fontSize: 17,
+    fontWeight: "700" as const,
+    color: "#FFFFFF",
+    letterSpacing: -0.2,
+    flexShrink: 1,
   },
   headerActions: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
+    gap: 14,
   },
   iconButton: {
-    width: 42,
-    height: 42,
-    borderRadius: 21,
-    backgroundColor: "rgba(255,255,255,0.10)",
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    backgroundColor: "rgba(255,255,255,0.15)",
     alignItems: "center",
     justifyContent: "center",
   },
   notifBadge: {
     position: "absolute",
-    top: -4,
-    right: -4,
+    top: -3,
+    right: -3,
     backgroundColor: "#EF4444",
-    minWidth: 19,
-    height: 19,
-    borderRadius: 9.5,
+    minWidth: 18,
+    height: 18,
+    borderRadius: 9,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: "#1B365D",
+    borderColor: "#D4695A",
     paddingHorizontal: 4,
   },
   notifBadgeText: {
@@ -592,159 +553,176 @@ const styles = StyleSheet.create({
     fontWeight: "800" as const,
     color: "#FFFFFF",
   },
-  avatarButton: {
-    borderRadius: 24,
-  },
-  avatarRing: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    padding: 2.5,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  avatar: {
-    width: 39,
-    height: 39,
-    borderRadius: 19.5,
-    borderWidth: 2,
-    borderColor: "#0F2440",
+  avatarImage: {
+    width: 40,
+    height: 40,
+    borderRadius: 20,
+    borderWidth: 2.5,
+    borderColor: "rgba(255,255,255,0.5)",
   },
   greetingBlock: {
-    paddingTop: 4,
+    paddingTop: 2,
   },
   greetingLabel: {
-    fontSize: 14,
-    fontWeight: "500" as const,
-    color: "rgba(255,255,255,0.65)",
-    letterSpacing: 0.3,
+    fontSize: 15,
+    fontWeight: "600" as const,
+    color: "rgba(255,255,255,0.80)",
+    letterSpacing: 0.2,
   },
   userNameText: {
-    fontSize: 28,
+    fontSize: 30,
     fontWeight: "800" as const,
     color: "#FFFFFF",
-    letterSpacing: -0.5,
-    marginTop: 2,
-  },
-  dateLabel: {
-    fontSize: 13,
-    color: "rgba(255,255,255,0.50)",
+    letterSpacing: -0.6,
     marginTop: 4,
-    fontWeight: "400" as const,
   },
 
   // ── Body ──
   scrollView: {
     flex: 1,
-    marginTop: -8,
+    marginTop: -4,
   },
   scrollContent: {
-    paddingTop: 20,
+    paddingTop: 24,
   },
 
-  // ── Section ──
+  // ── Sections ──
   section: {
     paddingHorizontal: 20,
     marginTop: 28,
   },
-  sectionHeader: {
+  gridSection: {
+    paddingHorizontal: 20,
+  },
+  sectionHeaderRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 6,
-  },
-  sectionHeaderLeft: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  sectionIconDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
+    marginBottom: 14,
   },
   sectionTitle: {
-    fontSize: 19,
+    fontSize: 18,
     fontWeight: "700" as const,
-    letterSpacing: -0.2,
+    letterSpacing: -0.3,
   },
-  sectionSubtitle: {
-    fontSize: 13,
-    marginBottom: 16,
-    marginLeft: 2,
-  },
-  viewAllBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 3,
-    paddingHorizontal: 12,
-    paddingVertical: 7,
-    borderRadius: 10,
-  },
-  viewAllText: {
-    fontSize: 13,
+  viewAllLink: {
+    fontSize: 14,
     fontWeight: "600" as const,
   },
 
-  // ── Quick Actions ──
-  quickActionsScroll: {
-    paddingHorizontal: 20,
-    gap: 12,
+  // ── Grid Cards ──
+  gridContainer: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    gap: CARD_GAP,
   },
-  quickActionCard: {
-    width: SCREEN_WIDTH * 0.42,
-    height: 150,
-    borderRadius: 24,
-    overflow: "hidden",
+  gridCard: {
+    width: CARD_WIDTH,
+    paddingVertical: 18,
+    paddingHorizontal: 16,
+    borderRadius: 20,
+    alignItems: "center",
+    gap: 12,
+    ...Platform.select({
+      ios: {
+        shadowColor: "#C55A7A",
+        shadowOffset: { width: 0, height: 3 },
+        shadowOpacity: 0.08,
+        shadowRadius: 12,
+      },
+      android: { elevation: 3 },
+      web: { boxShadow: "0 3px 12px rgba(197, 90, 122, 0.08)" },
+    }),
+  },
+  gridCardIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 18,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  gridCardLabel: {
+    fontSize: 13,
+    fontWeight: "600" as const,
+    letterSpacing: -0.1,
+  },
+
+  // ── Event Card ──
+  eventCard: {
+    borderRadius: 20,
+    padding: 16,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 6 },
-        shadowOpacity: 0.10,
-        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.06,
+        shadowRadius: 10,
       },
-      android: { elevation: 6 },
-      web: { boxShadow: "0 6px 14px rgba(0,0,0,0.10)" },
+      android: { elevation: 2 },
+      web: { boxShadow: "0 2px 10px rgba(0,0,0,0.06)" },
     }),
   },
-  quickActionGradient: {
+  eventCardLeft: {
     flex: 1,
-    padding: 16,
-    justifyContent: "space-between",
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
   },
-  quickActionIcon: {
-    width: 42,
-    height: 42,
+  eventDateBadge: {
+    width: 52,
+    height: 52,
     borderRadius: 14,
     alignItems: "center",
     justifyContent: "center",
-    marginBottom: 8,
   },
-  quickActionLabel: {
+  eventDateDay: {
+    fontSize: 20,
+    fontWeight: "800" as const,
+    color: "#FFFFFF",
+    lineHeight: 22,
+  },
+  eventDateMonth: {
+    fontSize: 10,
+    fontWeight: "700" as const,
+    color: "rgba(255,255,255,0.85)",
+    lineHeight: 14,
+  },
+  eventInfo: {
+    flex: 1,
+    gap: 6,
+  },
+  eventTitle: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: "#FFFFFF",
-    letterSpacing: -0.2,
-    marginBottom: 2,
+    letterSpacing: -0.1,
   },
-  quickActionSub: {
+  eventMeta: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    flexWrap: "wrap",
+  },
+  eventMetaItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+  },
+  eventMetaText: {
     fontSize: 12,
     fontWeight: "500" as const,
-    color: "rgba(255,255,255,0.75)",
   },
 
-  // ── Stats ──
-  statsRow: {
-    flexDirection: "row",
-    paddingHorizontal: 20,
-    marginTop: 24,
+  // ── Announcements ──
+  announcementsList: {
     gap: 10,
   },
-  statCard: {
-    flex: 1,
-    borderRadius: 20,
-    paddingVertical: 18,
-    alignItems: "center",
+  announcementCard: {
+    borderRadius: 18,
+    padding: 16,
+    borderLeftWidth: 4,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
@@ -756,76 +734,50 @@ const styles = StyleSheet.create({
       web: { boxShadow: "0 2px 10px rgba(0,0,0,0.04)" },
     }),
   },
-  statIconCircle: {
-    width: 36,
-    height: 36,
-    borderRadius: 12,
+  announcementHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
     alignItems: "center",
-    justifyContent: "center",
-    marginBottom: 8,
+    marginBottom: 10,
   },
-  statValue: {
-    fontSize: 22,
-    fontWeight: "800" as const,
-    letterSpacing: -0.3,
-    marginBottom: 2,
+  announcementHeaderLeft: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
   },
-  statLabel: {
+  announcementDot: {
+    width: 7,
+    height: 7,
+    borderRadius: 3.5,
+  },
+  announcementChip: {
     fontSize: 11,
-    fontWeight: "600" as const,
-    letterSpacing: 0.3,
-  },
-
-  // ── Announcements ──
-  announcementsList: {
-    gap: 10,
-  },
-  announcementCard: {
-    borderRadius: 18,
-    padding: 16,
-    borderLeftWidth: 3,
-    ...Platform.select({
-      ios: {
-        shadowColor: "#000",
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.05,
-        shadowRadius: 10,
-      },
-      android: { elevation: 2 },
-      web: { boxShadow: "0 2px 10px rgba(0,0,0,0.05)" },
-    }),
-  },
-  announcementCardTop: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 7,
-    marginBottom: 8,
-  },
-  chip: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 4,
+    fontWeight: "700" as const,
     paddingHorizontal: 8,
     paddingVertical: 3,
-    borderRadius: 7,
+    borderRadius: 6,
+    overflow: "hidden",
   },
-  chipText: {
-    fontSize: 10,
+  pinnedBadge: {
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+    borderRadius: 6,
+  },
+  pinnedBadgeText: {
+    fontSize: 11,
     fontWeight: "700" as const,
-    textTransform: "uppercase" as const,
-    letterSpacing: 0.3,
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: "700" as const,
     lineHeight: 22,
-    marginBottom: 6,
+    marginBottom: 8,
     letterSpacing: -0.1,
   },
   announcementContent: {
     fontSize: 14,
     lineHeight: 20,
-    marginBottom: 10,
+    marginBottom: 12,
   },
   announcementFooter: {
     flexDirection: "row",
@@ -835,16 +787,21 @@ const styles = StyleSheet.create({
   announcementFooterLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 7,
   },
   authorAvatar: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
+    width: 20,
+    height: 20,
+    borderRadius: 10,
   },
   announcementAuthor: {
     fontSize: 12,
     fontWeight: "500" as const,
+  },
+  dotSeparator: {
+    width: 3,
+    height: 3,
+    borderRadius: 1.5,
   },
   announcementDate: {
     fontSize: 12,
@@ -866,13 +823,12 @@ const styles = StyleSheet.create({
         shadowRadius: 10,
       },
       android: { elevation: 1 },
-      web: { boxShadow: "0 2px 10px rgba(0,0,0,0.03)" },
     }),
   },
   emptyIconCircle: {
-    width: 56,
-    height: 56,
-    borderRadius: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 14,
