@@ -2568,7 +2568,7 @@ export type Database = {
         | "standard"
         | "premium"
         | "enterprise"
-      user_status: "active" | "inactive" | "suspended" | "pending"
+      user_status: "active" | "inactive" | "suspended" | "pending" | "deleted"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2767,7 +2767,7 @@ export const Constants = {
       prayer_request_status: ["active", "answered", "archived"],
       profile_type: ["admin", "pastor", "staff", "volunteer", "member"],
       subscription_plan: ["free", "basic", "standard", "premium", "enterprise"],
-      user_status: ["active", "inactive", "suspended", "pending"],
+      user_status: ["active", "inactive", "suspended", "pending", "deleted"],
     },
   },
 } as const

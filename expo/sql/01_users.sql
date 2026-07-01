@@ -4,7 +4,7 @@
 -- ============================================
 
 -- Create enum for user status
-CREATE TYPE user_status AS ENUM ('active', 'inactive', 'suspended', 'pending');
+CREATE TYPE user_status AS ENUM ('active', 'inactive', 'suspended', 'pending', 'deleted');
 
 -- Public users table (mirrors auth.users)
 CREATE TABLE public.users (
