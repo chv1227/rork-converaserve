@@ -16,36 +16,37 @@ export default function TabLayout() {
         headerShown: false,
         tabBarStyle: {
           position: "absolute",
-          bottom: Platform.OS === "ios" ? 20 : 10,
-          left: 16,
-          right: 16,
-          borderRadius: 28,
-          borderTopWidth: 0,
-          paddingTop: 6,
-          paddingBottom: Platform.OS === "ios" ? 6 : 10,
-          height: Platform.OS === "ios" ? 82 : 70,
-          backgroundColor: "rgba(255, 255, 255, 0.92)",
+          bottom: 0,
+          borderTopLeftRadius: 16,
+          borderTopRightRadius: 16,
+          borderTopWidth: 1,
+          borderTopColor: "rgba(0,0,0,0.06)",
+          paddingTop: 4,
+          paddingBottom: Platform.OS === "ios" ? 4 : 6,
+          height: Platform.OS === "ios" ? 62 : 56,
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
           zIndex: 100,
           ...Platform.select({
             ios: {
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.10,
-              shadowRadius: 24,
+              shadowOffset: { width: 0, height: -3 },
+              shadowOpacity: 0.06,
+              shadowRadius: 8,
             },
             android: {
-              elevation: 10,
+              elevation: 8,
             },
             web: {
-              boxShadow: "0 8px 32px rgba(0, 0, 0, 0.08)",
+              boxShadow: "0 -4px 16px rgba(0, 0, 0, 0.05)",
             },
           }),
         },
         tabBarLabelStyle: {
-          fontSize: 10,
-          fontWeight: "700" as const,
-          marginTop: 1,
-          letterSpacing: 0.2,
+          fontSize: 9,
+          fontWeight: "600" as const,
+          marginTop: 0,
+          width: 74,
+          textAlign: "center",
         },
         tabBarItemStyle: {
           paddingTop: 2,
@@ -85,7 +86,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="signup"
         options={{
-          title: "Get Involved",
+          title: "Join",
           tabBarIcon: ({ color, size, focused }) => (
             <View style={focused ? { alignItems: "center", justifyContent: "center" } : undefined}>
               <UserPlus size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
