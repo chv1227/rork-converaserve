@@ -1,7 +1,7 @@
-# ChurchConnect Phase 1 MVP
+# ChurchConnect MVP
 
 ## Overview
-Production-ready church management platform with 9 core features. Future features (in-app payments, AI attendance, live streaming) are left as placeholders with scalable architecture.
+Production-ready church management platform with ministry modules, role-based access control, and comprehensive church administration tools.
 
 ## Features Progress
 
@@ -67,6 +67,17 @@ Production-ready church management platform with 9 core features. Future feature
 - [x] Invite member modal with role selection
 - [x] Content moderation and danger zone sections
 
+### 10. Ministry Modules
+- [x] Ministry Hub tab with card grid showing all ministries (My Ministries + Explore More)
+- [x] Per-ministry dashboard with 10 quick actions (Announcements, Chat, Calendar, Prayer, Tasks, Members, Files, Polls, Discussion, Stats)
+- [x] Deacons Ministry: care visits, benevolence requests, prayer assignments, meal coordination, service scheduling, reports
+- [x] Worship Ministry: team schedules, song library link, setlists, rehearsals, service plans, team roster
+- [x] Children's Ministry: classrooms, child profiles, digital check-in, lessons, incident reports, parent messaging
+- [x] Role-based access control: Church Admin, Pastor, Ministry Leader, Ministry Member
+- [x] Ministry join/leave system with access enforcement (non-members see Access Denied)
+- [x] 16 new database tables for ministry-specific features (15_ministry_extensions.sql)
+- [x] RLS policies on all ministry tables using is_ministry_member() and can_manage_ministry() helpers
+
 ## Polish & Launch Readiness
 - [x] Edge function deployed (send-push-notifications)
 - [x] pg_cron job scheduled every 60 seconds for push delivery
@@ -78,7 +89,7 @@ Production-ready church management platform with 9 core features. Future feature
 
 ## Backend (All Deployed)
 - [x] Forms & form_responses tables with RLS
-- [x] All 35+ tables have RLS policies (no unprotected data)
+- [x] All 50+ tables have RLS policies (no unprotected data)
 - [x] 5 Storage buckets with RLS: media, avatars, documents, announcements, chat-files
 - [x] Push notification infrastructure:
   - `user_push_tokens` table for Expo push tokens

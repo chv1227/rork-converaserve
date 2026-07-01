@@ -172,6 +172,33 @@ export interface MinistryMember {
   phone?: string;
 }
 
+// Ministry Hub & Dashboard types
+export interface MinistryData {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  imageUrl: string | null;
+  ministryType: string | null;
+  memberCount: number;
+  isMember: boolean;
+  status: string;
+}
+
+export interface MinistryDashboardInfo {
+  id: string;
+  name: string;
+  description: string;
+  color: string;
+  icon: string;
+  imageUrl: string | null;
+  ministryType: string | null;
+  contactEmail: string | null;
+  meetingLocation: string | null;
+  meetingSchedule: string | null;
+}
+
 export interface DiscussionPost {
   id: string;
   ministryId: string;

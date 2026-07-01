@@ -20,6 +20,7 @@ All required tables now have SQL migration files in `expo/sql/`. Below is the cu
 | 12_discussions.sql | discussions, discussion_comments, discussion_likes |
 | 13_songs.sql | songs, song_audio_parts, song_lyrics, worship_sets, worship_set_songs |
 | 14_signups.sql | church_membership_signups, childrens_ministry_children |
+| 15_ministry_extensions.sql | ministry_tasks, ministry_volunteer_slots, deacon_care_visits, deacon_benevolence_requests, deacon_prayer_assignments, deacon_meal_coordination, deacon_service_schedule, worship_schedules, worship_rehearsals, worship_availability, worship_service_plans, childrens_classrooms, childrens_classroom_assignments, childrens_check_ins, childrens_lessons, childrens_incident_reports |
 
 ## App Screens (all linked from home screen)
 
