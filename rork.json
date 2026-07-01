@@ -14,7 +14,10 @@
     {
       "name": "ChurchConnect",
       "path": "ios",
-      "framework": "swift"
+      "framework": "swift",
+      "settings": {
+        "displayName": "ChurchConnect"
+      }
     }
   ]
 }
