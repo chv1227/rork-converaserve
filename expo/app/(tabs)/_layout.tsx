@@ -128,6 +128,7 @@ export default function TabLayout() {
       <Tabs.Screen name="groups" options={{ href: null }} />
       <Tabs.Screen name="calendar" options={{ href: null }} />
       <Tabs.Screen name="notifications" options={{ href: null }} />
+      <Tabs.Screen name="profile" options={{ href: null }} />
       <Tabs.Screen name="more" options={{ href: null }} />
     </Tabs>
   );
