@@ -1,5 +1,5 @@
 import { Tabs } from "expo-router";
-import { House, MessageCircle, Heart, CircleUser, UserPlus, Church } from "lucide-react-native";
+import { House, MessageCircle, Heart, UserPlus, Church } from "lucide-react-native";
 import React from "react";
 import { Platform, View, StyleSheet } from "react-native";
 import { BlurView } from "expo-blur";
@@ -94,20 +94,9 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="ministries"
-        options={{
-          title: "Ministries",
-          tabBarIcon: ({ color, size, focused }) => (
-            <View style={focused ? { alignItems: "center", justifyContent: "center" } : undefined}>
-              <Church size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
-            </View>
-          ),
-        }}
-      />
-      <Tabs.Screen
         name="signup"
         options={{
-          title: "Signup",
+          title: "Get Involved",
           tabBarIcon: ({ focused }) => (
             <View style={styles.centerTabButton}>
               <LinearGradient
@@ -126,11 +115,13 @@ export default function TabLayout() {
         }}
       />
       <Tabs.Screen
-        name="profile"
+        name="ministries"
         options={{
-          title: "Profile",
+          title: "Ministries",
           tabBarIcon: ({ color, size, focused }) => (
-            <CircleUser size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
+            <View style={focused ? { alignItems: "center", justifyContent: "center" } : undefined}>
+              <Church size={focused ? size + 1 : size} color={color} strokeWidth={focused ? 2.5 : 2} />
+            </View>
           ),
         }}
       />
