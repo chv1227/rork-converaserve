@@ -410,12 +410,17 @@ export default function HomeScreen() {
   }, [headerAnim, bodyFade]);
 
   // Auto-rotate banner
+  const bannerItemWidth = SCREEN_WIDTH - 40 + 12; // slide width + marginRight
   useEffect(() => {
     if (BANNER_SLIDES.length <= 1) return;
     const interval = setInterval(() => {
       setActiveBannerIndex((prev) => {
         const next = (prev + 1) % BANNER_SLIDES.length;
-        bannerFlatListRef.current?.scrollToIndex({ index: next, animated: true });
+        try {
+          bannerFlatListRef.current?.scrollToIndex({ index: next, animated: true });
+        } catch {
+          // FlatList may not be ready yet — skip silently
+        }
         return next;
       });
     }, 4000);
@@ -729,8 +734,13 @@ export default function HomeScreen() {
                   pagingEnabled
                   showsHorizontalScrollIndicator={false}
                   onMomentumScrollEnd={onBannerScroll}
-                  snapToInterval={SCREEN_WIDTH - 40}
+                  snapToInterval={bannerItemWidth}
                   decelerationRate="fast"
+                  getItemLayout={(_data, index) => ({
+                    length: bannerItemWidth,
+                    offset: bannerItemWidth * index,
+                    index,
+                  })}
                   contentContainerStyle={styles.bannerList}
                 />
                 <DotIndicator count={BANNER_SLIDES.length} activeIndex={activeBannerIndex} colors={colors} />
