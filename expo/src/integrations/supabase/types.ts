@@ -2482,6 +2482,10 @@ export type Database = {
         Args: { p_church_id: string; p_user_id: string }
         Returns: boolean
       }
+      user_is_conversation_participant: {
+        Args: { p_conversation_id: string }
+        Returns: boolean
+      }
       user_is_staff_or_higher: {
         Args: { p_church_id: string }
         Returns: boolean
