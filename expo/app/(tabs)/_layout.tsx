@@ -7,7 +7,7 @@ import { BlurView } from "expo-blur";
 import { useTheme } from "@/providers/ThemeProvider";
 
 export default function TabLayout() {
-  const { colors, isDark } = useTheme();
+  const { colors } = useTheme();
 
   return (
     <Tabs
@@ -25,9 +25,7 @@ export default function TabLayout() {
           paddingTop: 8,
           paddingBottom: Platform.OS === "ios" ? 8 : 12,
           height: Platform.OS === "ios" ? 80 : 72,
-          backgroundColor: isDark
-            ? "rgba(26, 36, 54, 0.85)"
-            : "rgba(255, 255, 255, 0.85)",
+          backgroundColor: "rgba(255, 255, 255, 0.85)",
           ...Platform.select({
             ios: {
               shadowColor: "#000",
@@ -46,7 +44,7 @@ export default function TabLayout() {
         tabBarBackground: () =>
           Platform.OS === "ios" ? (
             <BlurView
-              tint={isDark ? "dark" : "light"}
+              tint="light"
               intensity={80}
               style={StyleSheet.absoluteFill}
             />

@@ -347,7 +347,7 @@ function AppContent() {
         <NotificationsProvider>
           <DataProvider>
             <AuthGate>
-              <ThemedStatusBar />
+              <StatusBar style="dark" />
               <RootLayoutNav />
             </AuthGate>
           </DataProvider>
@@ -357,10 +357,6 @@ function AppContent() {
   );
 }
 
-function ThemedStatusBar() {
-  const { isDark } = useTheme();
-  return <StatusBar style={isDark ? "light" : "dark"} />;
-}
 
 export default function RootLayout() {
   useEffect(() => {
