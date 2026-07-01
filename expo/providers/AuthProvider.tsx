@@ -892,7 +892,7 @@ export const [AuthProvider, useAuth] = createContextHook(() => {
   }, [state.user?.role, state.currentMembership?.role]);
 
   const isSuperAdmin = useMemo(() => {
-    return state.user?.role === "super_admin";
+    return state.user?.role === "admin" || state.user?.role === "super_admin";
   }, [state.user?.role]);
 
   const isLeader = useMemo(() => {
