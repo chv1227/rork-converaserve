@@ -21,6 +21,71 @@ import { Announcement } from "@/types";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
+// ── Announcement Card Component ── (extracted to fix hooks violation)
+const AnnouncementCardItem = React.memo(function AnnouncementCardItem({
+  announcement,
+  index,
+  colors,
+  onPress,
+}: {
+  announcement: Announcement;
+  index: number;
+  colors: ReturnType<typeof useTheme>["colors"];
+  onPress: () => void;
+}) {
+  const priorityColor =
+    announcement.priority === "high" ? colors.error
+    : announcement.priority === "low" ? colors.textTertiary
+    : colors.primary;
+
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const slideAnim = useRef(new Animated.Value(16)).current;
+
+  useEffect(() => {
+    Animated.parallel([
+      Animated.timing(fadeAnim, { toValue: 1, duration: 350, delay: 100 + index * 60, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
+      Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: 100 + index * 60, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
+    ]).start();
+  }, [fadeAnim, slideAnim, index]);
+
+  return (
+    <Animated.View style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
+      <TouchableOpacity
+        style={[styles.announcementCard, { backgroundColor: colors.surface }]}
+        onPress={onPress}
+        activeOpacity={0.7}
+      >
+        <View style={styles.announcementCardTop}>
+          {announcement.isPinned && (
+            <View style={[styles.pinnedChip, { backgroundColor: colors.primary + "0D" }]}>
+              <Pin size={10} color={colors.primary} />
+              <Text style={[styles.pinnedChipText, { color: colors.primary }]}>Pinned</Text>
+            </View>
+          )}
+          <View style={[styles.typeChip, { backgroundColor: announcement.ministryId ? colors.secondary + "12" : colors.primary + "10" }]}>
+            {announcement.ministryId ? <Users size={10} color={colors.secondary} /> : <Globe size={10} color={colors.primary} />}
+            <Text style={[styles.typeChipText, { color: announcement.ministryId ? colors.secondary : colors.primary }]}>
+              {announcement.ministryId ? (announcement.ministryName || "Ministry") : "General"}
+            </Text>
+          </View>
+        </View>
+        <Text style={[styles.announcementTitle, { color: colors.text }]} numberOfLines={2}>
+          {announcement.title}
+        </Text>
+        <Text style={[styles.announcementContent, { color: colors.textSecondary }]} numberOfLines={2}>
+          {announcement.content}
+        </Text>
+        <View style={styles.announcementFooter}>
+          <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
+          <Text style={[styles.announcementDate, { color: colors.textTertiary }]}>
+            {formatAnnouncementDate(announcement.date)}
+          </Text>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
+  );
+});
+
 function getTimeBasedGreeting(): string {
   const hour = new Date().getHours();
   if (hour >= 5 && hour < 12) return "Good Morning";
@@ -85,62 +150,9 @@ export default function HomeScreen() {
     return `${allAnnouncements.length} announcement${allAnnouncements.length > 1 ? "s" : ""}`;
   }, [allAnnouncements.length]);
 
-  const renderAnnouncementCard = useCallback(
-    (announcement: Announcement, index: number) => {
-      const priorityColor =
-        announcement.priority === "high" ? colors.error
-        : announcement.priority === "low" ? colors.textTertiary
-        : colors.primary;
-
-      const fadeAnim = useRef(new Animated.Value(0)).current;
-      const slideAnim = useRef(new Animated.Value(16)).current;
-
-      useEffect(() => {
-        Animated.parallel([
-          Animated.timing(fadeAnim, { toValue: 1, duration: 350, delay: 100 + index * 60, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
-          Animated.timing(slideAnim, { toValue: 0, duration: 350, delay: 100 + index * 60, useNativeDriver: true, easing: Easing.out(Easing.cubic) }),
-        ]).start();
-      }, [fadeAnim, slideAnim, index]);
-
-      return (
-        <Animated.View key={announcement.id} style={{ opacity: fadeAnim, transform: [{ translateY: slideAnim }] }}>
-          <TouchableOpacity
-            style={[styles.announcementCard, { backgroundColor: colors.surface }]}
-            onPress={() => router.push("/announcements" as Href)}
-            activeOpacity={0.7}
-          >
-            <View style={styles.announcementCardTop}>
-              {announcement.isPinned && (
-                <View style={[styles.pinnedChip, { backgroundColor: colors.primary + "0D" }]}>
-                  <Pin size={10} color={colors.primary} />
-                  <Text style={[styles.pinnedChipText, { color: colors.primary }]}>Pinned</Text>
-                </View>
-              )}
-              <View style={[styles.typeChip, { backgroundColor: announcement.ministryId ? colors.secondary + "12" : colors.primary + "10" }]}>
-                {announcement.ministryId ? <Users size={10} color={colors.secondary} /> : <Globe size={10} color={colors.primary} />}
-                <Text style={[styles.typeChipText, { color: announcement.ministryId ? colors.secondary : colors.primary }]}>
-                  {announcement.ministryId ? (announcement.ministryName || "Ministry") : "General"}
-                </Text>
-              </View>
-            </View>
-            <Text style={[styles.announcementTitle, { color: colors.text }]} numberOfLines={2}>
-              {announcement.title}
-            </Text>
-            <Text style={[styles.announcementContent, { color: colors.textSecondary }]} numberOfLines={2}>
-              {announcement.content}
-            </Text>
-            <View style={styles.announcementFooter}>
-              <View style={[styles.priorityDot, { backgroundColor: priorityColor }]} />
-              <Text style={[styles.announcementDate, { color: colors.textTertiary }]}>
-                {formatAnnouncementDate(announcement.date)}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </Animated.View>
-      );
-    },
-    [colors, router]
-  );
+  const handleAnnouncementPress = useCallback(() => {
+    router.push("/announcements" as Href);
+  }, [router]);
 
   return (
     <View style={[styles.container, { backgroundColor: colors.background }]}>
@@ -230,7 +242,15 @@ export default function HomeScreen() {
             </View>
           ) : announcements.length > 0 ? (
             <View style={styles.boardCards}>
-              {announcements.slice(0, 4).map((a, i) => renderAnnouncementCard(a, i))}
+              {announcements.slice(0, 4).map((a, i) => (
+                <AnnouncementCardItem
+                  key={a.id}
+                  announcement={a}
+                  index={i}
+                  colors={colors}
+                  onPress={handleAnnouncementPress}
+                />
+              ))}
             </View>
           ) : (
             <View style={[styles.emptyBoard, { backgroundColor: colors.surface }]}>
