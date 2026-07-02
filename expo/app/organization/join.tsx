@@ -14,7 +14,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Search, Building2, Send } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { Organization } from '@/types';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -198,7 +198,7 @@ export default function JoinOrganizationScreen() {
             style={styles.backButton}
             onPress={() => setSelectedOrg(null)}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Request to Join</Text>
           <View style={styles.placeholder} />
@@ -219,7 +219,7 @@ export default function JoinOrganizationScreen() {
             <TextInput
               style={styles.messageInput}
               placeholder="Tell them why you'd like to join..."
-              placeholderTextColor={Colors.textSecondary}
+              placeholderTextColor={LightTheme.textSecondary}
               value={message}
               onChangeText={setMessage}
               multiline
@@ -254,18 +254,18 @@ export default function JoinOrganizationScreen() {
           style={styles.backButton}
           onPress={() => router.back()}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={LightTheme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Join Church</Text>
         <View style={styles.placeholder} />
       </View>
 
       <View style={styles.searchContainer}>
-        <Search size={20} color={Colors.textSecondary} />
+        <Search size={20} color={LightTheme.textSecondary} />
         <TextInput
           style={styles.searchInput}
           placeholder="Search churches..."
-          placeholderTextColor={Colors.textSecondary}
+          placeholderTextColor={LightTheme.textSecondary}
           value={searchQuery}
           onChangeText={setSearchQuery}
         />
@@ -273,7 +273,7 @@ export default function JoinOrganizationScreen() {
 
       {isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={LightTheme.primary} />
         </View>
       ) : (
         <ScrollView
@@ -307,7 +307,7 @@ export default function JoinOrganizationScreen() {
             </>
           ) : (
             <View style={styles.emptyState}>
-              <Building2 size={64} color={Colors.textSecondary} />
+              <Building2 size={64} color={LightTheme.textSecondary} />
               <Text style={styles.emptyTitle}>No Churches Found</Text>
               <Text style={styles.emptyDescription}>
                 {searchQuery ? 'Try a different search term' : 'No churches available to join'}
@@ -323,7 +323,7 @@ export default function JoinOrganizationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   header: {
     flexDirection: 'row',
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: LightTheme.border,
   },
   backButton: {
     padding: 8,
@@ -340,7 +340,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   placeholder: {
     width: 40,
@@ -348,20 +348,20 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     marginHorizontal: 16,
     marginVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   searchInput: {
     flex: 1,
     paddingVertical: 14,
     paddingLeft: 12,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   loadingContainer: {
     flex: 1,
@@ -378,13 +378,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 12,
   },
   orgCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: Colors.border,
+    backgroundColor: LightTheme.border,
   },
   orgInfo: {
     flex: 1,
@@ -402,11 +402,11 @@ const styles = StyleSheet.create({
   orgName: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   orgDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   emptyState: {
@@ -416,18 +416,18 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   emptyDescription: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
   selectedOrgCard: {
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 24,
     marginBottom: 24,
@@ -436,18 +436,18 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 16,
-    backgroundColor: Colors.border,
+    backgroundColor: LightTheme.border,
     marginBottom: 16,
   },
   selectedOrgName: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     textAlign: 'center',
   },
   selectedOrgDescription: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
@@ -457,24 +457,24 @@ const styles = StyleSheet.create({
   messageLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   messageInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     height: 120,
   },
   sendButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     padding: 16,
     gap: 8,

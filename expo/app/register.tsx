@@ -19,7 +19,7 @@ import { useRouter, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mail, Lock, Eye, EyeOff, User, Phone, ArrowLeft, Send, X, RefreshCw, Cross } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useButtonPress } from "@/hooks/useAnimations";
 import { supabase } from "@/lib/supabase";
@@ -338,7 +338,7 @@ export default function RegisterScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Verify Your Email</Text>
               <TouchableOpacity onPress={closeVerificationModal} style={styles.closeBtn}>
-                <X size={22} color={Colors.textSecondary} />
+                <X size={22} color={LightTheme.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -360,7 +360,7 @@ export default function RegisterScreen() {
                   <Mail size={44} color="#D4A843" />
                 </View>
                 <Text style={styles.verifyHeading}>Check Your Inbox</Text>
-                <Text style={styles.modalDesc}>We've sent a verification link to{"\n"}<Text style={{ fontWeight: "600", color: Colors.text }}>{verificationEmail}</Text></Text>
+                <Text style={styles.modalDesc}>We've sent a verification link to{"\n"}<Text style={{ fontWeight: "600", color: LightTheme.text }}>{verificationEmail}</Text></Text>
                 <Text style={styles.verifyHint}>Click the link in the email to verify your account, then sign in.</Text>
 
                 {resendError ? (
@@ -447,28 +447,28 @@ const styles = StyleSheet.create({
   loginText: { fontSize: 15, color: TEXT_MUTED },
   loginLink: { fontSize: 15, fontWeight: "600" as const, color: "#D4A843" },
   modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.55)", justifyContent: "flex-end" },
-  modalSheet: { backgroundColor: Colors.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24 },
-  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: Colors.borderLight, alignSelf: "center", marginBottom: 16 },
+  modalSheet: { backgroundColor: LightTheme.surface, borderTopLeftRadius: 28, borderTopRightRadius: 28, padding: 24 },
+  modalHandle: { width: 40, height: 4, borderRadius: 2, backgroundColor: LightTheme.borderLight, alignSelf: "center", marginBottom: 16 },
   modalHeader: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginBottom: 16 },
-  modalTitle: { fontSize: 22, fontWeight: "700" as const, color: Colors.text },
+  modalTitle: { fontSize: 22, fontWeight: "700" as const, color: LightTheme.text },
   closeBtn: { padding: 4 },
-  modalDesc: { fontSize: 15, color: Colors.textSecondary, marginBottom: 20, lineHeight: 22, textAlign: "center" },
-  modalErrorBox: { backgroundColor: Colors.error + "12", borderWidth: 1, borderColor: Colors.error + "30", borderRadius: 14, padding: 14, marginBottom: 16 },
-  modalErrorText: { color: Colors.error, fontSize: 14, textAlign: "center", fontWeight: "500" as const },
+  modalDesc: { fontSize: 15, color: LightTheme.textSecondary, marginBottom: 20, lineHeight: 22, textAlign: "center" },
+  modalErrorBox: { backgroundColor: LightTheme.error + "12", borderWidth: 1, borderColor: LightTheme.error + "30", borderRadius: 14, padding: 14, marginBottom: 16 },
+  modalErrorText: { color: LightTheme.error, fontSize: 14, textAlign: "center", fontWeight: "500" as const },
   modalPrimaryBtn: { backgroundColor: "#1B3A5C", borderRadius: 16, paddingVertical: 16, alignItems: "center", justifyContent: "center", marginTop: 4 },
   modalPrimaryBtnText: { fontSize: 16, fontWeight: "600" as const, color: "#fff" },
   modalBtnRow: { flexDirection: "row", alignItems: "center", gap: 8 },
   modalCancelBtn: { paddingVertical: 16, alignItems: "center", marginTop: 4 },
-  modalCancelText: { fontSize: 15, color: Colors.textSecondary, fontWeight: "500" as const },
+  modalCancelText: { fontSize: 15, color: LightTheme.textSecondary, fontWeight: "500" as const },
   successBlock: { alignItems: "center", paddingVertical: 20 },
   successCircle: { width: 76, height: 76, borderRadius: 38, backgroundColor: "rgba(212, 168, 67, 0.12)", alignItems: "center", justifyContent: "center", marginBottom: 20 },
-  successTitle: { fontSize: 22, fontWeight: "700" as const, color: Colors.text, marginBottom: 12 },
-  successBody: { fontSize: 15, color: Colors.textSecondary, textAlign: "center", lineHeight: 22 },
-  successHighlight: { fontWeight: "600" as const, color: Colors.text },
-  successHint: { fontSize: 14, color: Colors.textTertiary, textAlign: "center", marginTop: 16, lineHeight: 20 },
+  successTitle: { fontSize: 22, fontWeight: "700" as const, color: LightTheme.text, marginBottom: 12 },
+  successBody: { fontSize: 15, color: LightTheme.textSecondary, textAlign: "center", lineHeight: 22 },
+  successHighlight: { fontWeight: "600" as const, color: LightTheme.text },
+  successHint: { fontSize: 14, color: LightTheme.textTertiary, textAlign: "center", marginTop: 16, lineHeight: 20 },
   doneBtn: { backgroundColor: "#1B3A5C", borderRadius: 16, paddingVertical: 16, paddingHorizontal: 48, marginTop: 24 },
   doneBtnText: { fontSize: 16, fontWeight: "600" as const, color: "#fff" },
   verifyIconRow: { alignItems: "center", marginBottom: 16 },
-  verifyHeading: { fontSize: 20, fontWeight: "700" as const, color: Colors.text, textAlign: "center", marginBottom: 8 },
-  verifyHint: { fontSize: 14, color: Colors.textSecondary, textAlign: "center", marginBottom: 24, lineHeight: 20 },
+  verifyHeading: { fontSize: 20, fontWeight: "700" as const, color: LightTheme.text, textAlign: "center", marginBottom: 8 },
+  verifyHint: { fontSize: 14, color: LightTheme.textSecondary, textAlign: "center", marginBottom: 24, lineHeight: 20 },
 });

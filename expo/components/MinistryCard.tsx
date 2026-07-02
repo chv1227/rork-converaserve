@@ -1,7 +1,7 @@
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Users, Music, Heart, Baby, HandHeart, Video, Plus, Check, Clock } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { Ministry } from '@/types';
 import React from "react";
 
@@ -37,7 +37,7 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
       <View style={styles.content}>
         <View style={styles.topRow}>
           <View style={[styles.iconContainer, { backgroundColor: ministry.color }]}>
-            <IconComponent size={20} color={Colors.textInverse} />
+            <IconComponent size={20} color={LightTheme.textInverse} />
           </View>
           
           {onAction && (
@@ -56,17 +56,17 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
             >
               {isMember ? (
                 <>
-                  <Check size={14} color={Colors.primary} />
+                  <Check size={14} color={LightTheme.primary} />
                   <Text style={styles.actionTextMember}>Joined</Text>
                 </>
               ) : isPending ? (
                 <>
-                  <Clock size={14} color={Colors.warning} />
+                  <Clock size={14} color={LightTheme.warning} />
                   <Text style={styles.actionTextPending}>Pending</Text>
                 </>
               ) : (
                 <>
-                  <Plus size={14} color={Colors.textInverse} />
+                  <Plus size={14} color={LightTheme.textInverse} />
                   <Text style={styles.actionTextJoin}>Join</Text>
                 </>
               )}
@@ -79,7 +79,7 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
           <Text style={styles.description} numberOfLines={2}>{ministry.description}</Text>
           
           <View style={styles.footer}>
-            <Users size={14} color={Colors.textInverse} style={{ opacity: 0.8 }} />
+            <Users size={14} color={LightTheme.textInverse} style={{ opacity: 0.8 }} />
             <Text style={styles.memberCount}>{ministry.memberCount} members</Text>
           </View>
         </View>
@@ -128,30 +128,30 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionButtonJoin: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   actionButtonMember: {
-    backgroundColor: Colors.textInverse,
+    backgroundColor: LightTheme.textInverse,
   },
   actionButtonPending: {
-    backgroundColor: Colors.warning + '20',
+    backgroundColor: LightTheme.warning + '20',
     borderWidth: 1,
-    borderColor: Colors.warning,
+    borderColor: LightTheme.warning,
   },
   actionTextJoin: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   actionTextMember: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   actionTextPending: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.warning,
+    color: LightTheme.warning,
   },
   info: {
     gap: 4,
@@ -159,11 +159,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   description: {
     fontSize: 13,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     opacity: 0.85,
     lineHeight: 18,
   },
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     fontSize: 13,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     opacity: 0.85,
     fontWeight: '500' as const,
   },

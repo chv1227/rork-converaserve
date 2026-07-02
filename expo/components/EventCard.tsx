@@ -1,7 +1,7 @@
 import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { MapPin, Clock, Users } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { useTheme } from '@/providers/ThemeProvider';
 import { Event } from '@/types';
 
@@ -103,7 +103,7 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -126,20 +126,20 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     opacity: 0.9,
     textTransform: 'uppercase',
   },
   dayNum: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     marginVertical: 2,
   },
   month: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     opacity: 0.9,
     textTransform: 'uppercase',
   },

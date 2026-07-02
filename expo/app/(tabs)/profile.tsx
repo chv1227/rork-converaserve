@@ -28,7 +28,7 @@ import {
   Link,
 } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -66,7 +66,7 @@ function MenuItem({ icon, title, subtitle, onPress, showBorder = true, danger = 
         <Text style={[styles.menuTitle, danger && styles.menuTitleDanger]}>{title}</Text>
         {subtitle && <Text style={styles.menuSubtitle}>{subtitle}</Text>}
       </View>
-      <ChevronRight size={18} color={Colors.textTertiary} />
+      <ChevronRight size={18} color={LightTheme.textTertiary} />
     </TouchableOpacity>
   );
 }
@@ -114,9 +114,9 @@ export default function ProfileScreen() {
   };
 
   const getRoleBadge = () => {
-    if (isSuperAdmin) return { label: "Super Admin", color: Colors.secondary };
-    if (isAdmin) return { label: "Admin", color: Colors.primary };
-    if (user?.role === "leader") return { label: "Leader", color: Colors.secondary };
+    if (isSuperAdmin) return { label: "Super Admin", color: LightTheme.secondary };
+    if (isAdmin) return { label: "Admin", color: LightTheme.primary };
+    if (user?.role === "leader") return { label: "Leader", color: LightTheme.secondary };
     return null;
   };
 
@@ -125,7 +125,7 @@ export default function ProfileScreen() {
   if (!user) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -178,21 +178,21 @@ export default function ProfileScreen() {
 
         <View style={styles.infoSection}>
           <View style={styles.infoItem}>
-            <Mail size={18} color={Colors.textSecondary} />
+            <Mail size={18} color={LightTheme.textSecondary} />
             <Text style={styles.infoText}>{user.email}</Text>
           </View>
           {!!user.phone && (
             <View style={styles.infoItem}>
-              <Phone size={18} color={Colors.textSecondary} />
+              <Phone size={18} color={LightTheme.textSecondary} />
               <Text style={styles.infoText}>{user.phone}</Text>
             </View>
           )}
           <View style={styles.infoItem}>
-            <Calendar size={18} color={Colors.textSecondary} />
+            <Calendar size={18} color={LightTheme.textSecondary} />
             <Text style={styles.infoText}>Joined {formatJoinDate(user.joinedDate)}</Text>
           </View>
           <View style={styles.infoItem}>
-            <Users size={18} color={Colors.textSecondary} />
+            <Users size={18} color={LightTheme.textSecondary} />
             <Text style={styles.infoText}>{userMinistries.length} ministries</Text>
           </View>
         </View>
@@ -206,12 +206,12 @@ export default function ProfileScreen() {
               <View style={styles.churchManagementCard}>
                 <View style={styles.churchHeader}>
                   <View style={styles.organizationIcon}>
-                    <Building2 size={24} color={Colors.primary} />
+                    <Building2 size={24} color={LightTheme.primary} />
                   </View>
                   <View style={styles.organizationInfo}>
                     <Text style={styles.organizationName}>{currentOrganization.name}</Text>
                     <View style={styles.superAdminBadge}>
-                      <Crown size={10} color={Colors.secondary} />
+                      <Crown size={10} color={LightTheme.secondary} />
                       <Text style={styles.superAdminBadgeText}>Super Admin</Text>
                     </View>
                   </View>
@@ -223,14 +223,14 @@ export default function ProfileScreen() {
                     onPress={() => router.push("/church-management" as any)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.managementActionIcon, { backgroundColor: Colors.primary + "15" }]}>
-                      <Users size={18} color={Colors.primary} />
+                    <View style={[styles.managementActionIcon, { backgroundColor: LightTheme.primary + "15" }]}>
+                      <Users size={18} color={LightTheme.primary} />
                     </View>
                     <View style={styles.managementActionContent}>
                       <Text style={styles.managementActionTitle}>Manage Members</Text>
                       <Text style={styles.managementActionSubtitle}>View and manage all members</Text>
                     </View>
-                    <ChevronRight size={16} color={Colors.textTertiary} />
+                    <ChevronRight size={16} color={LightTheme.textTertiary} />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
@@ -245,7 +245,7 @@ export default function ProfileScreen() {
                       <Text style={styles.managementActionTitle}>Manage Ministries</Text>
                       <Text style={styles.managementActionSubtitle}>Create and edit ministries</Text>
                     </View>
-                    <ChevronRight size={16} color={Colors.textTertiary} />
+                    <ChevronRight size={16} color={LightTheme.textTertiary} />
                   </TouchableOpacity>
                   
                   <TouchableOpacity 
@@ -253,14 +253,14 @@ export default function ProfileScreen() {
                     onPress={() => router.push("/organization/edit" as any)}
                     activeOpacity={0.7}
                   >
-                    <View style={[styles.managementActionIcon, { backgroundColor: Colors.warning + "15" }]}>
-                      <Cog size={18} color={Colors.warning} />
+                    <View style={[styles.managementActionIcon, { backgroundColor: LightTheme.warning + "15" }]}>
+                      <Cog size={18} color={LightTheme.warning} />
                     </View>
                     <View style={styles.managementActionContent}>
                       <Text style={styles.managementActionTitle}>Church Settings</Text>
                       <Text style={styles.managementActionSubtitle}>Edit organization settings</Text>
                     </View>
-                    <ChevronRight size={16} color={Colors.textTertiary} />
+                    <ChevronRight size={16} color={LightTheme.textTertiary} />
                   </TouchableOpacity>
                   
                   {isSuperAdmin && (
@@ -276,7 +276,7 @@ export default function ProfileScreen() {
                         <Text style={styles.managementActionTitle}>Manage Churches</Text>
                         <Text style={styles.managementActionSubtitle}>Create and edit churches</Text>
                       </View>
-                      <ChevronRight size={16} color={Colors.textTertiary} />
+                      <ChevronRight size={16} color={LightTheme.textTertiary} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -288,13 +288,13 @@ export default function ProfileScreen() {
                 activeOpacity={0.7}
               >
                 <View style={styles.organizationIcon}>
-                  <Building2 size={24} color={Colors.primary} />
+                  <Building2 size={24} color={LightTheme.primary} />
                 </View>
                 <View style={styles.organizationInfo}>
                   <Text style={styles.organizationName}>{currentOrganization.name}</Text>
                   <Text style={styles.organizationSubtitle}>View church info</Text>
                 </View>
-                <ChevronRight size={18} color={Colors.textTertiary} />
+                <ChevronRight size={18} color={LightTheme.textTertiary} />
               </TouchableOpacity>
             )}
           </>
@@ -445,13 +445,13 @@ export default function ProfileScreen() {
                 onPress={() => setNotificationsModalVisible(false)}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <BellRing size={20} color={Colors.primary} />
+                <BellRing size={20} color={LightTheme.primary} />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Push Notifications</Text>
                   <Text style={styles.settingSubtitle}>Receive alerts on your device</Text>
@@ -467,7 +467,7 @@ export default function ProfileScreen() {
             
             <View style={styles.settingRow}>
               <View style={styles.settingInfo}>
-                <Mail size={20} color={Colors.primary} />
+                <Mail size={20} color={LightTheme.primary} />
                 <View style={styles.settingText}>
                   <Text style={styles.settingTitle}>Email Notifications</Text>
                   <Text style={styles.settingSubtitle}>Receive updates via email</Text>
@@ -511,7 +511,7 @@ export default function ProfileScreen() {
                 onPress={() => setPrivacyModalVisible(false)}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             
@@ -522,12 +522,12 @@ export default function ProfileScreen() {
                 setChangePasswordModalVisible(true);
               }}
             >
-              <Lock size={20} color={Colors.primary} />
+              <Lock size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Change Password</Text>
                 <Text style={styles.privacyItemSubtitle}>Update your account password</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -540,12 +540,12 @@ export default function ProfileScreen() {
                 }
               }}
             >
-              <Eye size={20} color={Colors.primary} />
+              <Eye size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Profile Visibility</Text>
                 <Text style={styles.privacyItemSubtitle}>Control who can see your profile</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -554,12 +554,12 @@ export default function ProfileScreen() {
                 void Linking.openURL("https://churchconnect.app/privacy");
               }}
             >
-              <FileText size={20} color={Colors.primary} />
+              <FileText size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Privacy Policy</Text>
                 <Text style={styles.privacyItemSubtitle}>Read our privacy policy</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -587,7 +587,7 @@ export default function ProfileScreen() {
                 onPress={() => setHelpModalVisible(false)}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             
@@ -599,12 +599,12 @@ export default function ProfileScreen() {
                 }
               }}
             >
-              <Mail size={20} color={Colors.primary} />
+              <Mail size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Email Support</Text>
                 <Text style={styles.privacyItemSubtitle}>support@churchconnect.app</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -613,12 +613,12 @@ export default function ProfileScreen() {
                 void Linking.openURL("https://churchconnect.app/faq");
               }}
             >
-              <MessageCircle size={20} color={Colors.primary} />
+              <MessageCircle size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>FAQ</Text>
                 <Text style={styles.privacyItemSubtitle}>Frequently asked questions</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
             
             <TouchableOpacity 
@@ -627,12 +627,12 @@ export default function ProfileScreen() {
                 void Linking.openURL("https://churchconnect.app/terms");
               }}
             >
-              <FileText size={20} color={Colors.primary} />
+              <FileText size={20} color={LightTheme.primary} />
               <View style={styles.privacyItemText}>
                 <Text style={styles.privacyItemTitle}>Terms of Service</Text>
                 <Text style={styles.privacyItemSubtitle}>Read our terms and conditions</Text>
               </View>
-              <ChevronRight size={18} color={Colors.textTertiary} />
+              <ChevronRight size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
 
             <View style={styles.helpInfo}>
@@ -668,12 +668,12 @@ export default function ProfileScreen() {
                 }}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.deleteWarningContainer}>
-              <AlertTriangle size={32} color={Colors.error} />
+              <AlertTriangle size={32} color={LightTheme.error} />
               <Text style={styles.deleteWarningTitle}>This action is permanent</Text>
               <Text style={styles.deleteWarningText}>
                 Deleting your account will permanently remove your profile, messages, and all associated data. This cannot be undone.
@@ -685,7 +685,7 @@ export default function ProfileScreen() {
               <TextInput
                 style={styles.passwordInput}
                 placeholder='Type "DELETE" here'
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={deleteConfirmText}
                 onChangeText={setDeleteConfirmText}
                 autoCapitalize="characters"
@@ -726,7 +726,7 @@ export default function ProfileScreen() {
               disabled={deleteConfirmText !== 'DELETE' || isDeletingAccount}
             >
               {isDeletingAccount ? (
-                <ActivityIndicator color={Colors.textInverse} />
+                <ActivityIndicator color={LightTheme.textInverse} />
               ) : (
                 <Text style={styles.deleteAccountButtonText}>Delete My Account</Text>
               )}
@@ -765,18 +765,18 @@ export default function ProfileScreen() {
                 }}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             
             <View style={styles.passwordInputGroup}>
               <Text style={styles.passwordInputLabel}>Current Password</Text>
               <View style={styles.passwordInputContainer}>
-                <Lock size={18} color={Colors.textSecondary} />
+                <Lock size={18} color={LightTheme.textSecondary} />
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="Enter current password"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   secureTextEntry
                   value={currentPassword}
                   onChangeText={setCurrentPassword}
@@ -787,11 +787,11 @@ export default function ProfileScreen() {
             <View style={styles.passwordInputGroup}>
               <Text style={styles.passwordInputLabel}>New Password</Text>
               <View style={styles.passwordInputContainer}>
-                <Lock size={18} color={Colors.textSecondary} />
+                <Lock size={18} color={LightTheme.textSecondary} />
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="Enter new password (min 6 characters)"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   secureTextEntry
                   value={newPassword}
                   onChangeText={setNewPassword}
@@ -802,11 +802,11 @@ export default function ProfileScreen() {
             <View style={styles.passwordInputGroup}>
               <Text style={styles.passwordInputLabel}>Confirm New Password</Text>
               <View style={styles.passwordInputContainer}>
-                <Lock size={18} color={Colors.textSecondary} />
+                <Lock size={18} color={LightTheme.textSecondary} />
                 <TextInput
                   style={styles.passwordInput}
                   placeholder="Confirm new password"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   secureTextEntry
                   value={confirmPassword}
                   onChangeText={setConfirmPassword}
@@ -875,7 +875,7 @@ export default function ProfileScreen() {
               disabled={isChangingPassword}
             >
               {isChangingPassword ? (
-                <ActivityIndicator color={Colors.textInverse} />
+                <ActivityIndicator color={LightTheme.textInverse} />
               ) : (
                 <Text style={styles.modalButtonText}>Update Password</Text>
               )}
@@ -975,12 +975,12 @@ const styles = StyleSheet.create({
   viewAllText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   ministryBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 14,
     paddingVertical: 12,
     borderRadius: 12,
@@ -1006,16 +1006,16 @@ const styles = StyleSheet.create({
   ministryName: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   ministryMemberCount: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   noMinistriesCard: {
     width: "100%",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 24,
     alignItems: "center",
@@ -1024,14 +1024,14 @@ const styles = StyleSheet.create({
   noMinistriesTitle: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   noMinistriesSubtitle: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   menuSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     overflow: "hidden",
   },
@@ -1040,7 +1040,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   menuItemNoBorder: {
     borderBottomWidth: 0,
@@ -1049,13 +1049,13 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 12,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
   menuIconDanger: {
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
   },
   menuContent: {
     flex: 1,
@@ -1063,19 +1063,19 @@ const styles = StyleSheet.create({
   menuTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   menuTitleDanger: {
-    color: Colors.error,
+    color: LightTheme.error,
   },
   menuSubtitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   version: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textAlign: "center",
     marginTop: 24,
   },
@@ -1085,7 +1085,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -1100,13 +1100,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalCloseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1116,7 +1116,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   settingInfo: {
     flexDirection: "row",
@@ -1130,59 +1130,59 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   settingSubtitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   toggle: {
     width: 50,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     padding: 2,
     justifyContent: "center",
   },
   toggleActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   toggleKnob: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.textInverse,
+    backgroundColor: LightTheme.textInverse,
   },
   toggleKnobActive: {
     alignSelf: "flex-end",
   },
   modalButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: "center",
     marginTop: 24,
   },
   modalButtonSecondary: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   modalButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   modalButtonTextSecondary: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   privacyItem: {
     flexDirection: "row",
     alignItems: "center",
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
     gap: 12,
   },
   privacyItemText: {
@@ -1191,15 +1191,15 @@ const styles = StyleSheet.create({
   privacyItemTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   privacyItemSubtitle: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   helpInfo: {
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: LightTheme.primary + "10",
     borderRadius: 12,
     padding: 16,
     marginTop: 16,
@@ -1208,18 +1208,18 @@ const styles = StyleSheet.create({
   helpInfoText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   helpInfoSubtext: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
     textAlign: "center",
   },
   organizationCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -1239,15 +1239,15 @@ const styles = StyleSheet.create({
   organizationName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   organizationSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   churchManagementCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1257,12 +1257,12 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   superAdminBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.secondary + "18",
+    backgroundColor: LightTheme.secondary + "18",
     paddingHorizontal: 8,
     paddingVertical: 3,
     borderRadius: 10,
@@ -1273,7 +1273,7 @@ const styles = StyleSheet.create({
   superAdminBadgeText: {
     fontSize: 10,
     fontWeight: "600" as const,
-    color: Colors.secondary,
+    color: LightTheme.secondary,
   },
   managementActions: {
     marginTop: 12,
@@ -1283,7 +1283,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   managementActionLast: {
     borderBottomWidth: 0,
@@ -1302,15 +1302,15 @@ const styles = StyleSheet.create({
   managementActionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   managementActionSubtitle: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 1,
   },
   noOrgCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
@@ -1320,7 +1320,7 @@ const styles = StyleSheet.create({
     width: 64,
     height: 64,
     borderRadius: 32,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -1328,12 +1328,12 @@ const styles = StyleSheet.create({
   noOrgTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   noOrgSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     marginBottom: 20,
     lineHeight: 20,
@@ -1349,14 +1349,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     paddingVertical: 12,
   },
   createOrgButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   joinOrgButton: {
     flex: 1,
@@ -1364,14 +1364,14 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 6,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     borderRadius: 12,
     paddingVertical: 12,
   },
   joinOrgButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   passwordInputGroup: {
     marginBottom: 16,
@@ -1379,13 +1379,13 @@ const styles = StyleSheet.create({
   passwordInputLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   passwordInputContainer: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
@@ -1394,7 +1394,7 @@ const styles = StyleSheet.create({
   passwordInput: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalButtonDisabled: {
     opacity: 0.7,
@@ -1404,32 +1404,32 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 8,
     marginBottom: 16,
-    backgroundColor: Colors.error + "08",
+    backgroundColor: LightTheme.error + "08",
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.error + "20",
+    borderColor: LightTheme.error + "20",
   },
   deleteWarningTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.error,
+    color: LightTheme.error,
     marginTop: 12,
     marginBottom: 8,
   },
   deleteWarningText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
   deleteConfirmLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   deleteAccountButton: {
-    backgroundColor: Colors.error,
+    backgroundColor: LightTheme.error,
     borderRadius: 14,
     paddingVertical: 16,
     alignItems: "center",
@@ -1442,6 +1442,6 @@ const styles = StyleSheet.create({
   deleteAccountButtonText: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
 });

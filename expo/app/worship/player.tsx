@@ -24,7 +24,7 @@ import {
 } from "lucide-react-native";
 import Slider from "@react-native-community/slider";
 import * as Haptics from "expo-haptics";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 import { VocalPart, LyricLine } from "@/types";
@@ -34,7 +34,7 @@ const VOCAL_PARTS: { key: VocalPart; label: string; color: string }[] = [
   { key: "alto", label: "Alto", color: "#8B5CF6" },
   { key: "tenor", label: "Tenor", color: "#3B82F6" },
   { key: "bass", label: "Bass", color: "#10B981" },
-  { key: "full", label: "Full Mix", color: Colors.primary },
+  { key: "full", label: "Full Mix", color: LightTheme.primary },
 ];
 
 function formatTime(seconds: number): string {
@@ -340,7 +340,7 @@ export default function PlayerScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -366,7 +366,7 @@ export default function PlayerScreen() {
           onPress={handleClose}
           testID="close-player-button"
         >
-          <ChevronDown size={28} color={Colors.text} />
+          <ChevronDown size={28} color={LightTheme.text} />
         </TouchableOpacity>
         <View style={styles.headerTitle}>
           <Text style={styles.headerSubtitle}>NOW PLAYING</Text>
@@ -388,7 +388,7 @@ export default function PlayerScreen() {
             <Image source={{ uri: song.coverImage }} style={styles.coverImage} />
           ) : (
             <View style={styles.coverPlaceholder}>
-              <Music size={80} color={Colors.textTertiary} />
+              <Music size={80} color={LightTheme.textTertiary} />
             </View>
           )}
         </View>
@@ -457,7 +457,7 @@ export default function PlayerScreen() {
                     style={[
                       styles.lyricText,
                       index === currentLyricIndex && {
-                        color: selectedPartInfo?.color || Colors.primary,
+                        color: selectedPartInfo?.color || LightTheme.primary,
                         fontWeight: "700" as const,
                         fontSize: 20,
                       },
@@ -484,9 +484,9 @@ export default function PlayerScreen() {
             maximumValue={duration || 1}
             value={position}
             onSlidingComplete={handleSeek}
-            minimumTrackTintColor={selectedPartInfo?.color || Colors.primary}
-            maximumTrackTintColor={Colors.border}
-            thumbTintColor={selectedPartInfo?.color || Colors.primary}
+            minimumTrackTintColor={selectedPartInfo?.color || LightTheme.primary}
+            maximumTrackTintColor={LightTheme.border}
+            thumbTintColor={selectedPartInfo?.color || LightTheme.primary}
           />
           <Text style={styles.timeText}>{formatTime(duration)}</Text>
         </View>
@@ -497,13 +497,13 @@ export default function PlayerScreen() {
             onPress={handleSkipBack}
             testID="skip-back-button"
           >
-            <SkipBack size={28} color={Colors.text} />
+            <SkipBack size={28} color={LightTheme.text} />
           </TouchableOpacity>
 
           <TouchableOpacity
             style={[
               styles.playButton,
-              { backgroundColor: selectedPartInfo?.color || Colors.primary },
+              { backgroundColor: selectedPartInfo?.color || LightTheme.primary },
             ]}
             onPress={handlePlayPause}
             disabled={isLoading}
@@ -523,21 +523,21 @@ export default function PlayerScreen() {
             onPress={handleSkipForward}
             testID="skip-forward-button"
           >
-            <SkipForward size={28} color={Colors.text} />
+            <SkipForward size={28} color={LightTheme.text} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.volumeContainer}>
-          <Volume2 size={18} color={Colors.textSecondary} />
+          <Volume2 size={18} color={LightTheme.textSecondary} />
           <Slider
             style={styles.volumeSlider}
             minimumValue={0}
             maximumValue={1}
             value={volume}
             onValueChange={handleVolumeChange}
-            minimumTrackTintColor={Colors.textSecondary}
-            maximumTrackTintColor={Colors.border}
-            thumbTintColor={Colors.textSecondary}
+            minimumTrackTintColor={LightTheme.textSecondary}
+            maximumTrackTintColor={LightTheme.border}
+            thumbTintColor={LightTheme.textSecondary}
           />
         </View>
       </View>
@@ -548,7 +548,7 @@ export default function PlayerScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -556,7 +556,7 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   header: {
     flexDirection: "row",
@@ -564,9 +564,9 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 12,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   closeButton: {
     width: 44,
@@ -581,13 +581,13 @@ const styles = StyleSheet.create({
   headerSubtitle: {
     fontSize: 10,
     fontWeight: "600" as const,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     letterSpacing: 1,
   },
   headerSongTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 2,
   },
   lyricsContainer: {
@@ -609,7 +609,7 @@ const styles = StyleSheet.create({
     width: 200,
     height: 200,
     borderRadius: 16,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -620,12 +620,12 @@ const styles = StyleSheet.create({
   songTitle: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     textAlign: "center",
   },
   songArtist: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   partsContainer: {
@@ -634,7 +634,7 @@ const styles = StyleSheet.create({
   partsLabel: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 12,
@@ -646,14 +646,14 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   partButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   partButtonTextActive: {
     color: "#fff",
@@ -664,7 +664,7 @@ const styles = StyleSheet.create({
   lyricsSectionTitle: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 16,
@@ -674,19 +674,19 @@ const styles = StyleSheet.create({
   },
   lyricText: {
     fontSize: 18,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 28,
     textAlign: "center",
   },
   lyricTextPast: {
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   playerControls: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingTop: 16,
     paddingHorizontal: 24,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   progressContainer: {
     flexDirection: "row",
@@ -695,7 +695,7 @@ const styles = StyleSheet.create({
   },
   timeText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     width: 40,
     textAlign: "center",
   },

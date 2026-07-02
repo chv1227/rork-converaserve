@@ -3,7 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Home, ArrowLeft } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 
 export default function NotFoundScreen() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function NotFoundScreen() {
             style={styles.primaryButton}
             onPress={() => router.replace('/')}
           >
-            <Home size={20} color={Colors.textInverse} />
+            <Home size={20} color={LightTheme.textInverse} />
             <Text style={styles.primaryButtonText}>Go Home</Text>
           </TouchableOpacity>
           
@@ -31,7 +31,7 @@ export default function NotFoundScreen() {
             style={styles.secondaryButton}
             onPress={() => router.back()}
           >
-            <ArrowLeft size={20} color={Colors.primary} />
+            <ArrowLeft size={20} color={LightTheme.primary} />
             <Text style={styles.secondaryButtonText}>Go Back</Text>
           </TouchableOpacity>
         </View>
@@ -43,7 +43,7 @@ export default function NotFoundScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   content: {
     flex: 1,
@@ -54,19 +54,19 @@ const styles = StyleSheet.create({
   errorCode: {
     fontSize: 80,
     fontWeight: '800' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
     opacity: 0.3,
     marginBottom: 8,
   },
   title: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     lineHeight: 24,
     marginBottom: 32,
@@ -79,7 +79,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -88,13 +88,13 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   secondaryButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     paddingVertical: 14,
     paddingHorizontal: 24,
     borderRadius: 12,
@@ -103,6 +103,6 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
 });

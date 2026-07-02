@@ -23,7 +23,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
@@ -48,13 +48,13 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
   const getContentTypeIcon = () => {
     switch (report.contentType) {
       case "post":
-        return <FileText size={16} color={Colors.primary} />;
+        return <FileText size={16} color={LightTheme.primary} />;
       case "comment":
-        return <MessageSquare size={16} color={Colors.secondary} />;
+        return <MessageSquare size={16} color={LightTheme.secondary} />;
       case "message":
         return <Mail size={16} color="#8B5CF6" />;
       default:
-        return <AlertTriangle size={16} color={Colors.warning} />;
+        return <AlertTriangle size={16} color={LightTheme.warning} />;
     }
   };
 
@@ -63,9 +63,9 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
       case "resolved":
         return "#10B981";
       case "dismissed":
-        return Colors.textTertiary;
+        return LightTheme.textTertiary;
       default:
-        return Colors.warning;
+        return LightTheme.warning;
     }
   };
 
@@ -74,9 +74,9 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
       case "resolved":
         return <CheckCircle size={14} color="#10B981" />;
       case "dismissed":
-        return <XCircle size={14} color={Colors.textTertiary} />;
+        return <XCircle size={14} color={LightTheme.textTertiary} />;
       default:
-        return <Clock size={14} color={Colors.warning} />;
+        return <Clock size={14} color={LightTheme.warning} />;
     }
   };
 
@@ -94,7 +94,7 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
     <View style={styles.reportItem}>
       <View style={styles.reportHeader}>
         <View style={styles.reportTypeRow}>
-          <View style={[styles.reportTypeIcon, { backgroundColor: Colors.primary + "15" }]}>
+          <View style={[styles.reportTypeIcon, { backgroundColor: LightTheme.primary + "15" }]}>
             {getContentTypeIcon()}
           </View>
           <Text style={styles.reportType}>{report.contentType.toUpperCase()}</Text>
@@ -137,7 +137,7 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
             onPress={onResolve}
             activeOpacity={0.7}
           >
-            <Trash2 size={16} color={Colors.textInverse} />
+            <Trash2 size={16} color={LightTheme.textInverse} />
             <Text style={styles.resolveButtonText}>Remove Content</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -145,7 +145,7 @@ function ReportItem({ report, onResolve, onDismiss }: ReportItemProps) {
             onPress={onDismiss}
             activeOpacity={0.7}
           >
-            <X size={16} color={Colors.textSecondary} />
+            <X size={16} color={LightTheme.textSecondary} />
             <Text style={styles.dismissButtonText}>Dismiss</Text>
           </TouchableOpacity>
         </View>
@@ -255,7 +255,7 @@ export default function ContentModeration() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -271,7 +271,7 @@ export default function ContentModeration() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Content Moderation</Text>
@@ -307,7 +307,7 @@ export default function ContentModeration() {
 
       {reportsQuery.isLoading ? (
         <View style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={LightTheme.primary} />
         </View>
       ) : reportsQuery.data && reportsQuery.data.length > 0 ? (
         <ScrollView
@@ -327,7 +327,7 @@ export default function ContentModeration() {
         </ScrollView>
       ) : (
         <View style={[styles.container, styles.centered]}>
-          <AlertTriangle size={48} color={Colors.textTertiary} />
+          <AlertTriangle size={48} color={LightTheme.textTertiary} />
           <Text style={styles.emptyTitle}>No Reports</Text>
           <Text style={styles.emptySubtitle}>
             {statusFilter === "all"
@@ -343,7 +343,7 @@ export default function ContentModeration() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -351,11 +351,11 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -366,7 +366,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -377,11 +377,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   filterRow: {
@@ -391,19 +391,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     marginRight: 8,
   },
   filterChipActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   filterChipText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: "500" as const,
   },
   filterChipTextActive: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   content: {
     flex: 1,
@@ -412,7 +412,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   reportItem: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
   reportType: {
     fontSize: 12,
     fontWeight: "700" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     letterSpacing: 0.5,
   },
   statusBadge: {
@@ -455,10 +455,10 @@ const styles = StyleSheet.create({
   },
   reportDate: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   reportContent: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 12,
@@ -466,14 +466,14 @@ const styles = StyleSheet.create({
   reportLabel: {
     fontSize: 11,
     fontWeight: "600" as const,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginBottom: 4,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   reportText: {
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 20,
     fontStyle: "italic" as const,
   },
@@ -487,12 +487,12 @@ const styles = StyleSheet.create({
   },
   reportMetaLabel: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     width: 80,
   },
   reportMetaValue: {
     fontSize: 13,
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: "500" as const,
     flex: 1,
   },
@@ -510,31 +510,31 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   resolveButton: {
-    backgroundColor: Colors.error,
+    backgroundColor: LightTheme.error,
   },
   resolveButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   dismissButton: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   dismissButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   emptyTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
 });

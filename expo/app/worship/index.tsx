@@ -15,7 +15,7 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { useRouter, Href, Stack } from "expo-router";
 import { Music, Play, Settings, Clock, Mic2, ArrowLeft, Search, X } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { Song } from "@/types";
 import { useQuery } from "@tanstack/react-query";
@@ -57,7 +57,7 @@ function SongCard({ song, onPress }: SongCardProps) {
           <Image source={{ uri: song.coverImage }} style={styles.songImage} />
         ) : (
           <View style={styles.songImagePlaceholder}>
-            <Music size={28} color={Colors.textTertiary} />
+            <Music size={28} color={LightTheme.textTertiary} />
           </View>
         )}
         <View style={styles.playOverlay}>
@@ -75,12 +75,12 @@ function SongCard({ song, onPress }: SongCardProps) {
         )}
         <View style={styles.songMeta}>
           <View style={styles.metaItem}>
-            <Clock size={12} color={Colors.textTertiary} />
+            <Clock size={12} color={LightTheme.textTertiary} />
             <Text style={styles.metaText}>{formatDuration(song.duration)}</Text>
           </View>
           {availableParts.length > 0 && (
             <View style={styles.metaItem}>
-              <Mic2 size={12} color={Colors.textTertiary} />
+              <Mic2 size={12} color={LightTheme.textTertiary} />
               <Text style={styles.metaText}>
                 {availableParts.length} {availableParts.length === 1 ? "part" : "parts"}
               </Text>
@@ -201,7 +201,7 @@ export default function WorshipScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -217,7 +217,7 @@ export default function WorshipScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitleContainer}>
             <Text style={styles.title}>Music Player</Text>
@@ -229,7 +229,7 @@ export default function WorshipScreen() {
               onPress={handleManagePress}
               testID="manage-songs-button"
             >
-              <Settings size={22} color={Colors.primary} />
+              <Settings size={22} color={LightTheme.primary} />
             </TouchableOpacity>
           )}
           {!isAdmin && <View style={{ width: 44 }} />}
@@ -238,11 +238,11 @@ export default function WorshipScreen() {
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search size={20} color={Colors.textTertiary} />
+          <Search size={20} color={LightTheme.textTertiary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search songs or artists..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={LightTheme.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
             autoCapitalize="none"
@@ -251,7 +251,7 @@ export default function WorshipScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={clearSearch} style={styles.clearButton}>
-              <X size={18} color={Colors.textTertiary} />
+              <X size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
           )}
         </View>
@@ -260,7 +260,7 @@ export default function WorshipScreen() {
       <View style={styles.listContainer}>
         {filteredSongs.length === 0 ? (
           <View style={styles.emptyState}>
-            <Music size={64} color={Colors.textTertiary} />
+            <Music size={64} color={LightTheme.textTertiary} />
             <Text style={styles.emptyTitle}>
               {searchQuery ? 'No Results Found' : 'No Songs Yet'}
             </Text>
@@ -296,7 +296,7 @@ export default function WorshipScreen() {
                 <RefreshControl
                   refreshing={songsQuery.isRefetching}
                   onRefresh={onRefresh}
-                  tintColor={Colors.primary}
+                  tintColor={LightTheme.primary}
                 />
               }
               onScrollToIndexFailed={() => {}}
@@ -341,18 +341,18 @@ export default function WorshipScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
     alignItems: "center",
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -362,7 +362,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -373,40 +373,40 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   manageButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
   searchContainer: {
     paddingHorizontal: 16,
     paddingVertical: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   searchInputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     paddingHorizontal: 14,
     height: 48,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   searchInput: {
     flex: 1,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     marginLeft: 10,
     paddingVertical: 0,
   },
@@ -422,14 +422,14 @@ const styles = StyleSheet.create({
     paddingRight: 36,
   },
   sectionHeader: {
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     paddingVertical: 8,
     paddingHorizontal: 4,
   },
   sectionHeaderText: {
     fontSize: 14,
     fontWeight: "700" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
     textTransform: "uppercase",
   },
   alphabetSidebar: {
@@ -449,16 +449,16 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   alphabetLetterActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 11,
   },
   alphabetLetterText: {
     fontSize: 11,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   alphabetLetterTextDisabled: {
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     opacity: 0.4,
   },
   alphabetLetterTextActive: {
@@ -466,7 +466,7 @@ const styles = StyleSheet.create({
   },
   songCard: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 12,
     marginBottom: 10,
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   songImagePlaceholder: {
     width: "100%",
     height: "100%",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -501,7 +501,7 @@ const styles = StyleSheet.create({
     width: 28,
     height: 28,
     borderRadius: 14,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     justifyContent: "center",
     alignItems: "center",
   },
@@ -513,12 +513,12 @@ const styles = StyleSheet.create({
   songTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 4,
   },
   songArtist: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 8,
   },
   songMeta: {
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   emptyState: {
     flex: 1,
@@ -543,12 +543,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     marginTop: 8,
     paddingHorizontal: 40,

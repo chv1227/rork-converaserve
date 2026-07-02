@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -235,14 +235,14 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   createButtonHeader: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   calendarCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 20,
     padding: 16,
     marginBottom: 24,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   weekDays: {
     flexDirection: "row",
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   daysGrid: {
     flexDirection: "row",
@@ -310,34 +310,34 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   selectedDay: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 20,
   },
   selectedDayText: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     fontWeight: "600" as const,
   },
   todayDay: {
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: LightTheme.primary,
     borderRadius: 20,
   },
   todayDayText: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: "600" as const,
   },
   eventDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     marginTop: 2,
   },
   selectedEventDot: {
-    backgroundColor: Colors.textInverse,
+    backgroundColor: LightTheme.textInverse,
   },
   eventsSection: {
     marginBottom: 20,
@@ -345,28 +345,28 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   noEvents: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
   },
   noEventsText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   setupBanner: {
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: LightTheme.primary + '10',
     borderRadius: 12,
     padding: 16,
     marginBottom: 20,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: LightTheme.primary + '30',
   },
   setupBannerContent: {
     flexDirection: "row",
@@ -379,11 +379,11 @@ const styles = StyleSheet.create({
   setupBannerTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   setupBannerSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   loadingContainer: {

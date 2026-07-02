@@ -28,7 +28,7 @@ import {
   ChevronDown,
 } from 'lucide-react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '@/providers/AuthProvider';
@@ -217,11 +217,11 @@ export default function AnnouncementsScreen() {
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high':
-        return Colors.error;
+        return LightTheme.error;
       case 'low':
-        return Colors.textTertiary;
+        return LightTheme.textTertiary;
       default:
-        return Colors.primary;
+        return LightTheme.primary;
     }
   };
 
@@ -235,17 +235,17 @@ export default function AnnouncementsScreen() {
       <View style={styles.cardTopRow}>
         {announcement.isPinned && (
           <View style={styles.pinnedBadge}>
-            <Pin size={12} color={Colors.primary} />
+            <Pin size={12} color={LightTheme.primary} />
             <Text style={styles.pinnedText}>Pinned</Text>
           </View>
         )}
         <View style={[styles.typeBadge, announcement.ministryId ? styles.ministryTypeBadge : styles.generalTypeBadge]}>
           {announcement.ministryId ? (
-            <Users size={10} color={Colors.secondary} />
+            <Users size={10} color={LightTheme.secondary} />
           ) : (
-            <Globe size={10} color={Colors.primary} />
+            <Globe size={10} color={LightTheme.primary} />
           )}
-          <Text style={[styles.typeBadgeText, { color: announcement.ministryId ? Colors.secondary : Colors.primary }]}>
+          <Text style={[styles.typeBadgeText, { color: announcement.ministryId ? LightTheme.secondary : LightTheme.primary }]}>
             {announcement.ministryId ? 'Ministry' : 'General'}
           </Text>
         </View>
@@ -278,7 +278,7 @@ export default function AnnouncementsScreen() {
 
       {!!announcement.ministryName && (
         <View style={styles.ministryTag}>
-          <Users size={12} color={Colors.textSecondary} />
+          <Users size={12} color={LightTheme.textSecondary} />
           <Text style={styles.ministryTagText}>{announcement.ministryName}</Text>
         </View>
       )}
@@ -300,28 +300,28 @@ export default function AnnouncementsScreen() {
           title: 'Announcements',
           headerLeft: () => (
             <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-              <ChevronLeft size={24} color={Colors.text} />
+              <ChevronLeft size={24} color={LightTheme.text} />
             </TouchableOpacity>
           ),
           headerRight: () =>
             canCreateAnnouncement ? (
               <TouchableOpacity onPress={() => setShowCreateModal(true)} style={styles.headerButton}>
-                <Plus size={24} color={Colors.primary} />
+                <Plus size={24} color={LightTheme.primary} />
               </TouchableOpacity>
             ) : null,
-          headerStyle: { backgroundColor: Colors.background },
-          headerTitleStyle: { color: Colors.text, fontWeight: '700' as const },
+          headerStyle: { backgroundColor: LightTheme.background },
+          headerTitleStyle: { color: LightTheme.text, fontWeight: '700' as const },
           headerShadowVisible: false,
         }}
       />
 
       <View style={styles.searchContainer}>
         <View style={styles.searchInputContainer}>
-          <Search size={20} color={Colors.textTertiary} />
+          <Search size={20} color={LightTheme.textTertiary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search announcements..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={LightTheme.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -330,7 +330,7 @@ export default function AnnouncementsScreen() {
           style={[styles.filterButton, filterType !== 'all' && styles.filterButtonActive]}
           onPress={() => setShowFilterModal(true)}
         >
-          <Filter size={20} color={filterType !== 'all' ? Colors.primary : Colors.textSecondary} />
+          <Filter size={20} color={filterType !== 'all' ? LightTheme.primary : LightTheme.textSecondary} />
         </TouchableOpacity>
       </View>
 
@@ -347,7 +347,7 @@ export default function AnnouncementsScreen() {
           style={[styles.typeFilterTab, announcementType === 'general' && styles.typeFilterTabActive]}
           onPress={() => setAnnouncementType('general')}
         >
-          <Globe size={14} color={announcementType === 'general' ? Colors.primary : Colors.textSecondary} />
+          <Globe size={14} color={announcementType === 'general' ? LightTheme.primary : LightTheme.textSecondary} />
           <Text style={[styles.typeFilterText, announcementType === 'general' && styles.typeFilterTextActive]}>
             General
           </Text>
@@ -356,7 +356,7 @@ export default function AnnouncementsScreen() {
           style={[styles.typeFilterTab, announcementType === 'ministry' && styles.typeFilterTabActive]}
           onPress={() => setAnnouncementType('ministry')}
         >
-          <Users size={14} color={announcementType === 'ministry' ? Colors.primary : Colors.textSecondary} />
+          <Users size={14} color={announcementType === 'ministry' ? LightTheme.primary : LightTheme.textSecondary} />
           <Text style={[styles.typeFilterText, announcementType === 'ministry' && styles.typeFilterTextActive]}>
             Ministry
           </Text>
@@ -365,7 +365,7 @@ export default function AnnouncementsScreen() {
 
       {announcementsQuery.isLoading ? (
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={LightTheme.primary} />
           <Text style={styles.loadingText}>Loading announcements...</Text>
         </View>
       ) : filteredAnnouncements.length === 0 ? (
@@ -376,11 +376,11 @@ export default function AnnouncementsScreen() {
               onPress={() => setShowCreateModal(true)}
               activeOpacity={0.7}
             >
-              <Plus size={28} color={Colors.textInverse} />
+              <Plus size={28} color={LightTheme.textInverse} />
             </TouchableOpacity>
           )}
           <View style={styles.emptyIconContainer}>
-            <Megaphone size={48} color={Colors.textTertiary} />
+            <Megaphone size={48} color={LightTheme.textTertiary} />
           </View>
           <Text style={styles.emptyTitle}>No Announcements</Text>
           <Text style={styles.emptySubtitle}>
@@ -396,7 +396,7 @@ export default function AnnouncementsScreen() {
           style={styles.scrollView}
           contentContainerStyle={styles.scrollContent}
           refreshControl={
-            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
+            <RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={LightTheme.primary} />
           }
           showsVerticalScrollIndicator={false}
         >
@@ -439,7 +439,7 @@ export default function AnnouncementsScreen() {
             <View style={styles.detailHeader}>
               <Text style={styles.detailTitle}>Announcement</Text>
               <TouchableOpacity onPress={() => setSelectedAnnouncement(null)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -447,7 +447,7 @@ export default function AnnouncementsScreen() {
               <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
                 {selectedAnnouncement.isPinned && (
                   <View style={styles.pinnedBadge}>
-                    <Pin size={14} color={Colors.primary} />
+                    <Pin size={14} color={LightTheme.primary} />
                     <Text style={styles.pinnedText}>Pinned</Text>
                   </View>
                 )}
@@ -491,7 +491,7 @@ export default function AnnouncementsScreen() {
             <View style={styles.createHeader}>
               <Text style={styles.createTitle}>New Announcement</Text>
               <TouchableOpacity onPress={() => setShowCreateModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -506,7 +506,7 @@ export default function AnnouncementsScreen() {
                   }}
                 >
                   <View style={[styles.announcementTypeIcon, isGeneralAnnouncement && styles.announcementTypeIconActive]}>
-                    <Globe size={18} color={isGeneralAnnouncement ? Colors.textInverse : Colors.primary} />
+                    <Globe size={18} color={isGeneralAnnouncement ? LightTheme.textInverse : LightTheme.primary} />
                   </View>
                   <View style={styles.announcementTypeTextContainer}>
                     <Text style={[styles.announcementTypeTitle, isGeneralAnnouncement && styles.announcementTypeTitleActive]}>
@@ -520,7 +520,7 @@ export default function AnnouncementsScreen() {
                   onPress={() => setIsGeneralAnnouncement(false)}
                 >
                   <View style={[styles.announcementTypeIcon, !isGeneralAnnouncement && styles.announcementTypeIconActiveSecondary]}>
-                    <Users size={18} color={!isGeneralAnnouncement ? Colors.textInverse : Colors.secondary} />
+                    <Users size={18} color={!isGeneralAnnouncement ? LightTheme.textInverse : LightTheme.secondary} />
                   </View>
                   <View style={styles.announcementTypeTextContainer}>
                     <Text style={[styles.announcementTypeTitle, !isGeneralAnnouncement && styles.announcementTypeTitleActiveSecondary]}>
@@ -548,7 +548,7 @@ export default function AnnouncementsScreen() {
                         <Text style={styles.ministrySelectorPlaceholder}>Choose a ministry</Text>
                       )}
                     </View>
-                    <ChevronDown size={20} color={Colors.textSecondary} />
+                    <ChevronDown size={20} color={LightTheme.textSecondary} />
                   </TouchableOpacity>
                 </>
               )}
@@ -557,7 +557,7 @@ export default function AnnouncementsScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Enter announcement title"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newTitle}
                 onChangeText={setNewTitle}
               />
@@ -566,7 +566,7 @@ export default function AnnouncementsScreen() {
               <TextInput
                 style={[styles.input, styles.contentInput]}
                 placeholder="Enter announcement content"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newContent}
                 onChangeText={setNewContent}
                 multiline
@@ -603,7 +603,7 @@ export default function AnnouncementsScreen() {
                 disabled={createMutation.isPending}
               >
                 {createMutation.isPending ? (
-                  <ActivityIndicator color={Colors.textInverse} />
+                  <ActivityIndicator color={LightTheme.textInverse} />
                 ) : (
                   <Text style={styles.createButtonText}>Create Announcement</Text>
                 )}
@@ -662,7 +662,7 @@ export default function AnnouncementsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   backButton: {
     padding: 4,
@@ -680,32 +680,32 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   searchInput: {
     flex: 1,
     marginLeft: 8,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   filterButton: {
     width: 44,
     height: 44,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   filterButtonActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight + '15',
+    borderColor: LightTheme.primary,
+    backgroundColor: LightTheme.primaryLight + '15',
   },
   loadingContainer: {
     flex: 1,
@@ -715,7 +715,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   emptyContainer: {
     flex: 1,
@@ -727,13 +727,13 @@ const styles = StyleSheet.create({
     width: 60,
     height: 60,
     borderRadius: 30,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 24,
     ...Platform.select({
       ios: {
-        shadowColor: Colors.primary,
+        shadowColor: LightTheme.primary,
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
         shadowRadius: 8,
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
         elevation: 6,
       },
       web: {
-        boxShadow: `0 4px 8px ${Colors.primary}4D`,
+        boxShadow: `0 4px 8px ${LightTheme.primary}4D`,
       },
     }),
   },
@@ -750,7 +750,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -758,12 +758,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     lineHeight: 20,
   },
@@ -775,7 +775,7 @@ const styles = StyleSheet.create({
     paddingTop: 4,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
   },
   pinnedCard: {
     borderWidth: 1,
-    borderColor: Colors.primaryLight,
+    borderColor: LightTheme.primaryLight,
   },
   pinnedBadge: {
     flexDirection: 'row',
@@ -807,7 +807,7 @@ const styles = StyleSheet.create({
   pinnedText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   cardHeader: {
     flexDirection: 'row',
@@ -826,11 +826,11 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   authorRole: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   metaContainer: {
@@ -849,18 +849,18 @@ const styles = StyleSheet.create({
   },
   date: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   cardTitle: {
     fontSize: 16,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 6,
     lineHeight: 22,
   },
   cardContent: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 20,
   },
   cardTopRow: {
@@ -878,10 +878,10 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   generalTypeBadge: {
-    backgroundColor: Colors.primaryLight + '20',
+    backgroundColor: LightTheme.primaryLight + '20',
   },
   ministryTypeBadge: {
-    backgroundColor: Colors.secondary + '20',
+    backgroundColor: LightTheme.secondary + '20',
   },
   typeBadgeText: {
     fontSize: 10,
@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     marginHorizontal: 16,
     marginBottom: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 4,
   },
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   typeFilterTabActive: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     ...Platform.select({
       ios: {
         shadowColor: '#000',
@@ -925,10 +925,10 @@ const styles = StyleSheet.create({
   typeFilterText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   typeFilterTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: '600' as const,
   },
   ministryTag: {
@@ -936,7 +936,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 5,
     borderRadius: 12,
@@ -944,7 +944,7 @@ const styles = StyleSheet.create({
   },
   ministryTagText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: '500' as const,
   },
   modalOverlay: {
@@ -955,7 +955,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   filterModalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 20,
     width: '100%',
@@ -964,7 +964,7 @@ const styles = StyleSheet.create({
   filterModalTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
   },
   filterOption: {
@@ -974,14 +974,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   filterOptionActive: {
-    backgroundColor: Colors.primaryLight + '20',
+    backgroundColor: LightTheme.primaryLight + '20',
   },
   filterOptionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   filterOptionTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: '600' as const,
   },
   detailModalContainer: {
@@ -990,7 +990,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   detailModalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '85%',
@@ -1003,12 +1003,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   detailTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   detailScroll: {
     flex: 1,
@@ -1030,27 +1030,27 @@ const styles = StyleSheet.create({
   detailAuthorName: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   detailAuthorRole: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   detailDate: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   detailAnnouncementTitle: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
     lineHeight: 28,
   },
   detailContent: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 24,
   },
   createModalContainer: {
@@ -1059,7 +1059,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   createModalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: '90%',
@@ -1072,12 +1072,12 @@ const styles = StyleSheet.create({
     marginBottom: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   createTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   createScroll: {
     flex: 1,
@@ -1085,18 +1085,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   contentInput: {
     height: 120,
@@ -1112,18 +1112,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
   },
   priorityOptionActive: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   priorityOptionText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   createButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: 'center',
@@ -1133,7 +1133,7 @@ const styles = StyleSheet.create({
     opacity: 0.7,
   },
   createButtonText: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     fontSize: 16,
     fontWeight: '600' as const,
   },
@@ -1148,12 +1148,12 @@ const styles = StyleSheet.create({
     padding: 12,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.borderLight,
-    backgroundColor: Colors.surface,
+    borderColor: LightTheme.borderLight,
+    backgroundColor: LightTheme.surface,
   },
   announcementTypeOptionActive: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primaryLight + '10',
+    borderColor: LightTheme.primary,
+    backgroundColor: LightTheme.primaryLight + '10',
   },
   announcementTypeIcon: {
     width: 36,
@@ -1161,13 +1161,13 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primaryLight + '30',
+    backgroundColor: LightTheme.primaryLight + '30',
   },
   announcementTypeIconActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   announcementTypeIconActiveSecondary: {
-    backgroundColor: Colors.secondary,
+    backgroundColor: LightTheme.secondary,
   },
   announcementTypeTextContainer: {
     flex: 1,
@@ -1176,28 +1176,28 @@ const styles = StyleSheet.create({
   announcementTypeTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   announcementTypeTitleActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   announcementTypeTitleActiveSecondary: {
-    color: Colors.secondary,
+    color: LightTheme.secondary,
   },
   announcementTypeDesc: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginTop: 2,
   },
   ministrySelector: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   ministrySelectorContent: {
     flexDirection: 'row',
@@ -1206,12 +1206,12 @@ const styles = StyleSheet.create({
   },
   ministrySelectorText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   ministrySelectorPlaceholder: {
     fontSize: 15,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   ministryColorDot: {
     width: 12,
@@ -1220,7 +1220,7 @@ const styles = StyleSheet.create({
     marginRight: 10,
   },
   ministryPickerContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 20,
     width: '100%',
@@ -1230,7 +1230,7 @@ const styles = StyleSheet.create({
   ministryPickerTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
   },
   ministryPickerScroll: {
@@ -1245,14 +1245,14 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   ministryPickerOptionActive: {
-    backgroundColor: Colors.primaryLight + '20',
+    backgroundColor: LightTheme.primaryLight + '20',
   },
   ministryPickerOptionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   ministryPickerOptionTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: '600' as const,
   },
   emptyMinistryContainer: {
@@ -1261,6 +1261,6 @@ const styles = StyleSheet.create({
   },
   emptyMinistryText: {
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
 });

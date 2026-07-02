@@ -2,7 +2,7 @@ import React, { useRef, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
 import { Image } from 'expo-image';
 import { Pin, ChevronRight } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { useTheme } from '@/providers/ThemeProvider';
 import { Announcement } from '@/types';
 
@@ -175,7 +175,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   readMore: {
     fontSize: 14,

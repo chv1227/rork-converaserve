@@ -1,7 +1,7 @@
 import React, { useState, useCallback } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
 import { Info, X } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { getMinistryColor, MINISTRY_LEGEND } from '@/constants/ministryColors';
 import { Ministry } from '@/types';
 
@@ -109,7 +109,7 @@ export function MinistryLegend({
         <Text style={styles.legendTitle}>Ministry Colors</Text>
         {onInfoPress && (
           <TouchableOpacity onPress={onInfoPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Info size={16} color={Colors.textTertiary} />
+            <Info size={16} color={LightTheme.textTertiary} />
           </TouchableOpacity>
         )}
       </View>
@@ -173,7 +173,7 @@ export function ProfileMinistryIndicator({ ministries, size = 'medium' }: Profil
                 right: index * (dotSize + 2),
                 bottom: 0,
                 borderWidth: 1.5,
-                borderColor: Colors.surface,
+                borderColor: LightTheme.surface,
               },
             ]}
           />
@@ -210,7 +210,7 @@ function MinistryTooltipModal({ visible, ministries, onClose }: MinistryTooltipM
           <View style={styles.tooltipHeader}>
             <Text style={styles.tooltipTitle}>Ministry Affiliations</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={20} color={Colors.textSecondary} />
+              <X size={20} color={LightTheme.textSecondary} />
             </TouchableOpacity>
           </View>
           <View style={styles.tooltipContent}>
@@ -245,7 +245,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   tooltipContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     minWidth: 220,
@@ -263,12 +263,12 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   tooltipTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   tooltipContent: {
     gap: 10,
@@ -285,15 +285,15 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   dot: {
     borderWidth: 1.5,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   moreBadge: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 8,
     paddingHorizontal: 4,
     marginLeft: 4,
@@ -301,11 +301,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreText: {
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: '600' as const,
   },
   legendContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -323,7 +323,7 @@ const styles = StyleSheet.create({
   legendTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -357,7 +357,7 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 13,
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   legendTextCompact: {

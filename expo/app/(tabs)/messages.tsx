@@ -25,9 +25,9 @@ import {
   X,
   Check,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
+import { LightTheme } from "@/constants/colors";
 import { supabase } from "@/lib/supabase";
 import { Conversation } from "@/types";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -56,9 +56,11 @@ function formatConversationTime(dateStr: string): string {
 const ConversationListItem = React.memo(function ConversationListItem({
   item,
   onPress,
+  themeColors,
 }: {
   item: Conversation;
   onPress: (id: string) => void;
+  themeColors: ReturnType<typeof useTheme>["colors"];
 }) {
   const isUnread = item.unreadCount > 0;
   const scaleAnim = useRef(new Animated.Value(1)).current;
@@ -101,7 +103,7 @@ const ConversationListItem = React.memo(function ConversationListItem({
             />
           )}
           {item.type === "group" && (
-            <View style={[styles.groupBadge, { backgroundColor: Colors.primary }]}>
+            <View style={[styles.groupBadge, { backgroundColor: themeColors.primary, borderColor: themeColors.surface }]}>
               <Users size={10} color="#fff" />
             </View>
           )}
@@ -154,7 +156,7 @@ export default function MessagesScreen() {
   const insets = useSafeAreaInsets();
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { colors: themeColors } = useTheme();
+  const { colors } = useTheme();
   const { currentOrganization, user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [showNewChatModal, setShowNewChatModal] = useState(false);
@@ -472,8 +474,8 @@ export default function MessagesScreen() {
   }, [router]);
 
   const renderConversationItem = useCallback(({ item }: { item: Conversation }) => (
-    <ConversationListItem item={item} onPress={handleConversationPress} />
-  ), [handleConversationPress]);
+    <ConversationListItem item={item} onPress={handleConversationPress} themeColors={colors} />
+  ), [handleConversationPress, colors]);
 
   const renderMemberItem = ({ item }: { item: OrgMember }) => {
     const isSelected = selectedMembers.some((m) => m.id === item.id);
@@ -481,18 +483,18 @@ export default function MessagesScreen() {
     if (newChatTab === "direct") {
       return (
         <TouchableOpacity
-          style={[styles.memberItem, { backgroundColor: themeColors.surface }]}
+          style={[styles.memberItem, { backgroundColor: colors.surface }]}
           onPress={() => handleStartDM(item)}
           activeOpacity={0.7}
           disabled={createDMmutation.isPending}
         >
           <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
           <View style={styles.memberInfo}>
-            <Text style={[styles.memberName, { color: themeColors.text }]}>{item.name}</Text>
-            <Text style={[styles.memberEmail, { color: themeColors.textSecondary }]}>{item.email}</Text>
+            <Text style={[styles.memberName, { color: colors.text }]}>{item.name}</Text>
+            <Text style={[styles.memberEmail, { color: colors.textSecondary }]}>{item.email}</Text>
           </View>
           {createDMmutation.isPending && (
-            <ActivityIndicator size="small" color={themeColors.primary} />
+            <ActivityIndicator size="small" color={colors.primary} />
           )}
         </TouchableOpacity>
       );
@@ -500,20 +502,20 @@ export default function MessagesScreen() {
 
     return (
       <TouchableOpacity
-        style={[styles.memberItem, { backgroundColor: themeColors.surface }, isSelected && { backgroundColor: themeColors.primary + '10' }]}
+        style={[styles.memberItem, { backgroundColor: colors.surface }, isSelected && { backgroundColor: colors.primary + '10' }]}
         onPress={() => toggleMemberSelection(item)}
         activeOpacity={0.7}
       >
         <Image source={{ uri: item.avatar }} style={styles.memberAvatar} />
         <View style={styles.memberInfo}>
-          <Text style={[styles.memberName, { color: themeColors.text }]}>{item.name}</Text>
-          <Text style={[styles.memberEmail, { color: themeColors.textSecondary }]}>{item.email}</Text>
+          <Text style={[styles.memberName, { color: colors.text }]}>{item.name}</Text>
+          <Text style={[styles.memberEmail, { color: colors.textSecondary }]}>{item.email}</Text>
         </View>
         <View
           style={[
             styles.checkbox,
-            { borderColor: themeColors.border },
-            isSelected && { backgroundColor: themeColors.primary, borderColor: themeColors.primary },
+            { borderColor: colors.border },
+            isSelected && { backgroundColor: colors.primary, borderColor: colors.primary },
           ]}
         >
           {isSelected && <Check size={14} color="#fff" />}
@@ -524,16 +526,16 @@ export default function MessagesScreen() {
 
   if (!currentOrganization) {
     return (
-      <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-        <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
-          <Text style={[styles.title, { color: themeColors.text }]}>Messages</Text>
+      <View style={[styles.container, { backgroundColor: colors.background }]}>
+        <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
+          <Text style={[styles.title, { color: colors.text }]}>Messages</Text>
         </View>
         <View style={styles.emptyContainer}>
-          <View style={[styles.emptyIcon, { backgroundColor: themeColors.surfaceSecondary }]}>
-            <MessageCircle size={40} color={themeColors.textTertiary} />
+          <View style={[styles.emptyIcon, { backgroundColor: colors.surfaceSecondary }]}>
+            <MessageCircle size={40} color={colors.textTertiary} />
           </View>
-          <Text style={[styles.emptyText, { color: themeColors.text }]}>Join an organization first</Text>
-          <Text style={[styles.emptySubtext, { color: themeColors.textSecondary }]}>
+          <Text style={[styles.emptyText, { color: colors.text }]}>Join an organization first</Text>
+          <Text style={[styles.emptySubtext, { color: colors.textSecondary }]}>
             You need to be part of an organization to start messaging
           </Text>
         </View>
@@ -542,24 +544,24 @@ export default function MessagesScreen() {
   }
 
   return (
-    <View style={[styles.container, { backgroundColor: themeColors.background }]}>
-      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
+    <View style={[styles.container, { backgroundColor: colors.background }]}>
+      <View style={[styles.header, { paddingTop: insets.top + 8, backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
         <View style={styles.headerTop}>
-          <Text style={[styles.title, { color: themeColors.text }]}>Messages</Text>
+          <Text style={[styles.title, { color: colors.text }]}>Messages</Text>
           <TouchableOpacity
-            style={[styles.newChatButton, { backgroundColor: themeColors.primary }]}
+            style={[styles.newChatButton, { backgroundColor: colors.primary }]}
             onPress={() => setShowNewChatModal(true)}
             activeOpacity={0.7}
           >
             <Plus size={22} color="#fff" />
           </TouchableOpacity>
         </View>
-        <View style={[styles.searchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
-          <Search size={18} color={themeColors.textTertiary} />
+        <View style={[styles.searchContainer, { backgroundColor: colors.surfaceSecondary }]}>
+          <Search size={18} color={colors.textTertiary} />
           <TextInput
-            style={[styles.searchInput, { color: themeColors.text }]}
+            style={[styles.searchInput, { color: colors.text }]}
             placeholder="Search conversations..."
-            placeholderTextColor={themeColors.textTertiary}
+            placeholderTextColor={colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -575,14 +577,14 @@ export default function MessagesScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={themeColors.primary}
+            tintColor={colors.primary}
           />
         }
-        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: themeColors.borderLight }]} />}
+        ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.borderLight }]} />}
         ListHeaderComponent={
           isLoading && conversations.length === 0 ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={Colors.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : null
         }
@@ -590,7 +592,7 @@ export default function MessagesScreen() {
           !isLoading ? (
             <View style={styles.emptyContainer}>
               <View style={styles.emptyIcon}>
-                <MessageCircle size={40} color={Colors.textTertiary} />
+                <MessageCircle size={40} color={colors.textTertiary} />
               </View>
               <Text style={styles.emptyText}>No conversations yet</Text>
               <Text style={styles.emptySubtext}>
@@ -607,8 +609,8 @@ export default function MessagesScreen() {
         presentationStyle="pageSheet"
         onRequestClose={() => setShowNewChatModal(false)}
       >
-        <View style={[styles.modalContainer, { paddingTop: insets.top, backgroundColor: themeColors.background }]}>
-          <View style={[styles.modalHeader, { backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
+        <View style={[styles.modalContainer, { paddingTop: insets.top, backgroundColor: colors.background }]}>
+          <View style={[styles.modalHeader, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
             <TouchableOpacity
               onPress={() => {
                 setShowNewChatModal(false);
@@ -617,9 +619,9 @@ export default function MessagesScreen() {
                 setMemberSearch("");
               }}
             >
-              <X size={24} color={themeColors.text} />
+              <X size={24} color={colors.text} />
             </TouchableOpacity>
-            <Text style={[styles.modalTitle, { color: themeColors.text }]}>New Message</Text>
+            <Text style={[styles.modalTitle, { color: colors.text }]}>New Message</Text>
             {newChatTab === "group" && (
               <TouchableOpacity
                 onPress={handleCreateGroup}
@@ -644,35 +646,35 @@ export default function MessagesScreen() {
             {newChatTab === "direct" && <View style={{ width: 60 }} />}
           </View>
 
-          <View style={[styles.tabContainer, { backgroundColor: themeColors.surface }]}>
+          <View style={[styles.tabContainer, { backgroundColor: colors.surface }]}>
             <TouchableOpacity
-              style={[styles.tab, { backgroundColor: themeColors.surfaceSecondary }, newChatTab === "direct" && { backgroundColor: themeColors.primary + '15' }]}
+              style={[styles.tab, { backgroundColor: colors.surfaceSecondary }, newChatTab === "direct" && { backgroundColor: colors.primary + '15' }]}
               onPress={() => {
                 setNewChatTab("direct");
                 setSelectedMembers([]);
               }}
             >
-              <User size={18} color={newChatTab === "direct" ? themeColors.primary : themeColors.textSecondary} />
+              <User size={18} color={newChatTab === "direct" ? colors.primary : colors.textSecondary} />
               <Text
                 style={[
                   styles.tabText,
-                  { color: themeColors.textSecondary },
-                  newChatTab === "direct" && { color: themeColors.primary },
+                  { color: colors.textSecondary },
+                  newChatTab === "direct" && { color: colors.primary },
                 ]}
               >
                 Direct
               </Text>
             </TouchableOpacity>
             <TouchableOpacity
-              style={[styles.tab, { backgroundColor: themeColors.surfaceSecondary }, newChatTab === "group" && { backgroundColor: themeColors.primary + '15' }]}
+              style={[styles.tab, { backgroundColor: colors.surfaceSecondary }, newChatTab === "group" && { backgroundColor: colors.primary + '15' }]}
               onPress={() => setNewChatTab("group")}
             >
-              <Users size={18} color={newChatTab === "group" ? themeColors.primary : themeColors.textSecondary} />
+              <Users size={18} color={newChatTab === "group" ? colors.primary : colors.textSecondary} />
               <Text
                 style={[
                   styles.tabText,
-                  { color: themeColors.textSecondary },
-                  newChatTab === "group" && { color: themeColors.primary },
+                  { color: colors.textSecondary },
+                  newChatTab === "group" && { color: colors.primary },
                 ]}
               >
                 Group
@@ -681,11 +683,11 @@ export default function MessagesScreen() {
           </View>
 
           {newChatTab === "group" && (
-            <View style={[styles.groupNameContainer, { backgroundColor: themeColors.surface, borderBottomColor: themeColors.borderLight }]}>
+            <View style={[styles.groupNameContainer, { backgroundColor: colors.surface, borderBottomColor: colors.borderLight }]}>
               <TextInput
-                style={[styles.groupNameInput, { color: themeColors.text, backgroundColor: themeColors.surfaceSecondary }]}
+                style={[styles.groupNameInput, { color: colors.text, backgroundColor: colors.surfaceSecondary }]}
                 placeholder="Group name"
-                placeholderTextColor={themeColors.textTertiary}
+                placeholderTextColor={colors.textTertiary}
                 value={groupName}
                 onChangeText={setGroupName}
               />
@@ -704,7 +706,7 @@ export default function MessagesScreen() {
                       <Text style={styles.chipName} numberOfLines={1}>
                         {member.name.split(" ")[0]}
                       </Text>
-                      <X size={12} color={Colors.textSecondary} />
+                      <X size={12} color={colors.textSecondary} />
                     </TouchableOpacity>
                   ))}
                   {selectedMembers.length > 5 && (
@@ -719,12 +721,12 @@ export default function MessagesScreen() {
             </View>
           )}
 
-          <View style={[styles.memberSearchContainer, { backgroundColor: themeColors.surfaceSecondary }]}>
-            <Search size={18} color={themeColors.textTertiary} />
+          <View style={[styles.memberSearchContainer, { backgroundColor: colors.surfaceSecondary }]}>
+            <Search size={18} color={colors.textTertiary} />
             <TextInput
-              style={[styles.memberSearchInput, { color: themeColors.text }]}
+              style={[styles.memberSearchInput, { color: colors.text }]}
               placeholder="Search members..."
-              placeholderTextColor={themeColors.textTertiary}
+              placeholderTextColor={colors.textTertiary}
               value={memberSearch}
               onChangeText={setMemberSearch}
             />
@@ -732,7 +734,7 @@ export default function MessagesScreen() {
 
           {membersQuery.isLoading ? (
             <View style={styles.loadingContainer}>
-              <ActivityIndicator size="large" color={themeColors.primary} />
+              <ActivityIndicator size="large" color={colors.primary} />
             </View>
           ) : (
             <FlatList
@@ -740,10 +742,10 @@ export default function MessagesScreen() {
               keyExtractor={(item) => item.id}
               renderItem={renderMemberItem}
               contentContainerStyle={styles.memberListContent}
-              ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: themeColors.borderLight }]} />}
+              ItemSeparatorComponent={() => <View style={[styles.separator, { backgroundColor: colors.borderLight }]} />}
               ListEmptyComponent={
                 <View style={styles.emptyMembersContainer}>
-                  <Text style={[styles.emptyMembersText, { color: themeColors.textSecondary }]}>
+                  <Text style={[styles.emptyMembersText, { color: colors.textSecondary }]}>
                     {memberSearch
                       ? "No members found"
                       : "No other members in this organization"}
@@ -761,14 +763,14 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -779,20 +781,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   newChatButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
@@ -801,7 +803,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   listContent: {
     flexGrow: 1,
@@ -809,14 +811,14 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: LightTheme.borderLight,
     marginLeft: 80,
   },
   conversationItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
   },
   avatarContainer: {
     position: "relative",
@@ -834,7 +836,7 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   groupBadge: {
     position: "absolute",
@@ -844,7 +846,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -861,7 +863,7 @@ const styles = StyleSheet.create({
   conversationName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
     marginRight: 8,
   },
@@ -870,7 +872,7 @@ const styles = StyleSheet.create({
   },
   conversationTime: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   conversationPreview: {
     flexDirection: "row",
@@ -879,16 +881,16 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     flex: 1,
     marginRight: 8,
   },
   unreadMessage: {
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: "500" as const,
   },
   unreadBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -912,7 +914,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -920,13 +922,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
     textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -936,7 +938,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   modalHeader: {
     flexDirection: "row",
@@ -945,16 +947,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
-    backgroundColor: Colors.surface,
+    borderBottomColor: LightTheme.borderLight,
+    backgroundColor: LightTheme.surface,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   createButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
@@ -971,7 +973,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 8,
@@ -983,33 +985,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     gap: 6,
   },
   activeTab: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
   },
   tabText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   activeTabText: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   groupNameContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   groupNameInput: {
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 8,
   },
   selectedMembersRow: {
@@ -1021,7 +1023,7 @@ const styles = StyleSheet.create({
   selectedMemberChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     borderRadius: 16,
     paddingVertical: 4,
     paddingLeft: 4,
@@ -1035,24 +1037,24 @@ const styles = StyleSheet.create({
   },
   chipName: {
     fontSize: 12,
-    color: Colors.primary,
+    color: LightTheme.primary,
     maxWidth: 60,
   },
   moreChip: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   moreChipText: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: "600" as const,
   },
   memberSearchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     marginHorizontal: 16,
     marginVertical: 12,
     borderRadius: 12,
@@ -1063,7 +1065,7 @@ const styles = StyleSheet.create({
   memberSearchInput: {
     flex: 1,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   memberListContent: {
     flexGrow: 1,
@@ -1073,10 +1075,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
   },
   memberItemSelected: {
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: LightTheme.primary + '10',
   },
   memberAvatar: {
     width: 44,
@@ -1090,11 +1092,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   memberEmail: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   checkbox: {
@@ -1102,13 +1104,13 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: {
-    backgroundColor: Colors.primary,
-    borderColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
+    borderColor: LightTheme.primary,
   },
   emptyMembersContainer: {
     padding: 40,
@@ -1116,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   emptyMembersText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
   },
 });

@@ -1,7 +1,7 @@
 import React, { Component, ErrorInfo, ReactNode } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { AlertTriangle, RefreshCw } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 
 interface Props {
   children: ReactNode;
@@ -41,7 +41,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <View style={styles.container}>
           <View style={styles.content}>
             <View style={styles.iconContainer}>
-              <AlertTriangle size={48} color={Colors.error} />
+              <AlertTriangle size={48} color={LightTheme.error} />
             </View>
             <Text style={styles.title}>Something went wrong</Text>
             <Text style={styles.message}>
@@ -52,7 +52,7 @@ export class ErrorBoundary extends Component<Props, State> {
               onPress={this.handleRetry}
               activeOpacity={0.8}
             >
-              <RefreshCw size={20} color={Colors.textInverse} />
+              <RefreshCw size={20} color={LightTheme.textInverse} />
               <Text style={styles.retryButtonText}>Try Again</Text>
             </TouchableOpacity>
             {__DEV__ && this.state.error && (
@@ -74,7 +74,7 @@ export class ErrorBoundary extends Component<Props, State> {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     justifyContent: "center",
     alignItems: "center",
     padding: 24,
@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
     justifyContent: "center",
     alignItems: "center",
     marginBottom: 24,
@@ -95,13 +95,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 12,
     textAlign: "center",
   },
   message: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     lineHeight: 22,
     marginBottom: 24,
@@ -110,7 +110,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingVertical: 14,
     paddingHorizontal: 28,
     borderRadius: 12,
@@ -119,19 +119,19 @@ const styles = StyleSheet.create({
   retryButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   errorDetails: {
     marginTop: 24,
     maxHeight: 150,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 8,
     padding: 12,
     width: "100%",
   },
   errorText: {
     fontSize: 12,
-    color: Colors.error,
+    color: LightTheme.error,
     fontFamily: "monospace",
   },
 });

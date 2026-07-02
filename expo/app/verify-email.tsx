@@ -14,7 +14,7 @@ import { Mail, RefreshCw, LogOut, CheckCircle } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 
 const RESEND_COOLDOWN = 60;
 
@@ -193,10 +193,10 @@ export default function VerifyEmailScreen() {
           disabled={isChecking}
         >
           {isChecking ? (
-            <ActivityIndicator size="small" color={Colors.primary} />
+            <ActivityIndicator size="small" color={LightTheme.primary} />
           ) : (
             <>
-              <CheckCircle size={20} color={Colors.primary} />
+              <CheckCircle size={20} color={LightTheme.primary} />
               <Text style={styles.primaryButtonText}>I've Verified My Email</Text>
             </>
           )}
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   primaryButtonText: {
     fontSize: 16,
     fontWeight: "700" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   secondaryButton: {
     flexDirection: "row",

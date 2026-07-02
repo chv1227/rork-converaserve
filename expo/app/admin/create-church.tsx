@@ -30,7 +30,7 @@ import {
   ChevronUp,
   Shield,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
@@ -379,7 +379,7 @@ export default function AdminCreateChurchScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
         <Text style={styles.redirectText}>Checking permissions...</Text>
       </View>
     );
@@ -396,14 +396,14 @@ export default function AdminCreateChurchScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Create Church</Text>
             <Text style={styles.subtitle}>Register a new church profile</Text>
           </View>
           <View style={styles.adminBadge}>
-            <Shield size={14} color={Colors.primary} />
+            <Shield size={14} color={LightTheme.primary} />
             <Text style={styles.adminBadgeText}>Admin</Text>
           </View>
         </View>
@@ -421,7 +421,7 @@ export default function AdminCreateChurchScreen() {
         >
           <View style={styles.iconContainer}>
             <View style={styles.iconBg}>
-              <Church size={40} color={Colors.primary} />
+              <Church size={40} color={LightTheme.primary} />
             </View>
           </View>
 
@@ -438,7 +438,7 @@ export default function AdminCreateChurchScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Grace Community Church"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -455,9 +455,9 @@ export default function AdminCreateChurchScreen() {
                   {denomination || 'Select denomination (optional)'}
                 </Text>
                 {showDenominationPicker ? (
-                  <ChevronUp size={20} color={Colors.textSecondary} />
+                  <ChevronUp size={20} color={LightTheme.textSecondary} />
                 ) : (
-                  <ChevronDown size={20} color={Colors.textSecondary} />
+                  <ChevronDown size={20} color={LightTheme.textSecondary} />
                 )}
               </TouchableOpacity>
               {showDenominationPicker && (
@@ -487,7 +487,7 @@ export default function AdminCreateChurchScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Tell us about your church, mission, and community..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -503,11 +503,11 @@ export default function AdminCreateChurchScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Street Address <Text style={styles.required}>*</Text></Text>
               <View style={styles.inputWithIcon}>
-                <MapPin size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <MapPin size={20} color={LightTheme.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.inputInner}
                   placeholder="123 Church Street"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={address}
                   onChangeText={setAddress}
                 />
@@ -520,7 +520,7 @@ export default function AdminCreateChurchScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="City"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={city}
                   onChangeText={setCity}
                 />
@@ -531,7 +531,7 @@ export default function AdminCreateChurchScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="State"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={state}
                   onChangeText={setState}
                 />
@@ -544,7 +544,7 @@ export default function AdminCreateChurchScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="12345"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={zip}
                   onChangeText={setZip}
                   keyboardType="numeric"
@@ -560,7 +560,7 @@ export default function AdminCreateChurchScreen() {
                   <Text style={styles.pickerText} numberOfLines={1}>
                     {country}
                   </Text>
-                  <ChevronDown size={18} color={Colors.textSecondary} />
+                  <ChevronDown size={18} color={LightTheme.textSecondary} />
                 </TouchableOpacity>
               </View>
             </View>
@@ -593,11 +593,11 @@ export default function AdminCreateChurchScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email <Text style={styles.required}>*</Text></Text>
               <View style={styles.inputWithIcon}>
-                <Mail size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Mail size={20} color={LightTheme.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.inputInner}
                   placeholder="info@yourchurch.org"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -609,11 +609,11 @@ export default function AdminCreateChurchScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone <Text style={styles.required}>*</Text></Text>
               <View style={styles.inputWithIcon}>
-                <Phone size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Phone size={20} color={LightTheme.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.inputInner}
                   placeholder="+1 (555) 123-4567"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -624,11 +624,11 @@ export default function AdminCreateChurchScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Website</Text>
               <View style={styles.inputWithIcon}>
-                <Globe size={20} color={Colors.textSecondary} style={styles.inputIcon} />
+                <Globe size={20} color={LightTheme.textSecondary} style={styles.inputIcon} />
                 <TextInput
                   style={styles.inputInner}
                   placeholder="https://yourchurch.org"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={website}
                   onChangeText={setWebsite}
                   keyboardType="url"
@@ -643,13 +643,13 @@ export default function AdminCreateChurchScreen() {
             onPress={() => setShowOptionalFields(!showOptionalFields)}
           >
             <View style={styles.expandHeader}>
-              <ImageIcon size={20} color={Colors.primary} />
+              <ImageIcon size={20} color={LightTheme.primary} />
               <Text style={styles.expandTitle}>Images (Optional)</Text>
             </View>
             {showOptionalFields ? (
-              <ChevronUp size={20} color={Colors.textSecondary} />
+              <ChevronUp size={20} color={LightTheme.textSecondary} />
             ) : (
-              <ChevronDown size={20} color={Colors.textSecondary} />
+              <ChevronDown size={20} color={LightTheme.textSecondary} />
             )}
           </TouchableOpacity>
 
@@ -660,7 +660,7 @@ export default function AdminCreateChurchScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="https://example.com/logo.png"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={logo}
                   onChangeText={setLogo}
                   keyboardType="url"
@@ -674,7 +674,7 @@ export default function AdminCreateChurchScreen() {
                 <TextInput
                   style={styles.input}
                   placeholder="https://example.com/banner.png"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={bannerImage}
                   onChangeText={setBannerImage}
                   keyboardType="url"
@@ -690,13 +690,13 @@ export default function AdminCreateChurchScreen() {
             onPress={() => setShowSocialLinks(!showSocialLinks)}
           >
             <View style={styles.expandHeader}>
-              <Facebook size={20} color={Colors.primary} />
+              <Facebook size={20} color={LightTheme.primary} />
               <Text style={styles.expandTitle}>Social Links (Optional)</Text>
             </View>
             {showSocialLinks ? (
-              <ChevronUp size={20} color={Colors.textSecondary} />
+              <ChevronUp size={20} color={LightTheme.textSecondary} />
             ) : (
-              <ChevronDown size={20} color={Colors.textSecondary} />
+              <ChevronDown size={20} color={LightTheme.textSecondary} />
             )}
           </TouchableOpacity>
 
@@ -708,7 +708,7 @@ export default function AdminCreateChurchScreen() {
                   <TextInput
                     style={styles.inputInner}
                     placeholder="Facebook page URL"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={facebook}
                     onChangeText={setFacebook}
                     keyboardType="url"
@@ -723,7 +723,7 @@ export default function AdminCreateChurchScreen() {
                   <TextInput
                     style={styles.inputInner}
                     placeholder="Instagram profile URL"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={instagram}
                     onChangeText={setInstagram}
                     keyboardType="url"
@@ -738,7 +738,7 @@ export default function AdminCreateChurchScreen() {
                   <TextInput
                     style={styles.inputInner}
                     placeholder="Twitter/X profile URL"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={twitter}
                     onChangeText={setTwitter}
                     keyboardType="url"
@@ -753,7 +753,7 @@ export default function AdminCreateChurchScreen() {
                   <TextInput
                     style={styles.inputInner}
                     placeholder="YouTube channel URL"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={youtube}
                     onChangeText={setYoutube}
                     keyboardType="url"
@@ -806,7 +806,7 @@ export default function AdminCreateChurchScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -815,14 +815,14 @@ const styles = StyleSheet.create({
   redirectText: {
     marginTop: 16,
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -832,7 +832,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -843,17 +843,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   adminBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   adminBadgeText: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   keyboardView: {
     flex: 1,
@@ -881,19 +881,19 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
   formTitle: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     textAlign: 'center',
   },
   formSubtitle: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 28,
@@ -905,7 +905,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
   },
   inputGroup: {
@@ -914,20 +914,20 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   required: {
-    color: Colors.error,
+    color: LightTheme.error,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   textArea: {
     height: 100,
@@ -936,10 +936,10 @@ const styles = StyleSheet.create({
   inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     paddingHorizontal: 12,
   },
   inputIcon: {
@@ -950,7 +950,7 @@ const styles = StyleSheet.create({
     padding: 16,
     paddingLeft: 4,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   row: {
     flexDirection: 'row',
@@ -965,25 +965,25 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   pickerText: {
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
   },
   pickerPlaceholder: {
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   pickerList: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     marginTop: 8,
     maxHeight: 200,
     overflow: 'hidden',
@@ -994,29 +994,29 @@ const styles = StyleSheet.create({
   pickerItem: {
     padding: 14,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: LightTheme.border,
   },
   pickerItemSelected: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
   },
   pickerItemText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   pickerItemTextSelected: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: '600' as const,
   },
   expandSection: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   expandHeader: {
     flexDirection: 'row',
@@ -1026,37 +1026,37 @@ const styles = StyleSheet.create({
   expandTitle: {
     fontSize: 16,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   hint: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginTop: 6,
   },
   infoBox: {
-    backgroundColor: Colors.primary + '10',
+    backgroundColor: LightTheme.primary + '10',
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
     borderWidth: 1,
-    borderColor: Colors.primary + '30',
+    borderColor: LightTheme.primary + '30',
   },
   infoTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
     marginBottom: 8,
   },
   infoText: {
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 22,
   },
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     padding: 18,
     gap: 8,
@@ -1071,7 +1071,7 @@ const styles = StyleSheet.create({
   },
   disclaimer: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 18,

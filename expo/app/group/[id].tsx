@@ -40,7 +40,7 @@ import {
   XCircle,
   Bell,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -106,7 +106,7 @@ export default function GroupDetailScreen() {
         id: result.id,
         name: result.name,
         description: result.description || '',
-        color: result.color || Colors.primary,
+        color: result.color || LightTheme.primary,
         image: result.image_url || 'https://images.unsplash.com/photo-1511632765486-a01980e01a18',
         memberCount: 0,
       } : null;
@@ -599,7 +599,7 @@ export default function GroupDetailScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -646,7 +646,7 @@ export default function GroupDetailScreen() {
         
         {leaders.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Users size={32} color={Colors.textTertiary} />
+            <Users size={32} color={LightTheme.textTertiary} />
             <Text style={styles.emptyText}>No leaders assigned yet</Text>
           </View>
         ) : (
@@ -667,7 +667,7 @@ export default function GroupDetailScreen() {
                   onPress={() => handleMessageLeader(leader.id)}
                   activeOpacity={0.7}
                 >
-                  <Mail size={18} color={Colors.textInverse} />
+                  <Mail size={18} color={LightTheme.textInverse} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -683,14 +683,14 @@ export default function GroupDetailScreen() {
               style={[styles.addButton, { backgroundColor: ministry.color }]}
               onPress={() => setShowAnnouncementModal(true)}
             >
-              <Plus size={16} color={Colors.textInverse} />
+              <Plus size={16} color={LightTheme.textInverse} />
               <Text style={styles.addButtonText}>Add</Text>
             </TouchableOpacity>
           )}
         </View>
         {announcements.length === 0 ? (
           <View style={styles.emptyCard}>
-            <Bell size={32} color={Colors.textTertiary} />
+            <Bell size={32} color={LightTheme.textTertiary} />
             <Text style={styles.emptyText}>No announcements yet</Text>
             {isAdminOrLeader && (
               <Text style={styles.emptySubtext}>Tap + to create one</Text>
@@ -751,7 +751,7 @@ export default function GroupDetailScreen() {
             style={[styles.addButton, { backgroundColor: ministry.color }]}
             onPress={() => setShowDiscussionModal(true)}
           >
-            <Plus size={16} color={Colors.textInverse} />
+            <Plus size={16} color={LightTheme.textInverse} />
             <Text style={styles.addButtonText}>New</Text>
           </TouchableOpacity>
         )}
@@ -759,7 +759,7 @@ export default function GroupDetailScreen() {
       
       {discussions.length === 0 ? (
         <View style={styles.emptyCard}>
-          <MessageSquare size={32} color={Colors.textTertiary} />
+          <MessageSquare size={32} color={LightTheme.textTertiary} />
           <Text style={styles.emptyText}>No discussions yet</Text>
           <Text style={styles.emptySubtext}>Start the conversation!</Text>
         </View>
@@ -780,7 +780,7 @@ export default function GroupDetailScreen() {
             style={[styles.addButton, { backgroundColor: ministry.color }]}
             onPress={() => setShowPrayerModal(true)}
           >
-            <Plus size={16} color={Colors.textInverse} />
+            <Plus size={16} color={LightTheme.textInverse} />
             <Text style={styles.addButtonText}>Share</Text>
           </TouchableOpacity>
         )}
@@ -788,7 +788,7 @@ export default function GroupDetailScreen() {
       
       {prayerRequests.length === 0 ? (
         <View style={styles.emptyCard}>
-          <Heart size={32} color={Colors.textTertiary} />
+          <Heart size={32} color={LightTheme.textTertiary} />
           <Text style={styles.emptyText}>No prayer requests</Text>
           <Text style={styles.emptySubtext}>Share your prayer needs</Text>
         </View>
@@ -814,7 +814,7 @@ export default function GroupDetailScreen() {
       
       {events.length === 0 ? (
         <View style={styles.eventsEmptyCard}>
-          <Calendar size={28} color={Colors.textTertiary} />
+          <Calendar size={28} color={LightTheme.textTertiary} />
           <Text style={styles.eventsEmptyText}>No upcoming events</Text>
           <Text style={styles.eventsEmptySubtext}>Check back later for new events</Text>
         </View>
@@ -841,11 +841,11 @@ export default function GroupDetailScreen() {
                 <Text style={styles.eventTitleTop}>{event.title}</Text>
                 <View style={styles.eventMetaRow}>
                   <View style={styles.eventMetaTop}>
-                    <Clock size={11} color={Colors.textSecondary} />
+                    <Clock size={11} color={LightTheme.textSecondary} />
                     <Text style={styles.eventMetaTextTop}>{event.time}</Text>
                   </View>
                   <View style={styles.eventMetaTop}>
-                    <MapPin size={11} color={Colors.textSecondary} />
+                    <MapPin size={11} color={LightTheme.textSecondary} />
                     <Text style={styles.eventMetaTextTop} numberOfLines={1}>{event.location}</Text>
                   </View>
                 </View>
@@ -887,7 +887,7 @@ export default function GroupDetailScreen() {
         activeOpacity={0.7}
       >
         <View style={[styles.musicPlayerCardIcon, { backgroundColor: ministry.color }]}>
-          <Play size={28} color={Colors.textInverse} fill={Colors.textInverse} />
+          <Play size={28} color={LightTheme.textInverse} fill={LightTheme.textInverse} />
         </View>
         <View style={styles.musicPlayerCardInfo}>
           <Text style={styles.musicPlayerCardTitle}>Open Music Player</Text>
@@ -941,14 +941,14 @@ export default function GroupDetailScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.textInverse} />
+            <ArrowLeft size={24} color={LightTheme.textInverse} />
           </TouchableOpacity>
         </View>
 
         <View style={styles.heroContent}>
           <Text style={styles.heroTitle}>{ministry.name}</Text>
           <View style={styles.heroStats}>
-            <Users size={16} color={Colors.textInverse} />
+            <Users size={16} color={LightTheme.textInverse} />
             <Text style={styles.heroStatText}>{ministry.memberCount} members</Text>
           </View>
         </View>
@@ -966,7 +966,7 @@ export default function GroupDetailScreen() {
                 onPress={() => setActiveTab(tab.key)}
                 activeOpacity={0.7}
               >
-                <TabIcon size={16} color={isActive ? ministry.color : Colors.textSecondary} />
+                <TabIcon size={16} color={isActive ? ministry.color : LightTheme.textSecondary} />
                 <Text style={[styles.tabText, isActive && { color: ministry.color }]}>{tab.label}</Text>
               </TouchableOpacity>
             );
@@ -982,7 +982,7 @@ export default function GroupDetailScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={LightTheme.primary}
           />
         }
       >
@@ -996,10 +996,10 @@ export default function GroupDetailScreen() {
               testID="join-group-button"
             >
               {isActionLoading ? (
-                <ActivityIndicator size="small" color={Colors.textInverse} />
+                <ActivityIndicator size="small" color={LightTheme.textInverse} />
               ) : (
                 <>
-                  <Plus size={18} color={Colors.textInverse} />
+                  <Plus size={18} color={LightTheme.textInverse} />
                   <Text style={styles.notJoinedButtonText}>Join Group</Text>
                 </>
               )}
@@ -1022,7 +1022,7 @@ export default function GroupDetailScreen() {
                 activeOpacity={0.7}
                 testID="group-poll-button"
               >
-                <BarChart3 size={18} color={Colors.textInverse} />
+                <BarChart3 size={18} color={LightTheme.textInverse} />
                 <Text style={styles.chatButtonText}>Group Poll</Text>
               </TouchableOpacity>
 
@@ -1034,10 +1034,10 @@ export default function GroupDetailScreen() {
                 testID="leave-ministry-button"
               >
                 {isActionLoading ? (
-                  <ActivityIndicator size="small" color={Colors.error} />
+                  <ActivityIndicator size="small" color={LightTheme.error} />
                 ) : (
                   <>
-                    <XCircle size={18} color={Colors.error} />
+                    <XCircle size={18} color={LightTheme.error} />
                     <Text style={styles.leaveButtonText}>Leave</Text>
                   </>
                 )}
@@ -1071,7 +1071,7 @@ export default function GroupDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>New Discussion</Text>
               <TouchableOpacity onPress={() => setShowDiscussionModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
@@ -1079,7 +1079,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Discussion topic..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newDiscussionTitle}
                 onChangeText={setNewDiscussionTitle}
               />
@@ -1087,7 +1087,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Share your thoughts..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newDiscussionContent}
                 onChangeText={setNewDiscussionContent}
                 multiline
@@ -1098,7 +1098,7 @@ export default function GroupDetailScreen() {
               style={[styles.submitButton, { backgroundColor: ministry.color }]}
               onPress={handlePostDiscussion}
             >
-              <Send size={18} color={Colors.textInverse} />
+              <Send size={18} color={LightTheme.textInverse} />
               <Text style={styles.submitButtonText}>Post Discussion</Text>
             </TouchableOpacity>
           </View>
@@ -1119,7 +1119,7 @@ export default function GroupDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Prayer Request</Text>
               <TouchableOpacity onPress={() => setShowPrayerModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             <View style={styles.modalBody}>
@@ -1127,7 +1127,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Brief description..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newPrayerTitle}
                 onChangeText={setNewPrayerTitle}
               />
@@ -1135,7 +1135,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Share your prayer need..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newPrayerContent}
                 onChangeText={setNewPrayerContent}
                 multiline
@@ -1146,7 +1146,7 @@ export default function GroupDetailScreen() {
                 onPress={() => setIsAnonymousPrayer(!isAnonymousPrayer)}
               >
                 <View style={[styles.checkbox, isAnonymousPrayer && { backgroundColor: ministry.color, borderColor: ministry.color }]}>
-                  {isAnonymousPrayer && <Check size={14} color={Colors.textInverse} />}
+                  {isAnonymousPrayer && <Check size={14} color={LightTheme.textInverse} />}
                 </View>
                 <Text style={styles.anonymousText}>Post anonymously</Text>
               </TouchableOpacity>
@@ -1155,7 +1155,7 @@ export default function GroupDetailScreen() {
               style={[styles.submitButton, { backgroundColor: ministry.color }]}
               onPress={handlePostPrayer}
             >
-              <Heart size={18} color={Colors.textInverse} />
+              <Heart size={18} color={LightTheme.textInverse} />
               <Text style={styles.submitButtonText}>Share Prayer</Text>
             </TouchableOpacity>
           </View>
@@ -1173,7 +1173,7 @@ export default function GroupDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Group Polls</Text>
               <TouchableOpacity onPress={() => setShowPollsListModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
@@ -1184,7 +1184,7 @@ export default function GroupDetailScreen() {
                   setShowPollModal(true);
                 }}
               >
-                <Plus size={20} color={Colors.textInverse} />
+                <Plus size={20} color={LightTheme.textInverse} />
                 <Text style={styles.createPollButtonText}>Create New Poll</Text>
               </TouchableOpacity>
 
@@ -1194,7 +1194,7 @@ export default function GroupDetailScreen() {
                 </View>
               ) : polls.length === 0 ? (
                 <View style={styles.noPollsContainer}>
-                  <BarChart3 size={48} color={Colors.textTertiary} />
+                  <BarChart3 size={48} color={LightTheme.textTertiary} />
                   <Text style={styles.noPollsText}>No polls yet</Text>
                   <Text style={styles.noPollsSubtext}>Create a poll to gather feedback from the group</Text>
                 </View>
@@ -1254,11 +1254,11 @@ export default function GroupDetailScreen() {
                                       styles.pollCheckbox,
                                       isSelected && { backgroundColor: ministry.color, borderColor: ministry.color }
                                     ]}>
-                                      {isSelected && <Check size={12} color={Colors.textInverse} />}
+                                      {isSelected && <Check size={12} color={LightTheme.textInverse} />}
                                     </View>
                                   ) : userVotedThis ? (
                                     <View style={[styles.pollCheckbox, { backgroundColor: ministry.color, borderColor: ministry.color }]}>
-                                      <Check size={12} color={Colors.textInverse} />
+                                      <Check size={12} color={LightTheme.textInverse} />
                                     </View>
                                   ) : null}
                                   <Text style={styles.pollOptionText}>{option.text}</Text>
@@ -1296,7 +1296,7 @@ export default function GroupDetailScreen() {
                             disabled={selectedOptions.size === 0 || votePollMutation.isPending}
                           >
                             {votePollMutation.isPending ? (
-                              <ActivityIndicator size="small" color={Colors.textInverse} />
+                              <ActivityIndicator size="small" color={LightTheme.textInverse} />
                             ) : (
                               <Text style={styles.voteButtonText}>Vote</Text>
                             )}
@@ -1311,16 +1311,16 @@ export default function GroupDetailScreen() {
                               style={styles.pollActionButton}
                               onPress={() => handleClosePoll(poll.id)}
                             >
-                              <XCircle size={16} color={Colors.warning} />
-                              <Text style={[styles.pollActionText, { color: Colors.warning }]}>Close</Text>
+                              <XCircle size={16} color={LightTheme.warning} />
+                              <Text style={[styles.pollActionText, { color: LightTheme.warning }]}>Close</Text>
                             </TouchableOpacity>
                           )}
                           <TouchableOpacity
                             style={styles.pollActionButton}
                             onPress={() => handleDeletePoll(poll.id)}
                           >
-                            <Trash2 size={16} color={Colors.error} />
-                            <Text style={[styles.pollActionText, { color: Colors.error }]}>Delete</Text>
+                            <Trash2 size={16} color={LightTheme.error} />
+                            <Text style={[styles.pollActionText, { color: LightTheme.error }]}>Delete</Text>
                           </TouchableOpacity>
                         </View>
                       )}
@@ -1348,7 +1348,7 @@ export default function GroupDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Create Poll</Text>
               <TouchableOpacity onPress={() => setShowPollModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
@@ -1356,7 +1356,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="What would you like to ask?"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newPollQuestion}
                 onChangeText={setNewPollQuestion}
               />
@@ -1367,7 +1367,7 @@ export default function GroupDetailScreen() {
                   <TextInput
                     style={[styles.input, styles.pollOptionInput]}
                     placeholder={`Option ${index + 1}`}
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={option}
                     onChangeText={(value) => handleOptionChange(index, value)}
                   />
@@ -1376,7 +1376,7 @@ export default function GroupDetailScreen() {
                       style={styles.removeOptionButton}
                       onPress={() => handleRemoveOption(index)}
                     >
-                      <X size={20} color={Colors.error} />
+                      <X size={20} color={LightTheme.error} />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -1397,7 +1397,7 @@ export default function GroupDetailScreen() {
                 onPress={() => setAllowMultiple(!allowMultiple)}
               >
                 <View style={[styles.checkbox, allowMultiple && { backgroundColor: ministry.color, borderColor: ministry.color }]}>
-                  {allowMultiple && <Check size={14} color={Colors.textInverse} />}
+                  {allowMultiple && <Check size={14} color={LightTheme.textInverse} />}
                 </View>
                 <Text style={styles.anonymousText}>Allow multiple selections</Text>
               </TouchableOpacity>
@@ -1408,10 +1408,10 @@ export default function GroupDetailScreen() {
               disabled={createPollMutation.isPending}
             >
               {createPollMutation.isPending ? (
-                <ActivityIndicator size="small" color={Colors.textInverse} />
+                <ActivityIndicator size="small" color={LightTheme.textInverse} />
               ) : (
                 <>
-                  <BarChart3 size={18} color={Colors.textInverse} />
+                  <BarChart3 size={18} color={LightTheme.textInverse} />
                   <Text style={styles.submitButtonText}>Create Poll</Text>
                 </>
               )}
@@ -1434,7 +1434,7 @@ export default function GroupDetailScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>New Announcement</Text>
               <TouchableOpacity onPress={() => setShowAnnouncementModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
             <ScrollView style={styles.modalBody} showsVerticalScrollIndicator={false}>
@@ -1442,7 +1442,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="Announcement title..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newAnnouncementTitle}
                 onChangeText={setNewAnnouncementTitle}
               />
@@ -1450,7 +1450,7 @@ export default function GroupDetailScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Write your announcement..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newAnnouncementContent}
                 onChangeText={setNewAnnouncementContent}
                 multiline
@@ -1464,8 +1464,8 @@ export default function GroupDetailScreen() {
                     style={[
                       styles.priorityOption,
                       announcementPriority === priority && {
-                        backgroundColor: priority === "high" ? Colors.error + "20" : priority === "low" ? Colors.info + "20" : ministry.color + "20",
-                        borderColor: priority === "high" ? Colors.error : priority === "low" ? Colors.info : ministry.color,
+                        backgroundColor: priority === "high" ? LightTheme.error + "20" : priority === "low" ? LightTheme.info + "20" : ministry.color + "20",
+                        borderColor: priority === "high" ? LightTheme.error : priority === "low" ? LightTheme.info : ministry.color,
                       },
                     ]}
                     onPress={() => setAnnouncementPriority(priority)}
@@ -1474,7 +1474,7 @@ export default function GroupDetailScreen() {
                       style={[
                         styles.priorityOptionText,
                         announcementPriority === priority && {
-                          color: priority === "high" ? Colors.error : priority === "low" ? Colors.info : ministry.color,
+                          color: priority === "high" ? LightTheme.error : priority === "low" ? LightTheme.info : ministry.color,
                         },
                       ]}
                     >
@@ -1490,10 +1490,10 @@ export default function GroupDetailScreen() {
               disabled={createAnnouncementMutation.isPending}
             >
               {createAnnouncementMutation.isPending ? (
-                <ActivityIndicator size="small" color={Colors.textInverse} />
+                <ActivityIndicator size="small" color={LightTheme.textInverse} />
               ) : (
                 <>
-                  <Megaphone size={18} color={Colors.textInverse} />
+                  <Megaphone size={18} color={LightTheme.textInverse} />
                   <Text style={styles.submitButtonText}>Post Announcement</Text>
                 </>
               )}
@@ -1508,7 +1508,7 @@ export default function GroupDetailScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -1516,17 +1516,17 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 16,
   },
   backButton: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 20,
   },
   backButtonText: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     fontWeight: "600" as const,
   },
   heroContainer: {
@@ -1562,7 +1562,7 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     marginBottom: 6,
   },
   heroStats: {
@@ -1572,13 +1572,13 @@ const styles = StyleSheet.create({
   },
   heroStatText: {
     fontSize: 14,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
     opacity: 0.9,
   },
   tabsContainer: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   tabsContent: {
     flexDirection: 'row',
@@ -1598,7 +1598,7 @@ const styles = StyleSheet.create({
   tabText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   content: {
     flex: 1,
@@ -1620,22 +1620,22 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   notJoinedButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   joinedButton: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderWidth: 1,
-    borderColor: Colors.primary,
+    borderColor: LightTheme.primary,
   },
   notJoinedButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   joinedButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   prayersButton: {
     flex: 1,
@@ -1663,7 +1663,7 @@ const styles = StyleSheet.create({
   chatButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   leaveButton: {
     flex: 1,
@@ -1673,14 +1673,14 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     gap: 8,
-    backgroundColor: Colors.error + "10",
+    backgroundColor: LightTheme.error + "10",
     borderWidth: 1,
-    borderColor: Colors.error + "35",
+    borderColor: LightTheme.error + "35",
   },
   leaveButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   section: {
     marginBottom: 24,
@@ -1694,7 +1694,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
@@ -1709,16 +1709,16 @@ const styles = StyleSheet.create({
   addButtonText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   card: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
   },
   description: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 24,
   },
   missionHeader: {
@@ -1737,17 +1737,17 @@ const styles = StyleSheet.create({
   missionTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   missionCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 18,
     borderLeftWidth: 4,
   },
   missionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 24,
     fontStyle: 'italic' as const,
   },
@@ -1767,7 +1767,7 @@ const styles = StyleSheet.create({
   leadersTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   leadersGrid: {
     gap: 12,
@@ -1775,7 +1775,7 @@ const styles = StyleSheet.create({
   leaderCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 14,
     shadowColor: '#000',
@@ -1796,7 +1796,7 @@ const styles = StyleSheet.create({
   leaderName: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 4,
   },
   leaderRoleBadge: {
@@ -1817,7 +1817,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   emptyCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 32,
     alignItems: "center",
@@ -1825,30 +1825,30 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: '500' as const,
   },
   emptySubtext: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   roleLabel: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
     marginBottom: 8,
   },
   announcementCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
   },
   announcementCardHigh: {
     borderLeftWidth: 4,
-    borderLeftColor: Colors.warning,
+    borderLeftColor: LightTheme.warning,
   },
   announcementHeader: {
     flexDirection: 'row',
@@ -1867,14 +1867,14 @@ const styles = StyleSheet.create({
   announcementAuthor: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   announcementDate: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   priorityBadge: {
-    backgroundColor: Colors.warningLight,
+    backgroundColor: LightTheme.warningLight,
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 8,
@@ -1882,22 +1882,22 @@ const styles = StyleSheet.create({
   priorityText: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.warning,
+    color: LightTheme.warning,
   },
   announcementTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 6,
   },
   announcementContent: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 20,
   },
   eventsTopSection: {
     marginBottom: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 20,
     padding: 16,
     shadowColor: '#000',
@@ -1923,10 +1923,10 @@ const styles = StyleSheet.create({
     flex: 1,
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   eventsCountBadge: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -1934,7 +1934,7 @@ const styles = StyleSheet.create({
   eventsCountText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   eventsEmptyCard: {
     alignItems: 'center',
@@ -1944,11 +1944,11 @@ const styles = StyleSheet.create({
   eventsEmptyText: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   eventsEmptySubtext: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   eventsListContainer: {
     gap: 10,
@@ -1956,7 +1956,7 @@ const styles = StyleSheet.create({
   eventCardTop: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 14,
     padding: 12,
   },
@@ -1983,7 +1983,7 @@ const styles = StyleSheet.create({
   eventTitleTop: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 4,
   },
   eventMetaRow: {
@@ -1998,11 +1998,11 @@ const styles = StyleSheet.create({
   },
   eventMetaTextTop: {
     fontSize: 11,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     maxWidth: 100,
   },
   recurringBadgeTop: {
-    backgroundColor: Colors.infoLight,
+    backgroundColor: LightTheme.infoLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 6,
     paddingVertical: 2,
@@ -2012,7 +2012,7 @@ const styles = StyleSheet.create({
   recurringTextTop: {
     fontSize: 9,
     fontWeight: '600' as const,
-    color: Colors.info,
+    color: LightTheme.info,
   },
   eventAttendeesTop: {
     flexDirection: 'row',
@@ -2039,7 +2039,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginTop: 16,
@@ -2068,11 +2068,11 @@ const styles = StyleSheet.create({
   musicPlayerTitle: {
     fontSize: 17,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   musicPlayerSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   musicPlayerPlayButton: {
@@ -2101,17 +2101,17 @@ const styles = StyleSheet.create({
   musicTabTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   musicTabSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   musicPlayerCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
@@ -2136,11 +2136,11 @@ const styles = StyleSheet.create({
   musicPlayerCardTitle: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   musicPlayerCardDesc: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   musicFeatures: {
@@ -2149,7 +2149,7 @@ const styles = StyleSheet.create({
   musicFeatureItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 14,
     padding: 16,
   },
@@ -2167,20 +2167,20 @@ const styles = StyleSheet.create({
   musicFeatureTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   musicFeatureDesc: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: LightTheme.overlay,
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
   },
@@ -2190,12 +2190,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalBody: {
     padding: 20,
@@ -2203,18 +2203,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
     marginTop: 12,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   textArea: {
     minHeight: 100,
@@ -2231,13 +2231,13 @@ const styles = StyleSheet.create({
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   anonymousText: {
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   submitButton: {
     flexDirection: 'row',
@@ -2251,7 +2251,7 @@ const styles = StyleSheet.create({
   submitButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   createPollButton: {
     flexDirection: 'row',
@@ -2265,7 +2265,7 @@ const styles = StyleSheet.create({
   createPollButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   pollLoadingContainer: {
     padding: 40,
@@ -2279,16 +2279,16 @@ const styles = StyleSheet.create({
   noPollsText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 8,
   },
   noPollsSubtext: {
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textAlign: 'center' as const,
   },
   pollCard: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -2317,35 +2317,35 @@ const styles = StyleSheet.create({
   pollCreatorName: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   pollDate: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   closedBadge: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 8,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   closedBadgeText: {
     fontSize: 12,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   pollQuestion: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
     lineHeight: 24,
   },
   multipleHint: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginBottom: 12,
   },
   pollOptionsContainer: {
@@ -2353,11 +2353,11 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   pollOption: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
     overflow: 'hidden',
   },
   pollOptionContent: {
@@ -2376,13 +2376,13 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
   pollOptionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
   },
   pollOptionPercent: {
@@ -2391,7 +2391,7 @@ const styles = StyleSheet.create({
   },
   pollProgressBarBg: {
     height: 4,
-    backgroundColor: Colors.borderLight,
+    backgroundColor: LightTheme.borderLight,
     borderRadius: 2,
     marginTop: 10,
   },
@@ -2406,7 +2406,7 @@ const styles = StyleSheet.create({
   },
   pollVoteCount: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   voteButton: {
     paddingHorizontal: 24,
@@ -2416,7 +2416,7 @@ const styles = StyleSheet.create({
   voteButtonText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   pollActions: {
     flexDirection: 'row',
@@ -2425,7 +2425,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   pollActionButton: {
     flexDirection: 'row',
@@ -2470,13 +2470,13 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   priorityOptionText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
 });

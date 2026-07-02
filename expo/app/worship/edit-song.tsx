@@ -23,7 +23,7 @@ import {
 } from "lucide-react-native";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 import { supabase } from "@/lib/supabase";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { VocalPart, AudioPart } from "@/types";
 
@@ -310,7 +310,7 @@ export default function EditSongScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -334,7 +334,7 @@ export default function EditSongScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={LightTheme.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Edit Song</Text>
         <View style={{ width: 44 }} />
@@ -355,7 +355,7 @@ export default function EditSongScreen() {
               value={title}
               onChangeText={setTitle}
               placeholder="Song title"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
             />
           </View>
 
@@ -366,7 +366,7 @@ export default function EditSongScreen() {
               value={artist}
               onChangeText={setArtist}
               placeholder="Artist name"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
             />
           </View>
 
@@ -377,7 +377,7 @@ export default function EditSongScreen() {
               value={coverUrl}
               onChangeText={setCoverUrl}
               placeholder="https://example.com/image.jpg"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
               autoCapitalize="none"
             />
           </View>
@@ -389,7 +389,7 @@ export default function EditSongScreen() {
               value={duration}
               onChangeText={setDuration}
               placeholder="180"
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
               keyboardType="numeric"
             />
           </View>
@@ -415,13 +415,13 @@ export default function EditSongScreen() {
           onPress={() => setShowAudioSection(!showAudioSection)}
         >
           <View style={styles.collapsibleLeft}>
-            <Music2 size={20} color={Colors.primary} />
+            <Music2 size={20} color={LightTheme.primary} />
             <Text style={styles.collapsibleTitle}>Audio Parts ({audioParts.length})</Text>
           </View>
           {showAudioSection ? (
-            <ChevronUp size={20} color={Colors.textSecondary} />
+            <ChevronUp size={20} color={LightTheme.textSecondary} />
           ) : (
-            <ChevronDown size={20} color={Colors.textSecondary} />
+            <ChevronDown size={20} color={LightTheme.textSecondary} />
           )}
         </TouchableOpacity>
 
@@ -442,7 +442,7 @@ export default function EditSongScreen() {
                   onPress={() => handleRemoveAudioPart(part)}
                   disabled={removeAudioPartMutation.isPending}
                 >
-                  <Trash2 size={16} color={Colors.error} />
+                  <Trash2 size={16} color={LightTheme.error} />
                 </TouchableOpacity>
               </View>
             ))}
@@ -475,7 +475,7 @@ export default function EditSongScreen() {
                 value={newAudioUrl}
                 onChangeText={setNewAudioUrl}
                 placeholder="Audio file URL"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 autoCapitalize="none"
               />
               <TouchableOpacity
@@ -501,13 +501,13 @@ export default function EditSongScreen() {
           onPress={() => setShowLyricsSection(!showLyricsSection)}
         >
           <View style={styles.collapsibleLeft}>
-            <FileText size={20} color={Colors.primary} />
+            <FileText size={20} color={LightTheme.primary} />
             <Text style={styles.collapsibleTitle}>Lyrics ({lyrics.length} lines)</Text>
           </View>
           {showLyricsSection ? (
-            <ChevronUp size={20} color={Colors.textSecondary} />
+            <ChevronUp size={20} color={LightTheme.textSecondary} />
           ) : (
-            <ChevronDown size={20} color={Colors.textSecondary} />
+            <ChevronDown size={20} color={LightTheme.textSecondary} />
           )}
         </TouchableOpacity>
 
@@ -522,7 +522,7 @@ export default function EditSongScreen() {
               value={lyricsText}
               onChangeText={setLyricsText}
               placeholder="Enter lyrics with timestamps..."
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
               multiline
               textAlignVertical="top"
             />
@@ -550,7 +550,7 @@ export default function EditSongScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -558,30 +558,30 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   header: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     justifyContent: "center",
     alignItems: "center",
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   scrollContent: {
     flex: 1,
@@ -590,7 +590,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   section: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 20,
     marginBottom: 16,
@@ -598,7 +598,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
   },
   inputGroup: {
@@ -607,22 +607,22 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   saveButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingVertical: 14,
     borderRadius: 10,
     gap: 8,
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 8,
@@ -650,12 +650,12 @@ const styles = StyleSheet.create({
   collapsibleTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   audioPartRow: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 10,
     padding: 12,
     marginBottom: 8,
@@ -666,11 +666,11 @@ const styles = StyleSheet.create({
   audioPartLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   audioPartUrl: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginTop: 4,
   },
   removeButton: {
@@ -685,7 +685,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   partSelector: {
     flexDirection: "row",
@@ -697,15 +697,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   partOptionActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   partOptionText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   partOptionTextActive: {
     color: "#fff",
@@ -714,7 +714,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primaryLight,
+    backgroundColor: LightTheme.primaryLight,
     paddingVertical: 12,
     borderRadius: 10,
     gap: 6,
@@ -727,17 +727,17 @@ const styles = StyleSheet.create({
   },
   lyricsHint: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginBottom: 12,
     lineHeight: 18,
   },
   lyricsInput: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 10,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
-    color: Colors.text,
+    color: LightTheme.text,
     minHeight: 200,
     fontFamily: "monospace",
   },

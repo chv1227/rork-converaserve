@@ -31,7 +31,7 @@ import {
   Send,
   Calendar,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { ministryTemplates } from "@/mocks/ministryTemplates";
 import { MinistryLeaderRole, LeadershipTransferType } from "@/types";
@@ -136,11 +136,11 @@ function LeaderCard({ leader, onRemove, onTransfer, isPrimary, color }: LeaderCa
       <View style={styles.leaderActions}>
         {isPrimary ? (
           <TouchableOpacity style={[styles.actionBtn, styles.transferBtn]} onPress={onTransfer} activeOpacity={0.7}>
-            <RefreshCw size={16} color={Colors.warning} />
+            <RefreshCw size={16} color={LightTheme.warning} />
           </TouchableOpacity>
         ) : (
           <TouchableOpacity style={[styles.actionBtn, styles.removeBtn]} onPress={onRemove} activeOpacity={0.7}>
-            <UserMinus size={16} color={Colors.error} />
+            <UserMinus size={16} color={LightTheme.error} />
           </TouchableOpacity>
         )}
       </View>
@@ -162,9 +162,9 @@ function InvitationCard({ invitation, onResend, onCancel }: InvitationCardProps)
     <View style={[styles.invitationCard, isExpired && styles.invitationExpired]}>
       <View style={styles.invitationIcon}>
         {isExpired ? (
-          <AlertTriangle size={20} color={Colors.error} />
+          <AlertTriangle size={20} color={LightTheme.error} />
         ) : (
-          <Clock size={20} color={Colors.warning} />
+          <Clock size={20} color={LightTheme.warning} />
         )}
       </View>
       <View style={styles.invitationInfo}>
@@ -176,10 +176,10 @@ function InvitationCard({ invitation, onResend, onCancel }: InvitationCardProps)
       </View>
       <View style={styles.invitationActions}>
         <TouchableOpacity style={styles.resendBtn} onPress={onResend} activeOpacity={0.7}>
-          <Send size={14} color={Colors.primary} />
+          <Send size={14} color={LightTheme.primary} />
         </TouchableOpacity>
         <TouchableOpacity style={styles.cancelInviteBtn} onPress={onCancel} activeOpacity={0.7}>
-          <X size={14} color={Colors.error} />
+          <X size={14} color={LightTheme.error} />
         </TouchableOpacity>
       </View>
     </View>
@@ -362,7 +362,7 @@ export default function MinistryLeadersScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Leadership</Text>
@@ -388,7 +388,7 @@ export default function MinistryLeadersScreen() {
 
           {leaders.length === 0 ? (
             <View style={styles.emptyState}>
-              <Users size={40} color={Colors.textTertiary} />
+              <Users size={40} color={LightTheme.textTertiary} />
               <Text style={styles.emptyText}>No leaders assigned yet</Text>
               <TouchableOpacity
                 style={[styles.addFirstButton, { backgroundColor: template.color }]}
@@ -416,7 +416,7 @@ export default function MinistryLeadersScreen() {
         {pendingInvitations.length > 0 && (
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
-              <Clock size={18} color={Colors.warning} />
+              <Clock size={18} color={LightTheme.warning} />
               <Text style={styles.sectionTitle}>Pending Invitations</Text>
               <Text style={styles.sectionCount}>{pendingInvitations.length}</Text>
             </View>
@@ -444,7 +444,7 @@ export default function MinistryLeadersScreen() {
             </View>
           </View>
           <View style={styles.infoItem}>
-            <Shield size={16} color={Colors.primary} />
+            <Shield size={16} color={LightTheme.primary} />
             <View style={styles.infoContent}>
               <Text style={styles.infoLabel}>Co-Leader</Text>
               <Text style={styles.infoDescription}>
@@ -464,7 +464,7 @@ export default function MinistryLeadersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Invite Leader</Text>
               <TouchableOpacity onPress={() => setShowInviteModal(false)} style={styles.modalClose}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -472,11 +472,11 @@ export default function MinistryLeadersScreen() {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Search Member</Text>
                 <View style={styles.searchContainer}>
-                  <Search size={18} color={Colors.textSecondary} />
+                  <Search size={18} color={LightTheme.textSecondary} />
                   <TextInput
                     style={styles.searchInput}
                     placeholder="Search by name or email..."
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={searchQuery}
                     onChangeText={handleSearch}
                   />
@@ -500,7 +500,7 @@ export default function MinistryLeadersScreen() {
                           <Text style={styles.searchResultName}>{member.name}</Text>
                           <Text style={styles.searchResultEmail}>{member.email}</Text>
                         </View>
-                        {selectedMember?.id === member.id && <Check size={18} color={Colors.success} />}
+                        {selectedMember?.id === member.id && <Check size={18} color={LightTheme.success} />}
                       </TouchableOpacity>
                     ))}
                   </View>
@@ -514,7 +514,7 @@ export default function MinistryLeadersScreen() {
                       <Text style={styles.selectedMemberEmail}>{selectedMember.email}</Text>
                     </View>
                     <TouchableOpacity onPress={() => setSelectedMember(null)}>
-                      <X size={18} color={Colors.textSecondary} />
+                      <X size={18} color={LightTheme.textSecondary} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -528,7 +528,7 @@ export default function MinistryLeadersScreen() {
                     onPress={() => setSelectedRole("primary_leader")}
                     activeOpacity={0.7}
                   >
-                    <Crown size={18} color={selectedRole === "primary_leader" ? template.color : Colors.textSecondary} />
+                    <Crown size={18} color={selectedRole === "primary_leader" ? template.color : LightTheme.textSecondary} />
                     <Text style={[styles.roleOptionText, selectedRole === "primary_leader" && { color: template.color }]}>
                       Primary Leader
                     </Text>
@@ -538,7 +538,7 @@ export default function MinistryLeadersScreen() {
                     onPress={() => setSelectedRole("co_leader")}
                     activeOpacity={0.7}
                   >
-                    <Shield size={18} color={selectedRole === "co_leader" ? template.color : Colors.textSecondary} />
+                    <Shield size={18} color={selectedRole === "co_leader" ? template.color : LightTheme.textSecondary} />
                     <Text style={[styles.roleOptionText, selectedRole === "co_leader" && { color: template.color }]}>
                       Co-Leader
                     </Text>
@@ -551,7 +551,7 @@ export default function MinistryLeadersScreen() {
                 <TextInput
                   style={[styles.textInput, styles.textArea]}
                   placeholder="Add a personal message to the invitation..."
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={inviteMessage}
                   onChangeText={setInviteMessage}
                   multiline
@@ -587,13 +587,13 @@ export default function MinistryLeadersScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Transfer Leadership</Text>
               <TouchableOpacity onPress={() => setShowTransferModal(false)} style={styles.modalClose}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
             <ScrollView showsVerticalScrollIndicator={false}>
               <View style={styles.warningBox}>
-                <AlertTriangle size={20} color={Colors.warning} />
+                <AlertTriangle size={20} color={LightTheme.warning} />
                 <Text style={styles.warningText}>
                   This will transfer primary leadership of the ministry. Make sure you have selected the right person.
                 </Text>
@@ -602,11 +602,11 @@ export default function MinistryLeadersScreen() {
               <View style={styles.formGroup}>
                 <Text style={styles.formLabel}>Transfer To</Text>
                 <View style={styles.searchContainer}>
-                  <Search size={18} color={Colors.textSecondary} />
+                  <Search size={18} color={LightTheme.textSecondary} />
                   <TextInput
                     style={styles.searchInput}
                     placeholder="Search member..."
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={searchQuery}
                     onChangeText={handleSearch}
                   />
@@ -685,14 +685,14 @@ export default function MinistryLeadersScreen() {
                 <View style={styles.formGroup}>
                   <Text style={styles.formLabel}>Transfer Date</Text>
                   <TouchableOpacity style={styles.dateInput} activeOpacity={0.7}>
-                    <Calendar size={18} color={Colors.textSecondary} />
+                    <Calendar size={18} color={LightTheme.textSecondary} />
                     <Text style={styles.dateInputText}>{transferDate || "Select date..."}</Text>
                   </TouchableOpacity>
                 </View>
               )}
 
               <TouchableOpacity
-                style={[styles.submitButton, { backgroundColor: Colors.warning }, (!selectedMember || isLoading) && styles.submitButtonDisabled]}
+                style={[styles.submitButton, { backgroundColor: LightTheme.warning }, (!selectedMember || isLoading) && styles.submitButtonDisabled]}
                 onPress={handleTransferLeadership}
                 disabled={!selectedMember || isLoading}
                 activeOpacity={0.7}
@@ -717,7 +717,7 @@ export default function MinistryLeadersScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -725,14 +725,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -742,7 +742,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -753,11 +753,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   inviteButton: {
@@ -785,14 +785,14 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
   },
   sectionCount: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
-    backgroundColor: Colors.surfaceSecondary,
+    color: LightTheme.textSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -800,12 +800,12 @@ const styles = StyleSheet.create({
   emptyState: {
     alignItems: "center",
     paddingVertical: 32,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
   },
   emptyText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 12,
     marginBottom: 16,
   },
@@ -825,7 +825,7 @@ const styles = StyleSheet.create({
   leaderCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
@@ -848,7 +848,7 @@ const styles = StyleSheet.create({
   leaderName: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   primaryBadge: {
     flexDirection: "row",
@@ -864,12 +864,12 @@ const styles = StyleSheet.create({
   },
   leaderEmail: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 2,
   },
   leaderJoined: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   leaderActions: {
     flexDirection: "row",
@@ -883,30 +883,30 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   transferBtn: {
-    backgroundColor: Colors.warning + "15",
+    backgroundColor: LightTheme.warning + "15",
   },
   removeBtn: {
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
   },
   invitationCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 14,
     padding: 14,
     marginBottom: 10,
     borderLeftWidth: 3,
-    borderLeftColor: Colors.warning,
+    borderLeftColor: LightTheme.warning,
   },
   invitationExpired: {
-    borderLeftColor: Colors.error,
+    borderLeftColor: LightTheme.error,
     opacity: 0.7,
   },
   invitationIcon: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.warningLight,
+    backgroundColor: LightTheme.warningLight,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -917,12 +917,12 @@ const styles = StyleSheet.create({
   invitationName: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   invitationEmail: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 4,
   },
   invitationStatus: {
@@ -930,10 +930,10 @@ const styles = StyleSheet.create({
     fontWeight: "500" as const,
   },
   pendingText: {
-    color: Colors.warning,
+    color: LightTheme.warning,
   },
   expiredText: {
-    color: Colors.error,
+    color: LightTheme.error,
   },
   invitationActions: {
     flexDirection: "row",
@@ -943,7 +943,7 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -951,19 +951,19 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 16,
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
     alignItems: "center",
     justifyContent: "center",
   },
   infoSection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
   },
   infoTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 16,
   },
   infoItem: {
@@ -977,12 +977,12 @@ const styles = StyleSheet.create({
   infoLabel: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   infoDescription: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 16,
   },
   modalOverlay: {
@@ -991,7 +991,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -1006,13 +1006,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalClose: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1020,7 +1020,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 12,
-    backgroundColor: Colors.warningLight,
+    backgroundColor: LightTheme.warningLight,
     borderRadius: 12,
     padding: 14,
     marginBottom: 20,
@@ -1028,7 +1028,7 @@ const styles = StyleSheet.create({
   warningText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 18,
   },
   formGroup: {
@@ -1037,31 +1037,31 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 10,
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     paddingHorizontal: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   searchInput: {
     flex: 1,
     height: 48,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     marginLeft: 8,
   },
   searchResults: {
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     marginTop: 8,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
     overflow: "hidden",
   },
   searchResultItem: {
@@ -1069,10 +1069,10 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   searchResultSelected: {
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: LightTheme.primary + "10",
   },
   searchResultAvatar: {
     width: 40,
@@ -1086,16 +1086,16 @@ const styles = StyleSheet.create({
   searchResultName: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   searchResultEmail: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   selectedMember: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.successLight,
+    backgroundColor: LightTheme.successLight,
     borderRadius: 12,
     padding: 12,
     marginTop: 12,
@@ -1112,11 +1112,11 @@ const styles = StyleSheet.create({
   selectedMemberName: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   selectedMemberEmail: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   roleOptions: {
     flexDirection: "row",
@@ -1127,30 +1127,30 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   roleOptionSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "08",
+    borderColor: LightTheme.primary,
+    backgroundColor: LightTheme.primary + "08",
   },
   roleOptionText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   textInput: {
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   textArea: {
     minHeight: 80,
@@ -1159,23 +1159,23 @@ const styles = StyleSheet.create({
   transferOption: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   transferOptionSelected: {
-    borderColor: Colors.primary,
-    backgroundColor: Colors.primary + "08",
+    borderColor: LightTheme.primary,
+    backgroundColor: LightTheme.primary + "08",
   },
   transferOptionRadio: {
     width: 20,
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -1192,26 +1192,26 @@ const styles = StyleSheet.create({
   transferOptionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   transferOptionDesc: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   dateInput: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   dateInputText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   submitButton: {
     flexDirection: "row",

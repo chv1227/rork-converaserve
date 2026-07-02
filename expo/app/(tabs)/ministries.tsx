@@ -36,8 +36,9 @@ import {
   Plus,
   ArrowRight,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
+import { useTheme } from "@/providers/ThemeProvider";
 import { supabase } from "@/lib/supabase";
 import { useQuery } from "@tanstack/react-query";
 
@@ -81,6 +82,7 @@ export default function MinistriesHubScreen() {
   const router = useRouter();
   const insets = useSafeAreaInsets();
   const { user, isAdmin, isSuperAdmin, currentOrganization } = useAuth();
+  const { colors } = useTheme();
   const [isRefreshing, setIsRefreshing] = useState(false);
 
   const ministriesQuery = useQuery<MinistryData[]>({
@@ -131,7 +133,7 @@ export default function MinistriesHubScreen() {
             id: m.id,
             name: m.name,
             description: m.description || "",
-            color: m.color || Colors.primary,
+            color: m.color || colors.primary,
             icon: m.icon || "Users",
             image_url: m.image_url,
             ministry_type: m.ministry_type,
@@ -185,7 +187,7 @@ export default function MinistriesHubScreen() {
   if (ministriesQuery.isLoading) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.loadingText}>Loading ministries...</Text>
       </View>
     );
@@ -195,7 +197,7 @@ export default function MinistriesHubScreen() {
     <View style={styles.container}>
       {/* Header */}
       <LinearGradient
-        colors={[Colors.gradientStart, Colors.gradientMiddle, Colors.gradientEnd, Colors.primaryDark]}
+        colors={[colors.gradientStart, colors.gradientMiddle, colors.gradientEnd, colors.primaryDark]}
         locations={[0, 0.3, 0.7, 1]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
@@ -227,7 +229,7 @@ export default function MinistriesHubScreen() {
           <RefreshControl
             refreshing={isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={colors.primary}
           />
         }
       >
@@ -236,7 +238,7 @@ export default function MinistriesHubScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <View style={[styles.sectionDot, { backgroundColor: Colors.primary }]} />
+                <View style={[styles.sectionDot, { backgroundColor: colors.primary }]} />
                 <Text style={styles.sectionTitle}>My Ministries</Text>
               </View>
               <Text style={styles.sectionCount}>{userMinistries.length}</Text>
@@ -284,7 +286,7 @@ export default function MinistriesHubScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <View style={[styles.sectionDot, { backgroundColor: Colors.secondary }]} />
+                <View style={[styles.sectionDot, { backgroundColor: colors.secondary }]} />
                 <Text style={styles.sectionTitle}>
                   {userMinistries.length > 0 ? "Explore More" : "All Ministries"}
                 </Text>
@@ -294,7 +296,7 @@ export default function MinistriesHubScreen() {
 
             {otherMinistries.length === 0 && userMinistries.length > 0 ? (
               <View style={styles.emptyExploreCard}>
-                <Sparkles size={24} color={Colors.textTertiary} />
+                <Sparkles size={24} color={colors.textTertiary} />
                 <Text style={styles.emptyExploreText}>
                   You're part of every active ministry!
                 </Text>
@@ -347,21 +349,21 @@ export default function MinistriesHubScreen() {
           <View style={styles.section}>
             <View style={styles.sectionHeader}>
               <View style={styles.sectionTitleRow}>
-                <View style={[styles.sectionDot, { backgroundColor: Colors.accent }]} />
+                <View style={[styles.sectionDot, { backgroundColor: colors.accent }]} />
                 <Text style={styles.sectionTitle}>Ministry Overview</Text>
               </View>
             </View>
             <View style={styles.statsRow}>
               <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: Colors.primary + "15" }]}>
-                  <Church size={20} color={Colors.primary} />
+                <View style={[styles.statIcon, { backgroundColor: colors.primary + "15" }]}>
+                  <Church size={20} color={colors.primary} />
                 </View>
                 <Text style={styles.statNumber}>{ministries.length}</Text>
                 <Text style={styles.statLabel}>Total Ministries</Text>
               </View>
               <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: Colors.secondary + "15" }]}>
-                  <Users size={20} color={Colors.secondary} />
+                <View style={[styles.statIcon, { backgroundColor: colors.secondary + "15" }]}>
+                  <Users size={20} color={colors.secondary} />
                 </View>
                 <Text style={styles.statNumber}>
                   {ministries.reduce((sum, m) => sum + m.member_count, 0)}
@@ -369,8 +371,8 @@ export default function MinistriesHubScreen() {
                 <Text style={styles.statLabel}>Total Members</Text>
               </View>
               <View style={styles.statCard}>
-                <View style={[styles.statIcon, { backgroundColor: Colors.tertiary + "15" }]}>
-                  <Shield size={20} color={Colors.tertiary} />
+                <View style={[styles.statIcon, { backgroundColor: colors.tertiary + "15" }]}>
+                  <Shield size={20} color={colors.tertiary} />
                 </View>
                 <Text style={styles.statNumber}>
                   {ministries.filter((m) => m.is_member).length}
@@ -385,7 +387,7 @@ export default function MinistriesHubScreen() {
         {ministries.length === 0 && (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconCircle}>
-              <Church size={48} color={Colors.textTertiary} />
+              <Church size={48} color={colors.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>No Ministries Yet</Text>
             <Text style={styles.emptyDescription}>
@@ -401,7 +403,7 @@ export default function MinistriesHubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -411,7 +413,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   headerGradient: {
     paddingBottom: 24,
@@ -419,7 +421,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 36,
     ...Platform.select({
       ios: {
-        shadowColor: Colors.primaryDark,
+        shadowColor: LightTheme.primaryDark,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 20,
@@ -499,13 +501,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   sectionCount: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
-    backgroundColor: Colors.surfaceSecondary,
+    color: LightTheme.textSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -581,12 +583,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   statIcon: {
     width: 44,
@@ -599,26 +601,26 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 22,
     fontWeight: "800" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textAlign: "center",
     fontWeight: "500" as const,
   },
   emptyExploreCard: {
     alignItems: "center",
     padding: 24,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   emptyExploreText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 8,
   },
   emptyState: {
@@ -629,7 +631,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -637,12 +639,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     paddingHorizontal: 40,
     lineHeight: 20,

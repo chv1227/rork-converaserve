@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Users } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { Conversation } from '@/types';
 
 interface ConversationItemProps {
@@ -29,7 +29,7 @@ export default function ConversationItem({ conversation, onPress }: Conversation
             styles.groupBadge,
             conversation.ministryColor ? { backgroundColor: conversation.ministryColor } : null
           ]}>
-            <Users size={10} color={Colors.textInverse} />
+            <Users size={10} color={LightTheme.textInverse} />
           </View>
         )}
       </View>
@@ -75,7 +75,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 12,
     paddingHorizontal: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
   },
   avatarContainer: {
     position: 'relative',
@@ -86,7 +86,7 @@ const styles = StyleSheet.create({
     height: 56,
     borderRadius: 28,
     borderWidth: 2,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
     padding: 2,
   },
   avatar: {
@@ -101,11 +101,11 @@ const styles = StyleSheet.create({
     width: 20,
     height: 20,
     borderRadius: 10,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   content: {
     flex: 1,
@@ -119,16 +119,16 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
     marginRight: 8,
   },
   time: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   timeUnread: {
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: '600' as const,
   },
   footer: {
@@ -138,16 +138,16 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     flex: 1,
     marginRight: 8,
   },
   lastMessageUnread: {
-    color: Colors.text,
+    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   unreadBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     minWidth: 20,
     height: 20,
     borderRadius: 10,
@@ -158,6 +158,6 @@ const styles = StyleSheet.create({
   unreadCount: {
     fontSize: 11,
     fontWeight: '700' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
 });

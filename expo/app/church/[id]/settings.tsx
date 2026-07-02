@@ -33,7 +33,7 @@ import {
   ChevronRight,
   Church,
 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
@@ -346,7 +346,7 @@ export default function ChurchSettingsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <Shield size={48} color={Colors.textTertiary} />
+          <Shield size={48} color={LightTheme.textTertiary} />
           <Text style={styles.errorTitle}>Sign In Required</Text>
           <Text style={styles.errorText}>Please sign in to access church settings</Text>
           <TouchableOpacity style={styles.primaryButton} onPress={() => router.push('/login' as any)}>
@@ -361,7 +361,7 @@ export default function ChurchSettingsScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={LightTheme.primary} />
           <Text style={styles.loadingText}>Loading settings...</Text>
         </View>
       </SafeAreaView>
@@ -373,13 +373,13 @@ export default function ChurchSettingsScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Settings</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.centerContainer}>
-          <Shield size={48} color={Colors.error} />
+          <Shield size={48} color={LightTheme.error} />
           <Text style={styles.errorTitle}>Access Denied</Text>
           <Text style={styles.errorText}>Only church administrators can access settings</Text>
           <TouchableOpacity style={styles.secondaryButton} onPress={() => router.back()}>
@@ -405,7 +405,7 @@ export default function ChurchSettingsScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Church Settings</Text>
           <View style={styles.placeholder} />
@@ -413,7 +413,7 @@ export default function ChurchSettingsScreen() {
 
         <View style={styles.churchInfo}>
           <View style={styles.churchIcon}>
-            <Church size={24} color={Colors.primary} />
+            <Church size={24} color={LightTheme.primary} />
           </View>
           <View style={styles.churchDetails}>
             <Text style={styles.churchName}>{churchQuery.data?.name}</Text>
@@ -433,7 +433,7 @@ export default function ChurchSettingsScreen() {
                 style={[styles.tab, isActive && styles.tabActive]}
                 onPress={() => setActiveTab(tab.key)}
               >
-                <Icon size={18} color={isActive ? Colors.primary : Colors.textSecondary} />
+                <Icon size={18} color={isActive ? LightTheme.primary : LightTheme.textSecondary} />
                 <Text style={[styles.tabText, isActive && styles.tabTextActive]}>{tab.label}</Text>
               </TouchableOpacity>
             );
@@ -456,7 +456,7 @@ export default function ChurchSettingsScreen() {
                   value={name}
                   onChangeText={setName}
                   placeholder="Church name"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                 />
               </View>
 
@@ -467,7 +467,7 @@ export default function ChurchSettingsScreen() {
                   value={description}
                   onChangeText={setDescription}
                   placeholder="Church description"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   multiline
                   numberOfLines={4}
                   textAlignVertical="top"
@@ -481,7 +481,7 @@ export default function ChurchSettingsScreen() {
                   value={email}
                   onChangeText={setEmail}
                   placeholder="Contact email"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -494,7 +494,7 @@ export default function ChurchSettingsScreen() {
                   value={phone}
                   onChangeText={setPhone}
                   placeholder="Contact phone"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="phone-pad"
                 />
               </View>
@@ -506,7 +506,7 @@ export default function ChurchSettingsScreen() {
                   value={website}
                   onChangeText={setWebsite}
                   placeholder="https://yourchurch.org"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="url"
                   autoCapitalize="none"
                 />
@@ -519,7 +519,7 @@ export default function ChurchSettingsScreen() {
                   value={logo}
                   onChangeText={setLogo}
                   placeholder="https://example.com/logo.png"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="url"
                   autoCapitalize="none"
                 />
@@ -528,9 +528,9 @@ export default function ChurchSettingsScreen() {
               <View style={styles.settingRow}>
                 <View style={styles.settingInfo}>
                   {visibility === 'public' ? (
-                    <Eye size={20} color={Colors.primary} />
+                    <Eye size={20} color={LightTheme.primary} />
                   ) : (
-                    <EyeOff size={20} color={Colors.textSecondary} />
+                    <EyeOff size={20} color={LightTheme.textSecondary} />
                   )}
                   <View style={styles.settingText}>
                     <Text style={styles.settingTitle}>Visibility</Text>
@@ -576,7 +576,7 @@ export default function ChurchSettingsScreen() {
               <View style={styles.moduleList}>
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Calendar size={22} color={Colors.primary} />
+                    <Calendar size={22} color={LightTheme.primary} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Events</Text>
                       <Text style={styles.moduleDescription}>Church events and calendar</Text>
@@ -585,14 +585,14 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.events}
                     onValueChange={() => handleToggleModule('events')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.events ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.events ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Megaphone size={22} color={Colors.warning} />
+                    <Megaphone size={22} color={LightTheme.warning} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Announcements</Text>
                       <Text style={styles.moduleDescription}>Church-wide announcements</Text>
@@ -601,14 +601,14 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.announcements}
                     onValueChange={() => handleToggleModule('announcements')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.announcements ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.announcements ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <DollarSign size={22} color={Colors.success} />
+                    <DollarSign size={22} color={LightTheme.success} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Donations</Text>
                       <Text style={styles.moduleDescription}>Tithes and offerings</Text>
@@ -617,14 +617,14 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.donations}
                     onValueChange={() => handleToggleModule('donations')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.donations ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.donations ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Video size={22} color={Colors.error} />
+                    <Video size={22} color={LightTheme.error} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Media</Text>
                       <Text style={styles.moduleDescription}>Sermons and videos</Text>
@@ -633,8 +633,8 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.media}
                     onValueChange={() => handleToggleModule('media')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.media ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.media ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
@@ -649,8 +649,8 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.ministries}
                     onValueChange={() => handleToggleModule('ministries')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.ministries ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.ministries ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
@@ -665,8 +665,8 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={modulesEnabled.messaging}
                     onValueChange={() => handleToggleModule('messaging')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={modulesEnabled.messaging ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={modulesEnabled.messaging ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
               </View>
@@ -698,7 +698,7 @@ export default function ChurchSettingsScreen() {
               <View style={styles.moduleList}>
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Users size={22} color={Colors.primary} />
+                    <Users size={22} color={LightTheme.primary} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>New Members</Text>
                       <Text style={styles.moduleDescription}>When someone joins the church</Text>
@@ -707,14 +707,14 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={notificationPreferences.newMembers}
                     onValueChange={() => handleToggleNotification('newMembers')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={notificationPreferences.newMembers ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={notificationPreferences.newMembers ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Calendar size={22} color={Colors.warning} />
+                    <Calendar size={22} color={LightTheme.warning} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Events</Text>
                       <Text style={styles.moduleDescription}>Event reminders and updates</Text>
@@ -723,14 +723,14 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={notificationPreferences.events}
                     onValueChange={() => handleToggleNotification('events')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={notificationPreferences.events ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={notificationPreferences.events ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
                 <View style={styles.moduleItem}>
                   <View style={styles.moduleInfo}>
-                    <Megaphone size={22} color={Colors.success} />
+                    <Megaphone size={22} color={LightTheme.success} />
                     <View style={styles.moduleText}>
                       <Text style={styles.moduleTitle}>Announcements</Text>
                       <Text style={styles.moduleDescription}>New announcements posted</Text>
@@ -739,8 +739,8 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={notificationPreferences.announcements}
                     onValueChange={() => handleToggleNotification('announcements')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={notificationPreferences.announcements ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={notificationPreferences.announcements ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
 
@@ -755,8 +755,8 @@ export default function ChurchSettingsScreen() {
                   <Switch
                     value={notificationPreferences.donations}
                     onValueChange={() => handleToggleNotification('donations')}
-                    trackColor={{ false: Colors.border, true: Colors.primary + '50' }}
-                    thumbColor={notificationPreferences.donations ? Colors.primary : Colors.textTertiary}
+                    trackColor={{ false: LightTheme.border, true: LightTheme.primary + '50' }}
+                    thumbColor={notificationPreferences.donations ? LightTheme.primary : LightTheme.textTertiary}
                   />
                 </View>
               </View>
@@ -786,7 +786,7 @@ export default function ChurchSettingsScreen() {
               </Text>
 
               {membersQuery.isLoading ? (
-                <ActivityIndicator size="small" color={Colors.primary} style={styles.loading} />
+                <ActivityIndicator size="small" color={LightTheme.primary} style={styles.loading} />
               ) : membersQuery.data && membersQuery.data.length > 0 ? (
                 <View style={styles.memberList}>
                   {membersQuery.data.map((member) => (
@@ -810,13 +810,13 @@ export default function ChurchSettingsScreen() {
                             style={styles.memberActionButton}
                             onPress={() => handleChangeMemberRole(member.id, member.role)}
                           >
-                            <ChevronRight size={18} color={Colors.textSecondary} />
+                            <ChevronRight size={18} color={LightTheme.textSecondary} />
                           </TouchableOpacity>
                           <TouchableOpacity
                             style={styles.memberActionButton}
                             onPress={() => handleRemoveMember(member.id, member.name)}
                           >
-                            <Trash2 size={18} color={Colors.error} />
+                            <Trash2 size={18} color={LightTheme.error} />
                           </TouchableOpacity>
                         </View>
                       )}
@@ -825,7 +825,7 @@ export default function ChurchSettingsScreen() {
                 </View>
               ) : (
                 <View style={styles.emptyState}>
-                  <Users size={40} color={Colors.textTertiary} />
+                  <Users size={40} color={LightTheme.textTertiary} />
                   <Text style={styles.emptyText}>No members yet</Text>
                 </View>
               )}
@@ -840,7 +840,7 @@ export default function ChurchSettingsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   flex1: {
     flex: 1,
@@ -852,8 +852,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
-    backgroundColor: Colors.surface,
+    borderBottomColor: LightTheme.border,
+    backgroundColor: LightTheme.surface,
   },
   backButton: {
     padding: 8,
@@ -862,7 +862,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   placeholder: {
     width: 40,
@@ -871,15 +871,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: LightTheme.border,
   },
   churchIcon: {
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -890,20 +890,20 @@ const styles = StyleSheet.create({
   churchName: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   churchRole: {
     fontSize: 14,
-    color: Colors.primary,
+    color: LightTheme.primary,
     marginTop: 2,
   },
   tabBar: {
     flexDirection: 'row',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 8,
     paddingVertical: 8,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: LightTheme.border,
   },
   tab: {
     flex: 1,
@@ -916,15 +916,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   tabActive: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
   },
   tabText: {
     fontSize: 13,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   tabTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   content: {
     flex: 1,
@@ -939,12 +939,12 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   sectionDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 20,
   },
   inputGroup: {
@@ -953,17 +953,17 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   textArea: {
     height: 100,
@@ -973,12 +973,12 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   settingInfo: {
     flexDirection: 'row',
@@ -992,29 +992,29 @@ const styles = StyleSheet.create({
   settingTitle: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   settingDescription: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   visibilityButton: {
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 8,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   visibilityButtonActive: {
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: LightTheme.primary + '20',
   },
   visibilityButtonText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   visibilityButtonTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   moduleList: {
     gap: 12,
@@ -1023,11 +1023,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 14,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   moduleInfo: {
     flexDirection: 'row',
@@ -1041,18 +1041,18 @@ const styles = StyleSheet.create({
   moduleTitle: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   moduleDescription: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   saveButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
@@ -1073,11 +1073,11 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 12,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   memberInfo: {
     flexDirection: 'row',
@@ -1088,14 +1088,14 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary + '20',
+    backgroundColor: LightTheme.primary + '20',
     alignItems: 'center',
     justifyContent: 'center',
   },
   memberInitial: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   memberDetails: {
     marginLeft: 12,
@@ -1104,11 +1104,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 15,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   memberRole: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   memberActions: {
@@ -1127,22 +1127,22 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   errorText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
   loadingText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 12,
   },
   primaryButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
@@ -1155,7 +1155,7 @@ const styles = StyleSheet.create({
   },
   secondaryButton: {
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: LightTheme.primary,
     borderRadius: 12,
     paddingVertical: 14,
     paddingHorizontal: 32,
@@ -1164,7 +1164,7 @@ const styles = StyleSheet.create({
   secondaryButtonText: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   emptyState: {
     alignItems: 'center',
@@ -1173,7 +1173,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 12,
   },
   loading: {

@@ -34,7 +34,7 @@ import {
   Clock,
   Send,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth, UserRole } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -66,7 +66,7 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
       case "leader":
         return <Shield size={14} color="#3B82F6" />;
       default:
-        return <User size={14} color={Colors.textSecondary} />;
+        return <User size={14} color={LightTheme.textSecondary} />;
     }
   };
 
@@ -79,7 +79,7 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
       case "leader":
         return "#3B82F6";
       default:
-        return Colors.textSecondary;
+        return LightTheme.textSecondary;
     }
   };
 
@@ -115,7 +115,7 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
           onPress={() => setShowMenu(true)}
           activeOpacity={0.7}
         >
-          <MoreVertical size={20} color={Colors.textSecondary} />
+          <MoreVertical size={20} color={LightTheme.textSecondary} />
         </TouchableOpacity>
       )}
 
@@ -133,7 +133,7 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
                 onAction("edit", user.id);
               }}
             >
-              <Edit size={18} color={Colors.text} />
+              <Edit size={18} color={LightTheme.text} />
               <Text style={styles.actionMenuText}>Edit Profile</Text>
             </TouchableOpacity>
             <TouchableOpacity
@@ -145,13 +145,13 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
             >
               {user.isActive ? (
                 <>
-                  <UserX size={18} color={Colors.warning} />
-                  <Text style={[styles.actionMenuText, { color: Colors.warning }]}>Suspend User</Text>
+                  <UserX size={18} color={LightTheme.warning} />
+                  <Text style={[styles.actionMenuText, { color: LightTheme.warning }]}>Suspend User</Text>
                 </>
               ) : (
                 <>
-                  <UserCheck size={18} color={Colors.success} />
-                  <Text style={[styles.actionMenuText, { color: Colors.success }]}>Activate User</Text>
+                  <UserCheck size={18} color={LightTheme.success} />
+                  <Text style={[styles.actionMenuText, { color: LightTheme.success }]}>Activate User</Text>
                 </>
               )}
             </TouchableOpacity>
@@ -162,8 +162,8 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
                 onAction("change_role", user.id);
               }}
             >
-              <Shield size={18} color={Colors.primary} />
-              <Text style={[styles.actionMenuText, { color: Colors.primary }]}>Change Role</Text>
+              <Shield size={18} color={LightTheme.primary} />
+              <Text style={[styles.actionMenuText, { color: LightTheme.primary }]}>Change Role</Text>
             </TouchableOpacity>
             <TouchableOpacity
               style={[styles.actionMenuItem, styles.actionMenuItemLast]}
@@ -172,8 +172,8 @@ function UserItem({ user, onAction, currentUserId, isSuperAdmin }: UserItemProps
                 onAction("delete", user.id);
               }}
             >
-              <Trash2 size={18} color={Colors.error} />
-              <Text style={[styles.actionMenuText, { color: Colors.error }]}>Delete User</Text>
+              <Trash2 size={18} color={LightTheme.error} />
+              <Text style={[styles.actionMenuText, { color: LightTheme.error }]}>Delete User</Text>
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
@@ -495,7 +495,7 @@ export default function UserManagement() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -511,7 +511,7 @@ export default function UserManagement() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>User Management</Text>
@@ -522,7 +522,7 @@ export default function UserManagement() {
             onPress={() => setShowInviteModal(true)}
             activeOpacity={0.7}
           >
-            <UserPlus size={20} color={Colors.textInverse} />
+            <UserPlus size={20} color={LightTheme.textInverse} />
           </TouchableOpacity>
         </View>
 
@@ -547,11 +547,11 @@ export default function UserManagement() {
 
         <View style={styles.searchRow}>
           <View style={styles.searchContainer}>
-            <Search size={18} color={Colors.textSecondary} />
+            <Search size={18} color={LightTheme.textSecondary} />
             <TextInput
               style={styles.searchInput}
               placeholder="Search users..."
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
               value={searchQuery}
               onChangeText={setSearchQuery}
             />
@@ -561,7 +561,7 @@ export default function UserManagement() {
             onPress={() => setShowFilters(!showFilters)}
             activeOpacity={0.7}
           >
-            <Filter size={18} color={showFilters ? Colors.primary : Colors.textSecondary} />
+            <Filter size={18} color={showFilters ? LightTheme.primary : LightTheme.textSecondary} />
           </TouchableOpacity>
         </View>
 
@@ -593,7 +593,7 @@ export default function UserManagement() {
 
       {usersQuery.isLoading || invitationsQuery.isLoading ? (
         <View style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={Colors.primary} />
+          <ActivityIndicator size="large" color={LightTheme.primary} />
         </View>
       ) : showInvitationsTab ? (
         <ScrollView
@@ -603,7 +603,7 @@ export default function UserManagement() {
         >
           {invitationsQuery.data?.length === 0 ? (
             <View style={styles.emptyState}>
-              <Mail size={48} color={Colors.textTertiary} />
+              <Mail size={48} color={LightTheme.textTertiary} />
               <Text style={styles.emptyStateText}>No pending invitations</Text>
               <Text style={styles.emptyStateSubtext}>Invite users to join ConveraServe</Text>
             </View>
@@ -626,21 +626,21 @@ export default function UserManagement() {
                 </View>
                 <View style={styles.invitationDetails}>
                   <View style={styles.invitationDetail}>
-                    <Shield size={14} color={Colors.textSecondary} />
+                    <Shield size={14} color={LightTheme.textSecondary} />
                     <Text style={styles.invitationDetailText}>
                       {invitation.role.replace("_", " ").toUpperCase()}
                     </Text>
                   </View>
                   {invitation.ministryNames && invitation.ministryNames.length > 0 && (
                     <View style={styles.invitationDetail}>
-                      <User size={14} color={Colors.textSecondary} />
+                      <User size={14} color={LightTheme.textSecondary} />
                       <Text style={styles.invitationDetailText}>
                         {invitation.ministryNames.join(", ")}
                       </Text>
                     </View>
                   )}
                   <View style={styles.invitationDetail}>
-                    <Clock size={14} color={Colors.textSecondary} />
+                    <Clock size={14} color={LightTheme.textSecondary} />
                     <Text style={styles.invitationDetailText}>
                       Invited by {invitation.invitedByName}
                     </Text>
@@ -654,7 +654,7 @@ export default function UserManagement() {
                       disabled={resendInvitationMutation.isPending}
                       activeOpacity={0.7}
                     >
-                      <Send size={14} color={Colors.primary} />
+                      <Send size={14} color={LightTheme.primary} />
                       <Text style={styles.resendButtonText}>Resend</Text>
                     </TouchableOpacity>
                     <TouchableOpacity
@@ -663,7 +663,7 @@ export default function UserManagement() {
                       disabled={cancelInvitationMutation.isPending}
                       activeOpacity={0.7}
                     >
-                      <X size={14} color={Colors.error} />
+                      <X size={14} color={LightTheme.error} />
                       <Text style={styles.cancelButtonText}>Cancel</Text>
                     </TouchableOpacity>
                   </View>
@@ -698,7 +698,7 @@ export default function UserManagement() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Edit User</Text>
               <TouchableOpacity onPress={() => setEditingUser(null)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -709,7 +709,7 @@ export default function UserManagement() {
                 value={editForm.name}
                 onChangeText={(text) => setEditForm({ ...editForm, name: text })}
                 placeholder="Enter name"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
               />
             </View>
 
@@ -720,7 +720,7 @@ export default function UserManagement() {
                 value={editForm.email}
                 onChangeText={(text) => setEditForm({ ...editForm, email: text })}
                 placeholder="Enter email"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 keyboardType="email-address"
                 autoCapitalize="none"
               />
@@ -733,7 +733,7 @@ export default function UserManagement() {
                 value={editForm.phone}
                 onChangeText={(text) => setEditForm({ ...editForm, phone: text })}
                 placeholder="Enter phone"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 keyboardType="phone-pad"
               />
             </View>
@@ -745,10 +745,10 @@ export default function UserManagement() {
               activeOpacity={0.7}
             >
               {updateProfileMutation.isPending ? (
-                <ActivityIndicator color={Colors.textInverse} />
+                <ActivityIndicator color={LightTheme.textInverse} />
               ) : (
                 <>
-                  <Check size={18} color={Colors.textInverse} />
+                  <Check size={18} color={LightTheme.textInverse} />
                   <Text style={styles.saveButtonText}>Save Changes</Text>
                 </>
               )}
@@ -785,7 +785,7 @@ export default function UserManagement() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Invite User</Text>
               <TouchableOpacity onPress={() => setShowInviteModal(false)}>
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -797,7 +797,7 @@ export default function UserManagement() {
                   value={inviteForm.name}
                   onChangeText={(text) => setInviteForm({ ...inviteForm, name: text })}
                   placeholder="Enter name"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                 />
               </View>
 
@@ -808,7 +808,7 @@ export default function UserManagement() {
                   value={inviteForm.email}
                   onChangeText={(text) => setInviteForm({ ...inviteForm, email: text })}
                   placeholder="Enter email"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="email-address"
                   autoCapitalize="none"
                 />
@@ -861,7 +861,7 @@ export default function UserManagement() {
                         ]}
                       >
                         {inviteForm.ministries.includes(ministry.id) && (
-                          <Check size={12} color={Colors.textInverse} />
+                          <Check size={12} color={LightTheme.textInverse} />
                         )}
                       </View>
                       <Text style={styles.ministryOptionText}>{ministry.name}</Text>
@@ -877,10 +877,10 @@ export default function UserManagement() {
                 activeOpacity={0.7}
               >
                 {inviteUserMutation.isPending ? (
-                  <ActivityIndicator color={Colors.textInverse} />
+                  <ActivityIndicator color={LightTheme.textInverse} />
                 ) : (
                   <>
-                    <Send size={18} color={Colors.textInverse} />
+                    <Send size={18} color={LightTheme.textInverse} />
                     <Text style={styles.saveButtonText}>Send Invitation</Text>
                   </>
                 )}
@@ -898,18 +898,18 @@ export default function UserManagement() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
     alignItems: "center",
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -920,7 +920,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -933,25 +933,25 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 10,
     borderRadius: 10,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
   },
   tabActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   tabText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   tabTextActive: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -962,11 +962,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   searchRow: {
@@ -977,7 +977,7 @@ const styles = StyleSheet.create({
     flex: 1,
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     gap: 8,
@@ -986,18 +986,18 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   filterButton: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
   filterButtonActive: {
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
   },
   filterRow: {
     marginTop: 12,
@@ -1006,19 +1006,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     marginRight: 8,
   },
   filterChipActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   filterChipText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontWeight: "500" as const,
   },
   filterChipTextActive: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   content: {
     flex: 1,
@@ -1029,7 +1029,7 @@ const styles = StyleSheet.create({
   userItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -1051,10 +1051,10 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   suspendedBadge: {
-    backgroundColor: Colors.error + "20",
+    backgroundColor: LightTheme.error + "20",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 10,
@@ -1062,11 +1062,11 @@ const styles = StyleSheet.create({
   suspendedText: {
     fontSize: 10,
     fontWeight: "600" as const,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   userEmail: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   userRoleRow: {
@@ -1093,7 +1093,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   actionMenu: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     overflow: "hidden",
     minWidth: 200,
@@ -1105,18 +1105,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     gap: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   actionMenuItemLast: {
     borderBottomWidth: 0,
   },
   actionMenuText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   modalContent: {
     flex: 1,
@@ -1131,7 +1131,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   formGroup: {
     marginBottom: 20,
@@ -1139,23 +1139,23 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 8,
   },
   formInput: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 14,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   saveButton: {
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     paddingVertical: 16,
     gap: 8,
@@ -1164,10 +1164,10 @@ const styles = StyleSheet.create({
   saveButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   roleModal: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     overflow: "hidden",
     minWidth: 200,
@@ -1175,20 +1175,20 @@ const styles = StyleSheet.create({
   roleModalTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   roleOption: {
     paddingVertical: 14,
     paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   roleOptionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   emptyState: {
     alignItems: "center",
@@ -1198,16 +1198,16 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   invitationItem: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -1224,11 +1224,11 @@ const styles = StyleSheet.create({
   invitationName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   invitationEmail: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   statusBadge: {
@@ -1237,18 +1237,18 @@ const styles = StyleSheet.create({
     borderRadius: 12,
   },
   statusPending: {
-    backgroundColor: Colors.warning + "20",
+    backgroundColor: LightTheme.warning + "20",
   },
   statusAccepted: {
-    backgroundColor: Colors.success + "20",
+    backgroundColor: LightTheme.success + "20",
   },
   statusExpired: {
-    backgroundColor: Colors.error + "20",
+    backgroundColor: LightTheme.error + "20",
   },
   statusText: {
     fontSize: 10,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   invitationDetails: {
     gap: 6,
@@ -1260,7 +1260,7 @@ const styles = StyleSheet.create({
   },
   invitationDetailText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   invitationActions: {
     flexDirection: "row",
@@ -1268,7 +1268,7 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   resendButton: {
     flexDirection: "row",
@@ -1277,12 +1277,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
   },
   resendButtonText: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   cancelButton: {
     flexDirection: "row",
@@ -1291,12 +1291,12 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     paddingHorizontal: 16,
     borderRadius: 8,
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
   },
   cancelButtonText: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   roleSelector: {
     flexDirection: "row",
@@ -1307,23 +1307,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   roleSelectorOptionActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   roleSelectorText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: "capitalize",
   },
   roleSelectorTextActive: {
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   formHint: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginBottom: 12,
   },
   ministryList: {
@@ -1336,23 +1336,23 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     paddingHorizontal: 14,
     borderRadius: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   ministryOptionActive: {
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: LightTheme.primary + "10",
   },
   ministryCheckbox: {
     width: 22,
     height: 22,
     borderRadius: 6,
     borderWidth: 2,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
     alignItems: "center",
     justifyContent: "center",
   },
   ministryOptionText: {
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
     flex: 1,
   },
 });

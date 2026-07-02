@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Crown, Shield, User, Mail, Phone } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { MinistryMember, Ministry } from '@/types';
 import { MinistryDots } from '@/components/MinistryIndicators';
 
@@ -17,9 +17,9 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
   const getRoleIcon = () => {
     switch (member.role) {
       case 'leader':
-        return <Crown size={14} color={Colors.warning} />;
+        return <Crown size={14} color={LightTheme.warning} />;
       case 'admin':
-        return <Shield size={14} color={Colors.tertiary} />;
+        return <Shield size={14} color={LightTheme.tertiary} />;
       default:
         return null;
     }
@@ -27,9 +27,9 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
 
   const getRoleColor = () => {
     switch (member.role) {
-      case 'leader': return Colors.warning;
-      case 'admin': return Colors.tertiary;
-      default: return Colors.textTertiary;
+      case 'leader': return LightTheme.warning;
+      case 'admin': return LightTheme.tertiary;
+      default: return LightTheme.textTertiary;
     }
   };
 
@@ -45,7 +45,7 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
             <Image source={{ uri: member.avatar }} style={styles.compactAvatar} />
           ) : (
             <View style={[styles.compactAvatar, styles.avatarPlaceholder]}>
-              <User size={14} color={Colors.textTertiary} />
+              <User size={14} color={LightTheme.textTertiary} />
             </View>
           )}
           {ministries.length > 0 && (
@@ -80,7 +80,7 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
           <Image source={{ uri: member.avatar }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <User size={20} color={Colors.textTertiary} />
+            <User size={20} color={LightTheme.textTertiary} />
           </View>
         )}
         {ministries.length > 0 && (
@@ -122,13 +122,13 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
         <View style={styles.contactRow}>
           {member.email && (
             <View style={styles.contactItem}>
-              <Mail size={12} color={Colors.textTertiary} />
+              <Mail size={12} color={LightTheme.textTertiary} />
               <Text style={styles.contactText} numberOfLines={1}>{member.email}</Text>
             </View>
           )}
           {!!member.phone && (
             <View style={styles.contactItem}>
-              <Phone size={12} color={Colors.textTertiary} />
+              <Phone size={12} color={LightTheme.textTertiary} />
               <Text style={styles.contactText}>{member.phone}</Text>
             </View>
           )}
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -167,7 +167,7 @@ const styles = StyleSheet.create({
     right: -4,
   },
   avatarPlaceholder: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   roleBadge: {
     flexDirection: 'row',
@@ -211,7 +211,7 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   compactContainer: {
     alignItems: 'center',
@@ -238,7 +238,7 @@ const styles = StyleSheet.create({
   compactName: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     textAlign: 'center',
   },
   compactRoleRow: {
@@ -278,7 +278,7 @@ const styles = StyleSheet.create({
   },
   moreMinistries: {
     fontSize: 10,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     fontWeight: '500' as const,
   },
 });

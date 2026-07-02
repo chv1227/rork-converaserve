@@ -41,7 +41,7 @@ import {
   Globe,
   Clock,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -142,7 +142,7 @@ function TemplateCard({ template, onSelect }: TemplateCardProps) {
           </Text>
           <View style={styles.templateMeta}>
             <View style={styles.metaItem}>
-              <Clock size={12} color={Colors.textTertiary} />
+              <Clock size={12} color={LightTheme.textTertiary} />
               <Text style={styles.metaText}>
                 {template.defaultSchedule[0]?.day} {template.defaultSchedule[0]?.time}
               </Text>
@@ -174,7 +174,7 @@ function MemberItem({ member, onRemove }: MemberItemProps) {
         <Text style={styles.memberEmail}>{member.email}</Text>
       </View>
       <TouchableOpacity style={styles.removeMemberButton} onPress={onRemove} activeOpacity={0.7}>
-        <UserMinus size={18} color={Colors.error} />
+        <UserMinus size={18} color={LightTheme.error} />
       </TouchableOpacity>
     </View>
   );
@@ -517,7 +517,7 @@ export default function AdminMinistriesScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <Users size={48} color={Colors.textTertiary} />
+        <Users size={48} color={LightTheme.textTertiary} />
         <Text style={[styles.emptyTitle, { marginTop: 16 }]}>No Church Selected</Text>
         <Text style={styles.emptySubtitle}>Please select a church organization first</Text>
         <TouchableOpacity
@@ -551,7 +551,7 @@ export default function AdminMinistriesScreen() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Ministry Management</Text>
@@ -567,11 +567,11 @@ export default function AdminMinistriesScreen() {
         </View>
 
         <View style={styles.searchContainer}>
-          <Search size={18} color={Colors.textSecondary} />
+          <Search size={18} color={LightTheme.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search ministries..."
-            placeholderTextColor={Colors.textTertiary}
+            placeholderTextColor={LightTheme.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
@@ -584,7 +584,7 @@ export default function AdminMinistriesScreen() {
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.infoCard}>
-          <Palette size={20} color={Colors.primary} />
+          <Palette size={20} color={LightTheme.primary} />
           <Text style={styles.infoText}>
             Create, edit, and manage ministries. Assign colors that appear on user profiles to indicate ministry affiliations.
           </Text>
@@ -592,11 +592,11 @@ export default function AdminMinistriesScreen() {
 
         {ministriesQuery.isLoading ? (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={LightTheme.primary} />
           </View>
         ) : filteredMinistries.length === 0 ? (
           <View style={styles.emptyState}>
-            <Users size={48} color={Colors.textTertiary} />
+            <Users size={48} color={LightTheme.textTertiary} />
             <Text style={styles.emptyTitle}>
               {searchQuery ? "No Results" : "No Ministries"}
             </Text>
@@ -638,7 +638,7 @@ export default function AdminMinistriesScreen() {
                         {ministry.description}
                       </Text>
                       <View style={styles.ministryMeta}>
-                        <Users size={12} color={Colors.textTertiary} />
+                        <Users size={12} color={LightTheme.textTertiary} />
                         <Text style={styles.memberCount}>
                           {ministry.memberCount} members
                         </Text>
@@ -657,7 +657,7 @@ export default function AdminMinistriesScreen() {
                       }}
                       activeOpacity={0.7}
                     >
-                      <Edit2 size={16} color={Colors.primary} />
+                      <Edit2 size={16} color={LightTheme.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={[styles.actionButton, styles.deleteButton]}
@@ -668,9 +668,9 @@ export default function AdminMinistriesScreen() {
                       activeOpacity={0.7}
                       disabled={deleteMutation.isPending}
                     >
-                      <Trash2 size={16} color={Colors.error} />
+                      <Trash2 size={16} color={LightTheme.error} />
                     </TouchableOpacity>
-                    <ChevronRight size={18} color={Colors.textTertiary} />
+                    <ChevronRight size={18} color={LightTheme.textTertiary} />
                   </View>
                 </TouchableOpacity>
               );
@@ -698,7 +698,7 @@ export default function AdminMinistriesScreen() {
                 onPress={resetForm}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -710,7 +710,7 @@ export default function AdminMinistriesScreen() {
                   value={formData.name}
                   onChangeText={(text) => setFormData({ ...formData, name: text })}
                   placeholder="e.g., Youth Ministry"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                 />
               </View>
 
@@ -721,7 +721,7 @@ export default function AdminMinistriesScreen() {
                   value={formData.description}
                   onChangeText={(text) => setFormData({ ...formData, description: text })}
                   placeholder="Brief description of the ministry..."
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   multiline
                   numberOfLines={3}
                   textAlignVertical="top"
@@ -783,7 +783,7 @@ export default function AdminMinistriesScreen() {
         <View style={[styles.membersModalContainer, { paddingTop: insets.top + 20 }]}>
           <View style={styles.membersModalHeader}>
             <TouchableOpacity onPress={() => setSelectedMinistryId(null)}>
-              <X size={24} color={Colors.text} />
+              <X size={24} color={LightTheme.text} />
             </TouchableOpacity>
             <Text style={styles.membersModalTitle}>{selectedMinistry?.name}</Text>
             <TouchableOpacity
@@ -809,7 +809,7 @@ export default function AdminMinistriesScreen() {
               <View style={styles.ministryDetailInfo}>
                 <Text style={styles.ministryDetailDescription}>{selectedMinistry.description}</Text>
                 <View style={styles.ministryDetailStats}>
-                  <Users size={16} color={Colors.textSecondary} />
+                  <Users size={16} color={LightTheme.textSecondary} />
                   <Text style={styles.ministryDetailStatText}>
                     {selectedMinistry.memberCount} members
                   </Text>
@@ -823,7 +823,7 @@ export default function AdminMinistriesScreen() {
                 }}
                 activeOpacity={0.7}
               >
-                <Edit2 size={16} color={Colors.primary} />
+                <Edit2 size={16} color={LightTheme.primary} />
                 <Text style={styles.editMinistryButtonText}>Edit</Text>
               </TouchableOpacity>
             </View>
@@ -832,7 +832,7 @@ export default function AdminMinistriesScreen() {
           <Text style={styles.sectionTitle}>Members</Text>
 
           {membersQuery.isLoading ? (
-            <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 20 }} />
+            <ActivityIndicator size="small" color={LightTheme.primary} style={{ marginTop: 20 }} />
           ) : membersQuery.data && membersQuery.data.length > 0 ? (
             <ScrollView style={styles.membersList} showsVerticalScrollIndicator={false}>
               {membersQuery.data.map((member) => (
@@ -846,7 +846,7 @@ export default function AdminMinistriesScreen() {
             </ScrollView>
           ) : (
             <View style={styles.emptyMembers}>
-              <Users size={40} color={Colors.textTertiary} />
+              <Users size={40} color={LightTheme.textTertiary} />
               <Text style={styles.emptyMembersText}>No members in this ministry</Text>
             </View>
           )}
@@ -863,7 +863,7 @@ export default function AdminMinistriesScreen() {
         <View style={[styles.templateModalContainer, { paddingTop: insets.top + 20 }]}>
           <View style={styles.templateModalHeader}>
             <TouchableOpacity onPress={() => setTemplateModalVisible(false)}>
-              <X size={24} color={Colors.text} />
+              <X size={24} color={LightTheme.text} />
             </TouchableOpacity>
             <Text style={styles.templateModalTitle}>Choose a Template</Text>
             <View style={{ width: 24 }} />
@@ -874,17 +874,17 @@ export default function AdminMinistriesScreen() {
           </Text>
 
           <View style={styles.templateSearchContainer}>
-            <Search size={18} color={Colors.textSecondary} />
+            <Search size={18} color={LightTheme.textSecondary} />
             <TextInput
               style={styles.templateSearchInput}
               placeholder="Search templates..."
-              placeholderTextColor={Colors.textTertiary}
+              placeholderTextColor={LightTheme.textTertiary}
               value={templateSearchQuery}
               onChangeText={setTemplateSearchQuery}
             />
             {templateSearchQuery.length > 0 && (
               <TouchableOpacity onPress={() => setTemplateSearchQuery("")}>
-                <X size={18} color={Colors.textSecondary} />
+                <X size={18} color={LightTheme.textSecondary} />
               </TouchableOpacity>
             )}
           </View>
@@ -923,7 +923,7 @@ export default function AdminMinistriesScreen() {
           <ScrollView style={styles.templatesScroll} showsVerticalScrollIndicator={false}>
             {filteredTemplates.length === 0 ? (
               <View style={styles.emptyTemplates}>
-                <Search size={40} color={Colors.textTertiary} />
+                <Search size={40} color={LightTheme.textTertiary} />
                 <Text style={styles.emptyTemplatesText}>No templates found</Text>
               </View>
             ) : (
@@ -948,7 +948,7 @@ export default function AdminMinistriesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
@@ -956,14 +956,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -974,7 +974,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -985,25 +985,25 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   addButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     gap: 8,
@@ -1012,7 +1012,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   content: {
     flex: 1,
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   infoCard: {
     flexDirection: "row",
     alignItems: "flex-start",
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: LightTheme.primary + "10",
     borderRadius: 12,
     padding: 16,
     gap: 12,
@@ -1032,7 +1032,7 @@ const styles = StyleSheet.create({
   infoText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.text,
+    color: LightTheme.text,
     lineHeight: 20,
   },
   loadingContainer: {
@@ -1046,19 +1046,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 8,
     textAlign: "center",
   },
   createFirstButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 24,
@@ -1074,7 +1074,7 @@ const styles = StyleSheet.create({
     gap: 12,
   },
   ministryCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     flexDirection: "row",
@@ -1098,12 +1098,12 @@ const styles = StyleSheet.create({
   ministryName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 4,
   },
   ministryDescription: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 18,
     marginBottom: 8,
   },
@@ -1114,7 +1114,7 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginRight: 8,
   },
   colorBadge: {
@@ -1137,12 +1137,12 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 10,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
   },
   deleteButton: {
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
   },
   modalOverlay: {
     flex: 1,
@@ -1150,7 +1150,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -1165,13 +1165,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   modalCloseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1184,18 +1184,18 @@ const styles = StyleSheet.create({
   formLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   formInput: {
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   formTextArea: {
     minHeight: 80,
@@ -1228,7 +1228,7 @@ const styles = StyleSheet.create({
     gap: 10,
     marginTop: 16,
     padding: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderRadius: 10,
   },
   previewDot: {
@@ -1239,11 +1239,11 @@ const styles = StyleSheet.create({
   previewColorText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     fontFamily: Platform.OS === "ios" ? "Menlo" : "monospace",
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: "center",
@@ -1259,7 +1259,7 @@ const styles = StyleSheet.create({
   },
   membersModalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     padding: 20,
   },
   membersModalHeader: {
@@ -1271,15 +1271,15 @@ const styles = StyleSheet.create({
   membersModalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   viewButton: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   ministryDetailHeader: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -1300,7 +1300,7 @@ const styles = StyleSheet.create({
   },
   ministryDetailDescription: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 20,
   },
   ministryDetailStats: {
@@ -1310,12 +1310,12 @@ const styles = StyleSheet.create({
   },
   ministryDetailStatText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   editMinistryButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     paddingHorizontal: 12,
     paddingVertical: 8,
     borderRadius: 8,
@@ -1324,12 +1324,12 @@ const styles = StyleSheet.create({
   editMinistryButtonText: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
@@ -1340,7 +1340,7 @@ const styles = StyleSheet.create({
   memberItem: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 12,
     marginBottom: 8,
@@ -1357,18 +1357,18 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   memberEmail: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   removeMemberButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1381,11 +1381,11 @@ const styles = StyleSheet.create({
   },
   emptyMembersText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   templateModalContainer: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   templateModalHeader: {
     flexDirection: "row",
@@ -1397,11 +1397,11 @@ const styles = StyleSheet.create({
   templateModalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   templateModalSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     paddingHorizontal: 20,
     marginBottom: 16,
@@ -1409,7 +1409,7 @@ const styles = StyleSheet.create({
   templateSearchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     marginHorizontal: 20,
@@ -1420,7 +1420,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   categoriesScroll: {
     maxHeight: 44,
@@ -1434,15 +1434,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   categoryChipActive: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   categoryChipText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   categoryChipTextActive: {
     color: "#fff",
@@ -1455,7 +1455,7 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   templateCard: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -1488,18 +1488,18 @@ const styles = StyleSheet.create({
   templateName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   templateCategory: {
     fontSize: 11,
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: "500" as const,
     marginBottom: 6,
   },
   templateDescription: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 18,
     marginBottom: 10,
   },
@@ -1514,7 +1514,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 11,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   emptyTemplates: {
     alignItems: "center",
@@ -1523,6 +1523,6 @@ const styles = StyleSheet.create({
   },
   emptyTemplatesText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
 });

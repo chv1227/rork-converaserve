@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { Image } from 'expo-image';
 import { Heart, User, Check } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { PrayerRequest } from '@/types';
 
 interface PrayerRequestCardProps {
@@ -33,7 +33,7 @@ export default function PrayerRequestCard({ request, onPress, onPray }: PrayerRe
     >
       {request.isAnswered && (
         <View style={styles.answeredBadge}>
-          <Check size={12} color={Colors.success} />
+          <Check size={12} color={LightTheme.success} />
           <Text style={styles.answeredText}>Answered</Text>
         </View>
       )}
@@ -41,13 +41,13 @@ export default function PrayerRequestCard({ request, onPress, onPray }: PrayerRe
       <View style={styles.header}>
         {request.isAnonymous ? (
           <View style={[styles.avatar, styles.anonymousAvatar]}>
-            <User size={18} color={Colors.textTertiary} />
+            <User size={18} color={LightTheme.textTertiary} />
           </View>
         ) : request.authorAvatar ? (
           <Image source={{ uri: request.authorAvatar }} style={styles.avatar} />
         ) : (
           <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <User size={18} color={Colors.textTertiary} />
+            <User size={18} color={LightTheme.textTertiary} />
           </View>
         )}
         <View style={styles.authorInfo}>
@@ -69,8 +69,8 @@ export default function PrayerRequestCard({ request, onPress, onPray }: PrayerRe
         >
           <Heart 
             size={16} 
-            color={request.isAnswered ? Colors.success : Colors.primary} 
-            fill={request.isAnswered ? Colors.success : 'transparent'}
+            color={request.isAnswered ? LightTheme.success : LightTheme.primary} 
+            fill={request.isAnswered ? LightTheme.success : 'transparent'}
           />
           <Text style={[styles.prayButtonText, request.isAnswered && styles.prayButtonTextAnswered]}>
             {request.prayerCount} praying
@@ -83,7 +83,7 @@ export default function PrayerRequestCard({ request, onPress, onPray }: PrayerRe
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -93,18 +93,18 @@ const styles = StyleSheet.create({
     shadowRadius: 8,
     elevation: 2,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.tertiary,
+    borderLeftColor: LightTheme.tertiary,
   },
   answeredContainer: {
-    borderLeftColor: Colors.success,
-    backgroundColor: Colors.successLight,
+    borderLeftColor: LightTheme.success,
+    backgroundColor: LightTheme.successLight,
   },
   answeredBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginBottom: 12,
-    backgroundColor: Colors.success + '20',
+    backgroundColor: LightTheme.success + '20',
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -113,7 +113,7 @@ const styles = StyleSheet.create({
   answeredText: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: Colors.success,
+    color: LightTheme.success,
   },
   header: {
     flexDirection: 'row',
@@ -127,12 +127,12 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatarPlaceholder: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   anonymousAvatar: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -142,49 +142,49 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   timestamp: {
     fontSize: 13,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginTop: 2,
   },
   title: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 6,
   },
   content: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 20,
     marginBottom: 12,
   },
   footer: {
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: Colors.borderLight,
+    borderTopColor: LightTheme.borderLight,
   },
   prayButton: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 6,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     alignSelf: 'flex-start',
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
   },
   prayButtonAnswered: {
-    backgroundColor: Colors.success + '20',
+    backgroundColor: LightTheme.success + '20',
   },
   prayButtonText: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   prayButtonTextAnswered: {
-    color: Colors.success,
+    color: LightTheme.success,
   },
 });

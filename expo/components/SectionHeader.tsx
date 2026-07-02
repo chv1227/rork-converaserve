@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 
 interface SectionHeaderProps {
   title: string;
@@ -21,7 +21,7 @@ export default function SectionHeader({ title, actionText, onActionPress }: Sect
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
           <Text style={styles.actionText}>{actionText}</Text>
-          <ChevronRight size={16} color={Colors.primary} />
+          <ChevronRight size={16} color={LightTheme.primary} />
         </TouchableOpacity>
       )}
     </View>
@@ -39,7 +39,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   action: {
     flexDirection: 'row',
@@ -49,6 +49,6 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
 });

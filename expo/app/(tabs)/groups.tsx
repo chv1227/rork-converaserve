@@ -41,7 +41,7 @@ import {
   Star,
   TrendingUp,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -199,12 +199,12 @@ function MinistryCardAnimated({
             >
               {isMember ? (
                 <>
-                  <Check size={14} color={Colors.primary} />
+                  <Check size={14} color={LightTheme.primary} />
                   <Text style={styles.actionTextMember}>Joined</Text>
                 </>
               ) : isPending ? (
                 <>
-                  <Clock size={14} color={Colors.warning} />
+                  <Clock size={14} color={LightTheme.warning} />
                   <Text style={styles.actionTextPending}>Pending</Text>
                 </>
               ) : (
@@ -312,10 +312,10 @@ function CompactMinistryCard({
         </View>
         {isMember && (
           <View style={styles.memberBadge}>
-            <Check size={12} color={Colors.success} />
+            <Check size={12} color={LightTheme.success} />
           </View>
         )}
-        <ChevronRight size={18} color={Colors.textTertiary} />
+        <ChevronRight size={18} color={LightTheme.textTertiary} />
       </TouchableOpacity>
     </Animated.View>
   );
@@ -558,7 +558,7 @@ export default function GroupsScreen() {
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <X size={18} color={Colors.textTertiary} />
+              <X size={18} color={LightTheme.textTertiary} />
             </TouchableOpacity>
           )}
         </View>
@@ -572,13 +572,13 @@ export default function GroupsScreen() {
           <RefreshControl
             refreshing={localRefreshing || isRefreshing}
             onRefresh={onRefresh}
-            tintColor={Colors.primary}
+            tintColor={LightTheme.primary}
           />
         }
       >
         {isLoading && ministries.length === 0 && (
           <View style={styles.loadingContainer}>
-            <ActivityIndicator size="large" color={Colors.primary} />
+            <ActivityIndicator size="large" color={LightTheme.primary} />
             <Text style={styles.loadingText}>Loading ministries...</Text>
           </View>
         )}
@@ -732,7 +732,7 @@ export default function GroupsScreen() {
                 style={styles.closeButton}
                 onPress={() => setShowCreateModal(false)}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -741,7 +741,7 @@ export default function GroupsScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Youth Ministry"
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newMinistryName}
                 onChangeText={setNewMinistryName}
               />
@@ -750,7 +750,7 @@ export default function GroupsScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Describe the purpose of this ministry (min 10 characters)..."
-                placeholderTextColor={Colors.textTertiary}
+                placeholderTextColor={LightTheme.textTertiary}
                 value={newMinistryDescription}
                 onChangeText={setNewMinistryDescription}
                 multiline
@@ -792,7 +792,7 @@ export default function GroupsScreen() {
                     >
                       <IconComponent
                         size={24}
-                        color={selectedIcon === item.name ? selectedColor : Colors.textSecondary}
+                        color={selectedIcon === item.name ? selectedColor : LightTheme.textSecondary}
                       />
                     </TouchableOpacity>
                   );
@@ -848,14 +848,14 @@ export default function GroupsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -866,11 +866,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   subtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   headerActions: {
@@ -882,7 +882,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -890,14 +890,14 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 14,
     gap: 10,
@@ -906,7 +906,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   content: {
     flex: 1,
@@ -921,7 +921,7 @@ const styles = StyleSheet.create({
   },
   loadingText: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   emptyState: {
     alignItems: "center",
@@ -931,7 +931,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
@@ -939,12 +939,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center",
     maxWidth: 280,
     lineHeight: 22,
@@ -952,7 +952,7 @@ const styles = StyleSheet.create({
   emptyCreateButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingHorizontal: 24,
     paddingVertical: 14,
     borderRadius: 28,
@@ -971,12 +971,12 @@ const styles = StyleSheet.create({
   noResultsTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginTop: 16,
   },
   noResultsSubtitle: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 4,
   },
   section: {
@@ -994,11 +994,11 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   cardWrapper: {
     marginBottom: 16,
@@ -1007,7 +1007,7 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 20,
     overflow: "hidden",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.1,
@@ -1046,7 +1046,7 @@ const styles = StyleSheet.create({
     gap: 5,
   },
   cardActionJoin: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   cardActionMember: {
     backgroundColor: "#fff",
@@ -1054,7 +1054,7 @@ const styles = StyleSheet.create({
   cardActionPending: {
     backgroundColor: "rgba(245, 158, 11, 0.2)",
     borderWidth: 1,
-    borderColor: Colors.warning,
+    borderColor: LightTheme.warning,
   },
   actionTextJoin: {
     fontSize: 13,
@@ -1064,12 +1064,12 @@ const styles = StyleSheet.create({
   actionTextMember: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   actionTextPending: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: Colors.warning,
+    color: LightTheme.warning,
   },
   cardInfo: {
     gap: 6,
@@ -1120,7 +1120,7 @@ const styles = StyleSheet.create({
   compactCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 14,
     padding: 14,
     shadowColor: "#000",
@@ -1143,29 +1143,29 @@ const styles = StyleSheet.create({
   compactTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 2,
   },
   compactMeta: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   memberBadge: {
     width: 24,
     height: 24,
     borderRadius: 12,
-    backgroundColor: Colors.success + "20",
+    backgroundColor: LightTheme.success + "20",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8,
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: Colors.overlay,
+    backgroundColor: LightTheme.overlay,
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     maxHeight: "90%",
@@ -1176,18 +1176,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 20,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   closeButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1197,18 +1197,18 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 8,
     marginTop: 16,
   },
   input: {
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 12,
     padding: 14,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   textArea: {
     minHeight: 80,
@@ -1244,7 +1244,7 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 14,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
@@ -1257,7 +1257,7 @@ const styles = StyleSheet.create({
   previewCard: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 14,
     padding: 14,
     borderLeftWidth: 4,
@@ -1276,11 +1276,11 @@ const styles = StyleSheet.create({
   previewName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   previewDesc: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginTop: 2,
   },
   submitButton: {

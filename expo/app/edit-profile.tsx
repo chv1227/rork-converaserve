@@ -16,7 +16,7 @@ import { Image } from "expo-image";
 import { useRouter } from "expo-router";
 import { ArrowLeft, Camera, User, Phone, Mail, Users, Check, ImageIcon, X } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import Colors from "@/constants/colors";
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { Ministry } from "@/types";
@@ -240,7 +240,7 @@ export default function EditProfileScreen() {
   if (!user) {
     return (
       <View style={[styles.container, styles.centered]}>
-        <ActivityIndicator size="large" color={Colors.primary} />
+        <ActivityIndicator size="large" color={LightTheme.primary} />
       </View>
     );
   }
@@ -253,7 +253,7 @@ export default function EditProfileScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={Colors.text} />
+          <ArrowLeft size={24} color={LightTheme.text} />
         </TouchableOpacity>
         <Text style={styles.title}>Edit Profile</Text>
         <TouchableOpacity
@@ -302,7 +302,7 @@ export default function EditProfileScreen() {
                 onPress={handleImagePickerPress}
                 activeOpacity={0.7}
               >
-                <Camera size={18} color={Colors.primary} />
+                <Camera size={18} color={LightTheme.primary} />
                 <Text style={styles.photoOptionText}>
                   {Platform.OS === "web" ? "Upload Photo" : "Take Photo"}
                 </Text>
@@ -313,7 +313,7 @@ export default function EditProfileScreen() {
                 onPress={() => setShowAvatarPicker(!showAvatarPicker)}
                 activeOpacity={0.7}
               >
-                <ImageIcon size={18} color={Colors.primary} />
+                <ImageIcon size={18} color={LightTheme.primary} />
                 <Text style={styles.photoOptionText}>Choose Avatar</Text>
               </TouchableOpacity>
             </View>
@@ -344,13 +344,13 @@ export default function EditProfileScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Full Name</Text>
               <View style={styles.inputContainer}>
-                <User size={20} color={Colors.textSecondary} />
+                <User size={20} color={LightTheme.textSecondary} />
                 <TextInput
                   style={styles.input}
                   value={name}
                   onChangeText={setName}
                   placeholder="Enter your full name"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   autoCapitalize="words"
                 />
               </View>
@@ -359,13 +359,13 @@ export default function EditProfileScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={[styles.inputContainer, styles.inputDisabled]}>
-                <Mail size={20} color={Colors.textTertiary} />
+                <Mail size={20} color={LightTheme.textTertiary} />
                 <TextInput
                   style={[styles.input, styles.inputTextDisabled]}
                   value={user.email}
                   editable={false}
                   placeholder="Email address"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                 />
               </View>
               <Text style={styles.helperText}>Email cannot be changed</Text>
@@ -374,13 +374,13 @@ export default function EditProfileScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone Number</Text>
               <View style={styles.inputContainer}>
-                <Phone size={20} color={Colors.textSecondary} />
+                <Phone size={20} color={LightTheme.textSecondary} />
                 <TextInput
                   style={styles.input}
                   value={phone}
                   onChangeText={setPhone}
                   placeholder="Enter your phone number"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   keyboardType="phone-pad"
                 />
               </View>
@@ -389,7 +389,7 @@ export default function EditProfileScreen() {
 
           <View style={styles.ministrySection}>
             <View style={styles.ministrySectionHeader}>
-              <Users size={20} color={Colors.primary} />
+              <Users size={20} color={LightTheme.primary} />
               <Text style={styles.ministrySectionTitle}>Ministry Affiliations</Text>
             </View>
             <Text style={styles.ministrySectionSubtitle}>
@@ -397,7 +397,7 @@ export default function EditProfileScreen() {
             </Text>
             
             {ministriesQuery.isLoading ? (
-              <ActivityIndicator size="small" color={Colors.primary} style={{ marginTop: 16 }} />
+              <ActivityIndicator size="small" color={LightTheme.primary} style={{ marginTop: 16 }} />
             ) : availableMinistries.length === 0 ? (
               <Text style={styles.noMinistriesText}>No ministries available</Text>
             ) : (
@@ -464,7 +464,7 @@ export default function EditProfileScreen() {
                 onPress={handleCancelPreview}
                 activeOpacity={0.7}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -521,21 +521,21 @@ export default function EditProfileScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   centered: {
     justifyContent: "center",
     alignItems: "center",
   },
   header: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     flexDirection: "row",
     alignItems: "center",
     justifyContent: "space-between",
     paddingHorizontal: 16,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   backButton: {
     width: 40,
@@ -543,15 +543,15 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   title: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   saveButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
@@ -584,7 +584,7 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 60,
     borderWidth: 4,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   cameraOverlay: {
     position: "absolute",
@@ -593,15 +593,15 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 3,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   changePhotoText: {
     fontSize: 14,
-    color: Colors.primary,
+    color: LightTheme.primary,
     marginTop: 8,
     fontWeight: "500" as const,
   },
@@ -614,20 +614,20 @@ const styles = StyleSheet.create({
     flexDirection: "row" as const,
     alignItems: "center" as const,
     gap: 6,
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
     borderWidth: 1,
-    borderColor: Colors.primary + "30",
+    borderColor: LightTheme.primary + "30",
   },
   photoOptionText: {
     fontSize: 13,
-    color: Colors.primary,
+    color: LightTheme.primary,
     fontWeight: "500" as const,
   },
   avatarPicker: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -635,7 +635,7 @@ const styles = StyleSheet.create({
   pickerTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 12,
   },
   avatarGrid: {
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
     borderColor: "transparent",
   },
   avatarOptionSelected: {
-    borderColor: Colors.primary,
+    borderColor: LightTheme.primary,
   },
   avatarOptionImage: {
     width: 56,
@@ -666,57 +666,57 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginLeft: 4,
   },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     gap: 12,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   inputDisabled: {
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   input: {
     flex: 1,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   inputTextDisabled: {
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
   },
   helperText: {
     fontSize: 12,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     marginLeft: 4,
   },
   infoCard: {
-    backgroundColor: Colors.primary + "10",
+    backgroundColor: LightTheme.primary + "10",
     borderRadius: 12,
     padding: 16,
     marginTop: 24,
     borderLeftWidth: 4,
-    borderLeftColor: Colors.primary,
+    borderLeftColor: LightTheme.primary,
   },
   infoTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
     marginBottom: 4,
   },
   infoText: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 20,
   },
   ministrySection: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     padding: 16,
     marginTop: 24,
@@ -730,17 +730,17 @@ const styles = StyleSheet.create({
   ministrySectionTitle: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   ministrySectionSubtitle: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 18,
     marginBottom: 16,
   },
   noMinistriesText: {
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     fontStyle: "italic",
     textAlign: "center",
     paddingVertical: 16,
@@ -756,9 +756,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     borderWidth: 1.5,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
     gap: 8,
   },
   ministryDot: {
@@ -768,7 +768,7 @@ const styles = StyleSheet.create({
   },
   ministryChipText: {
     fontSize: 13,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   checkIcon: {
     width: 16,
@@ -785,7 +785,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   previewModal: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 20,
     width: "100%" as const,
     maxWidth: 360,
@@ -800,13 +800,13 @@ const styles = StyleSheet.create({
   previewTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   closeButton: {
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     alignItems: "center" as const,
     justifyContent: "center" as const,
   },
@@ -819,11 +819,11 @@ const styles = StyleSheet.create({
     height: 200,
     borderRadius: 100,
     borderWidth: 4,
-    borderColor: Colors.primary + "30",
+    borderColor: LightTheme.primary + "30",
   },
   previewHint: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: "center" as const,
     marginBottom: 20,
   },
@@ -835,21 +835,21 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
     alignItems: "center" as const,
     justifyContent: "center" as const,
   },
   cancelButtonText: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   confirmButton: {
     flex: 1,
     flexDirection: "row" as const,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     alignItems: "center" as const,
     justifyContent: "center" as const,
     gap: 8,

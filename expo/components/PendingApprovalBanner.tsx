@@ -1,7 +1,7 @@
 import React from "react";
 import { View, Text, StyleSheet, Platform } from "react-native";
 import { Clock, ShieldAlert } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 
 interface PendingApprovalBannerProps {
   type?: "pending" | "suspended";
@@ -93,7 +93,7 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     lineHeight: 17,
   },
 });

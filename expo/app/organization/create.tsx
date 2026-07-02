@@ -16,7 +16,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Mail, Lock, Eye, EyeOff, User, Phone, LogIn, UserPlus, X, Send, RefreshCw } from 'lucide-react-native';
-import Colors from '@/constants/colors';
+import { LightTheme } from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 
@@ -343,7 +343,7 @@ export default function CreateOrganizationScreen() {
             style={styles.backButton}
             onPress={() => router.back()}
           >
-            <ArrowLeft size={24} color={Colors.text} />
+            <ArrowLeft size={24} color={LightTheme.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Create Church</Text>
           <View style={styles.placeholder} />
@@ -355,7 +355,7 @@ export default function CreateOrganizationScreen() {
           keyboardShouldPersistTaps="handled"
         >
           <View style={styles.iconContainer}>
-            <Building2 size={48} color={Colors.primary} />
+            <Building2 size={48} color={LightTheme.primary} />
           </View>
 
           <Text style={styles.title}>Create Your Church</Text>
@@ -369,7 +369,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Grace Community Church"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -381,7 +381,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Tell us about your church..."
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -395,7 +395,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="123 Faith Avenue, City, State"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={address}
                 onChangeText={setAddress}
               />
@@ -406,7 +406,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="+1 (555) 123-4567"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={phone}
                 onChangeText={setPhone}
                 keyboardType="phone-pad"
@@ -418,7 +418,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="info@yourchurch.org"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
@@ -431,7 +431,7 @@ export default function CreateOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="https://yourchurch.org"
-                placeholderTextColor={Colors.textSecondary}
+                placeholderTextColor={LightTheme.textSecondary}
                 value={website}
                 onChangeText={setWebsite}
                 keyboardType="url"
@@ -495,7 +495,7 @@ export default function CreateOrganizationScreen() {
                 }}
                 style={styles.closeButton}
               >
-                <X size={24} color={Colors.text} />
+                <X size={24} color={LightTheme.text} />
               </TouchableOpacity>
             </View>
 
@@ -507,7 +507,7 @@ export default function CreateOrganizationScreen() {
                   setAuthError('');
                 }}
               >
-                <LogIn size={18} color={authMode === 'signin' ? Colors.primary : Colors.textSecondary} />
+                <LogIn size={18} color={authMode === 'signin' ? LightTheme.primary : LightTheme.textSecondary} />
                 <Text style={[styles.authTabText, authMode === 'signin' && styles.authTabTextActive]}>
                   Sign In
                 </Text>
@@ -519,7 +519,7 @@ export default function CreateOrganizationScreen() {
                   setAuthError('');
                 }}
               >
-                <UserPlus size={18} color={authMode === 'signup' ? Colors.primary : Colors.textSecondary} />
+                <UserPlus size={18} color={authMode === 'signup' ? LightTheme.primary : LightTheme.textSecondary} />
                 <Text style={[styles.authTabText, authMode === 'signup' && styles.authTabTextActive]}>
                   Create Account
                 </Text>
@@ -536,12 +536,12 @@ export default function CreateOrganizationScreen() {
               {authMode === 'signup' && (
                 <View style={styles.authInputContainer}>
                   <View style={styles.authInputIcon}>
-                    <User size={20} color={Colors.textSecondary} />
+                    <User size={20} color={LightTheme.textSecondary} />
                   </View>
                   <TextInput
                     style={styles.authInput}
                     placeholder="Full name *"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={authName}
                     onChangeText={setAuthName}
                     autoCapitalize="words"
@@ -552,12 +552,12 @@ export default function CreateOrganizationScreen() {
 
               <View style={styles.authInputContainer}>
                 <View style={styles.authInputIcon}>
-                  <Mail size={20} color={Colors.textSecondary} />
+                  <Mail size={20} color={LightTheme.textSecondary} />
                 </View>
                 <TextInput
                   style={styles.authInput}
                   placeholder="Email address *"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={authEmail}
                   onChangeText={setAuthEmail}
                   keyboardType="email-address"
@@ -570,12 +570,12 @@ export default function CreateOrganizationScreen() {
               {authMode === 'signup' && (
                 <View style={styles.authInputContainer}>
                   <View style={styles.authInputIcon}>
-                    <Phone size={20} color={Colors.textSecondary} />
+                    <Phone size={20} color={LightTheme.textSecondary} />
                   </View>
                   <TextInput
                     style={styles.authInput}
                     placeholder="Phone number (optional)"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={authPhone}
                     onChangeText={setAuthPhone}
                     keyboardType="phone-pad"
@@ -586,12 +586,12 @@ export default function CreateOrganizationScreen() {
 
               <View style={styles.authInputContainer}>
                 <View style={styles.authInputIcon}>
-                  <Lock size={20} color={Colors.textSecondary} />
+                  <Lock size={20} color={LightTheme.textSecondary} />
                 </View>
                 <TextInput
                   style={styles.authInput}
                   placeholder="Password *"
-                  placeholderTextColor={Colors.textTertiary}
+                  placeholderTextColor={LightTheme.textTertiary}
                   value={authPassword}
                   onChangeText={setAuthPassword}
                   secureTextEntry={!showPassword}
@@ -602,9 +602,9 @@ export default function CreateOrganizationScreen() {
                   onPress={() => setShowPassword(!showPassword)}
                 >
                   {showPassword ? (
-                    <EyeOff size={20} color={Colors.textSecondary} />
+                    <EyeOff size={20} color={LightTheme.textSecondary} />
                   ) : (
-                    <Eye size={20} color={Colors.textSecondary} />
+                    <Eye size={20} color={LightTheme.textSecondary} />
                   )}
                 </TouchableOpacity>
               </View>
@@ -612,12 +612,12 @@ export default function CreateOrganizationScreen() {
               {authMode === 'signup' && (
                 <View style={styles.authInputContainer}>
                   <View style={styles.authInputIcon}>
-                    <Lock size={20} color={Colors.textSecondary} />
+                    <Lock size={20} color={LightTheme.textSecondary} />
                   </View>
                   <TextInput
                     style={styles.authInput}
                     placeholder="Confirm password *"
-                    placeholderTextColor={Colors.textTertiary}
+                    placeholderTextColor={LightTheme.textTertiary}
                     value={confirmPassword}
                     onChangeText={setConfirmPassword}
                     secureTextEntry={!showPassword}
@@ -632,7 +632,7 @@ export default function CreateOrganizationScreen() {
                 disabled={authLoading}
               >
                 {authLoading ? (
-                  <ActivityIndicator color={Colors.textInverse} />
+                  <ActivityIndicator color={LightTheme.textInverse} />
                 ) : (
                   <Text style={styles.authSubmitButtonText}>
                     {authMode === 'signin' ? 'Sign In' : 'Create Account'}
@@ -656,13 +656,13 @@ export default function CreateOrganizationScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Verify Your Email</Text>
               <TouchableOpacity onPress={closeVerificationModal} style={styles.closeButton}>
-                <X size={24} color={Colors.textSecondary} />
+                <X size={24} color={LightTheme.textSecondary} />
               </TouchableOpacity>
             </View>
 
             <View style={styles.verificationContainer}>
               <View style={styles.verificationIcon}>
-                <Send size={32} color={Colors.primary} />
+                <Send size={32} color={LightTheme.primary} />
               </View>
               <Text style={styles.verificationTitle}>Check Your Inbox</Text>
               <Text style={styles.verificationText}>
@@ -691,10 +691,10 @@ export default function CreateOrganizationScreen() {
                 disabled={isResending}
               >
                 {isResending ? (
-                  <ActivityIndicator size="small" color={Colors.primary} />
+                  <ActivityIndicator size="small" color={LightTheme.primary} />
                 ) : (
                   <>
-                    <RefreshCw size={18} color={Colors.primary} />
+                    <RefreshCw size={18} color={LightTheme.primary} />
                     <Text style={styles.resendButtonText}>Resend Verification Email</Text>
                   </>
                 )}
@@ -717,7 +717,7 @@ export default function CreateOrganizationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: Colors.background,
+    backgroundColor: LightTheme.background,
   },
   keyboardView: {
     flex: 1,
@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    borderBottomColor: LightTheme.border,
   },
   backButton: {
     padding: 8,
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   placeholder: {
     width: 40,
@@ -756,12 +756,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     marginBottom: 32,
@@ -775,16 +775,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   input: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
     borderWidth: 1,
-    borderColor: Colors.border,
+    borderColor: LightTheme.border,
   },
   textArea: {
     height: 100,
@@ -794,7 +794,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 12,
     padding: 16,
     marginTop: 32,
@@ -810,7 +810,7 @@ const styles = StyleSheet.create({
   },
   authHint: {
     fontSize: 14,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     marginTop: 16,
   },
@@ -820,7 +820,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   closeButton: {
     padding: 4,
@@ -853,38 +853,38 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
   },
   authTabActive: {
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
   },
   authTabText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   authTabTextActive: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   authErrorContainer: {
-    backgroundColor: Colors.error + '15',
+    backgroundColor: LightTheme.error + '15',
     padding: 12,
     borderRadius: 12,
     marginBottom: 16,
   },
   authErrorText: {
-    color: Colors.error,
+    color: LightTheme.error,
     fontSize: 14,
     textAlign: 'center',
   },
   authInputContainer: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: Colors.borderLight,
+    borderColor: LightTheme.borderLight,
   },
   authInputIcon: {
     paddingLeft: 16,
@@ -894,13 +894,13 @@ const styles = StyleSheet.create({
     paddingVertical: 16,
     paddingHorizontal: 12,
     fontSize: 16,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   eyeIcon: {
     paddingRight: 16,
   },
   authSubmitButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: 'center',
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
   authSubmitButtonText: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
   verificationContainer: {
     alignItems: 'center',
@@ -924,7 +924,7 @@ const styles = StyleSheet.create({
     width: 72,
     height: 72,
     borderRadius: 36,
-    backgroundColor: Colors.primary + '15',
+    backgroundColor: LightTheme.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -932,47 +932,47 @@ const styles = StyleSheet.create({
   verificationTitle: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: Colors.text,
+    color: LightTheme.text,
     marginBottom: 12,
   },
   verificationText: {
     fontSize: 15,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
   },
   verificationEmailText: {
     fontWeight: '600' as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   verificationHint: {
     fontSize: 14,
-    color: Colors.textTertiary,
+    color: LightTheme.textTertiary,
     textAlign: 'center',
     marginTop: 16,
     lineHeight: 20,
   },
   resendErrorContainer: {
-    backgroundColor: Colors.error + '15',
+    backgroundColor: LightTheme.error + '15',
     padding: 12,
     borderRadius: 12,
     marginTop: 16,
     width: '100%',
   },
   resendErrorText: {
-    color: Colors.error,
+    color: LightTheme.error,
     fontSize: 14,
     textAlign: 'center',
   },
   resendSuccessContainer: {
-    backgroundColor: Colors.success + '15',
+    backgroundColor: LightTheme.success + '15',
     padding: 12,
     borderRadius: 12,
     marginTop: 16,
     width: '100%',
   },
   resendSuccessText: {
-    color: Colors.success,
+    color: LightTheme.success,
     fontSize: 14,
     textAlign: 'center',
   },
@@ -984,7 +984,7 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     paddingHorizontal: 20,
     borderWidth: 2,
-    borderColor: Colors.primary,
+    borderColor: LightTheme.primary,
     borderRadius: 16,
     marginTop: 24,
     width: '100%',
@@ -995,10 +995,10 @@ const styles = StyleSheet.create({
   resendButtonText: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   doneButton: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
     borderRadius: 16,
     paddingVertical: 16,
     paddingHorizontal: 48,
@@ -1009,6 +1009,6 @@ const styles = StyleSheet.create({
   doneButtonText: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: Colors.textInverse,
+    color: LightTheme.textInverse,
   },
 });

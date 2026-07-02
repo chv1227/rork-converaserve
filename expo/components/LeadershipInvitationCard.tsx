@@ -18,7 +18,7 @@ import {
   MessageSquare,
   ChevronRight,
 } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 import { LeadershipInvitation } from "@/types";
 
 interface LeadershipInvitationCardProps {
@@ -115,7 +115,7 @@ export default function LeadershipInvitationCard({
             <Text style={styles.title}>Leadership Invitation</Text>
             <Text style={styles.ministryName}>{invitation.ministryName}</Text>
           </View>
-          <ChevronRight size={18} color={Colors.textTertiary} />
+          <ChevronRight size={18} color={LightTheme.textTertiary} />
         </View>
 
         <View style={styles.content}>
@@ -127,9 +127,9 @@ export default function LeadershipInvitationCard({
           <View style={styles.roleRow}>
             <View style={[styles.roleTag, invitation.role === "primary_leader" ? styles.primaryTag : styles.coLeaderTag]}>
               {invitation.role === "primary_leader" ? (
-                <Crown size={14} color={Colors.warning} />
+                <Crown size={14} color={LightTheme.warning} />
               ) : (
-                <Shield size={14} color={Colors.primary} />
+                <Shield size={14} color={LightTheme.primary} />
               )}
               <Text style={[styles.roleText, invitation.role === "primary_leader" ? styles.primaryText : styles.coLeaderText]}>
                 {invitation.role === "primary_leader" ? "Primary Leader" : "Co-Leader"}
@@ -137,7 +137,7 @@ export default function LeadershipInvitationCard({
             </View>
 
             <View style={[styles.expiryTag, isExpiring && styles.expiryTagUrgent]}>
-              <Clock size={12} color={isExpiring ? Colors.error : Colors.textSecondary} />
+              <Clock size={12} color={isExpiring ? LightTheme.error : LightTheme.textSecondary} />
               <Text style={[styles.expiryText, isExpiring && styles.expiryTextUrgent]}>
                 {daysLeft} days left
               </Text>
@@ -146,7 +146,7 @@ export default function LeadershipInvitationCard({
 
           {!!invitation.message && (
             <View style={styles.messageContainer}>
-              <MessageSquare size={14} color={Colors.textSecondary} />
+              <MessageSquare size={14} color={LightTheme.textSecondary} />
               <Text style={styles.messageText} numberOfLines={2}>
                 {`"${invitation.message}"`}
               </Text>
@@ -173,7 +173,7 @@ export default function LeadershipInvitationCard({
             onPress={handleDecline}
             activeOpacity={0.7}
           >
-            <X size={18} color={Colors.error} />
+            <X size={18} color={LightTheme.error} />
             <Text style={styles.declineText}>Decline</Text>
           </TouchableOpacity>
           <TouchableOpacity
@@ -192,7 +192,7 @@ export default function LeadershipInvitationCard({
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: Colors.surface,
+    backgroundColor: LightTheme.surface,
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 12,
@@ -207,7 +207,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: Colors.borderLight,
+    borderBottomColor: LightTheme.borderLight,
   },
   avatarContainer: {
     position: "relative",
@@ -228,13 +228,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     borderWidth: 2,
-    borderColor: Colors.surface,
+    borderColor: LightTheme.surface,
   },
   primaryBadge: {
-    backgroundColor: Colors.warning,
+    backgroundColor: LightTheme.warning,
   },
   coLeaderBadge: {
-    backgroundColor: Colors.primary,
+    backgroundColor: LightTheme.primary,
   },
   headerInfo: {
     flex: 1,
@@ -242,7 +242,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 12,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 2,
@@ -250,7 +250,7 @@ const styles = StyleSheet.create({
   ministryName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   content: {
     padding: 16,
@@ -262,13 +262,13 @@ const styles = StyleSheet.create({
   },
   inviterLabel: {
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     marginRight: 8,
   },
   inviterName: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   roleRow: {
     flexDirection: "row",
@@ -285,20 +285,20 @@ const styles = StyleSheet.create({
     borderRadius: 8,
   },
   primaryTag: {
-    backgroundColor: Colors.warningLight,
+    backgroundColor: LightTheme.warningLight,
   },
   coLeaderTag: {
-    backgroundColor: Colors.primary + "15",
+    backgroundColor: LightTheme.primary + "15",
   },
   roleText: {
     fontSize: 13,
     fontWeight: "600" as const,
   },
   primaryText: {
-    color: Colors.warning,
+    color: LightTheme.warning,
   },
   coLeaderText: {
-    color: Colors.primary,
+    color: LightTheme.primary,
   },
   expiryTag: {
     flexDirection: "row",
@@ -306,25 +306,25 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 8,
     paddingVertical: 4,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 6,
   },
   expiryTagUrgent: {
-    backgroundColor: Colors.errorLight,
+    backgroundColor: LightTheme.errorLight,
   },
   expiryText: {
     fontSize: 11,
     fontWeight: "500" as const,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   expiryTextUrgent: {
-    color: Colors.error,
+    color: LightTheme.error,
   },
   messageContainer: {
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 8,
-    backgroundColor: Colors.surfaceSecondary,
+    backgroundColor: LightTheme.surfaceSecondary,
     borderRadius: 10,
     padding: 12,
     marginBottom: 12,
@@ -332,7 +332,7 @@ const styles = StyleSheet.create({
   messageText: {
     flex: 1,
     fontSize: 13,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
     fontStyle: "italic",
     lineHeight: 18,
   },
@@ -343,12 +343,12 @@ const styles = StyleSheet.create({
   },
   transferLabel: {
     fontSize: 12,
-    color: Colors.textSecondary,
+    color: LightTheme.textSecondary,
   },
   transferValue: {
     fontSize: 12,
     fontWeight: "500" as const,
-    color: Colors.text,
+    color: LightTheme.text,
   },
   actions: {
     flexDirection: "row",
@@ -364,12 +364,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: Colors.error + "15",
+    backgroundColor: LightTheme.error + "15",
   },
   declineText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: Colors.error,
+    color: LightTheme.error,
   },
   acceptButton: {
     flex: 1,
@@ -379,7 +379,7 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: Colors.success,
+    backgroundColor: LightTheme.success,
   },
   acceptText: {
     fontSize: 14,

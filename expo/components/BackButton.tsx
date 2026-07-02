@@ -2,7 +2,7 @@ import React from "react";
 import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import Colors from "@/constants/colors";
+import { LightTheme } from "@/constants/colors";
 
 interface BackButtonProps {
   onPress?: () => void;
@@ -14,7 +14,7 @@ interface BackButtonProps {
 
 export default function BackButton({
   onPress,
-  color = Colors.text,
+  color = LightTheme.text,
   size = 24,
   style,
   testID = "back-button",
