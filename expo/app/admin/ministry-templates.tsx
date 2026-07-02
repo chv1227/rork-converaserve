@@ -41,7 +41,7 @@ import {
   Trophy,
   Globe,
 } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { ministryTemplates, MINISTRY_CATEGORIES, MinistryTemplate } from "@/mocks/ministryTemplates";
 
@@ -119,7 +119,7 @@ function TemplateCard({ template, isSelected, onToggle, onPreview }: TemplateCar
           </Text>
           <View style={styles.templateMeta}>
             <View style={styles.metaItem}>
-              <Clock size={12} color={LightTheme.textTertiary} />
+              <Clock size={12} color={Colors.textTertiary} />
               <Text style={styles.metaText}>
                 {template.defaultSchedule[0]?.day} {template.defaultSchedule[0]?.time}
               </Text>
@@ -132,7 +132,7 @@ function TemplateCard({ template, isSelected, onToggle, onPreview }: TemplateCar
               }}
               activeOpacity={0.7}
             >
-              <Eye size={14} color={LightTheme.primary} />
+              <Eye size={14} color={Colors.primary} />
               <Text style={styles.previewButtonText}>Preview</Text>
             </TouchableOpacity>
           </View>
@@ -161,7 +161,7 @@ function PreviewModal({ template, visible, onClose, onAdd }: PreviewModalProps) 
       <View style={[styles.previewContainer, { paddingTop: insets.top }]}>
         <View style={styles.previewHeader}>
           <TouchableOpacity onPress={onClose} style={styles.previewCloseButton}>
-            <X size={24} color={LightTheme.text} />
+            <X size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.previewTitle}>Template Preview</Text>
           <TouchableOpacity style={styles.addFromPreviewButton} onPress={onAdd} activeOpacity={0.7}>
@@ -216,7 +216,7 @@ function PreviewModal({ template, visible, onClose, onAdd }: PreviewModalProps) 
               <View style={styles.sectionsList}>
                 {template.suggestedSections.map((section) => (
                   <View key={section} style={styles.sectionBadge}>
-                    <Check size={12} color={LightTheme.success} />
+                    <Check size={12} color={Colors.success} />
                     <Text style={styles.sectionBadgeText}>
                       {section.replace(/_/g, ' ').replace(/\b\w/g, l => l.toUpperCase())}
                     </Text>
@@ -333,7 +333,7 @@ export default function MinistryTemplatesScreen() {
       <View style={[styles.header, { paddingTop: insets.top + 8 }]}>
         <View style={styles.headerRow}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()} activeOpacity={0.7}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Ministry Templates</Text>
@@ -352,17 +352,17 @@ export default function MinistryTemplatesScreen() {
         </View>
 
         <View style={styles.searchContainer}>
-          <Search size={18} color={LightTheme.textSecondary} />
+          <Search size={18} color={Colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Search templates..."
-            placeholderTextColor={LightTheme.textTertiary}
+            placeholderTextColor={Colors.textTertiary}
             value={searchQuery}
             onChangeText={setSearchQuery}
           />
           {searchQuery.length > 0 && (
             <TouchableOpacity onPress={() => setSearchQuery("")}>
-              <X size={18} color={LightTheme.textSecondary} />
+              <X size={18} color={Colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -406,7 +406,7 @@ export default function MinistryTemplatesScreen() {
       >
         {filteredTemplates.length === 0 ? (
           <View style={styles.emptyState}>
-            <Filter size={48} color={LightTheme.textTertiary} />
+            <Filter size={48} color={Colors.textTertiary} />
             <Text style={styles.emptyTitle}>No Templates Found</Text>
             <Text style={styles.emptySubtitle}>Try adjusting your search or filter</Text>
           </View>
@@ -509,7 +509,7 @@ export default function MinistryTemplatesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   centered: {
     justifyContent: "center",
@@ -517,14 +517,14 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: LightTheme.error,
+    color: Colors.error,
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -535,7 +535,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -546,17 +546,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   addButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
@@ -570,7 +570,7 @@ const styles = StyleSheet.create({
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     gap: 8,
@@ -580,7 +580,7 @@ const styles = StyleSheet.create({
     flex: 1,
     height: 44,
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   categoriesScroll: {
     marginHorizontal: -20,
@@ -593,15 +593,15 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
   },
   categoryChipActive: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
   },
   categoryChipText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   categoryChipTextActive: {
     color: "#fff",
@@ -619,19 +619,19 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 8,
   },
   templatesGrid: {
     gap: 16,
   },
   templateCard: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: "hidden",
     shadowColor: "#000",
@@ -668,7 +668,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 24,
-    backgroundColor: LightTheme.success,
+    backgroundColor: Colors.success,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -678,18 +678,18 @@ const styles = StyleSheet.create({
   templateName: {
     fontSize: 17,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 4,
   },
   templateCategory: {
     fontSize: 12,
-    color: LightTheme.primary,
+    color: Colors.primary,
     fontWeight: "500" as const,
     marginBottom: 8,
   },
   templateDescription: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     lineHeight: 18,
     marginBottom: 12,
   },
@@ -705,7 +705,7 @@ const styles = StyleSheet.create({
   },
   metaText: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
   },
   previewButton: {
     flexDirection: "row",
@@ -713,22 +713,22 @@ const styles = StyleSheet.create({
     gap: 4,
     paddingHorizontal: 10,
     paddingVertical: 6,
-    backgroundColor: LightTheme.primary + "15",
+    backgroundColor: Colors.primary + "15",
     borderRadius: 8,
   },
   previewButtonText: {
     fontSize: 12,
     fontWeight: "500" as const,
-    color: LightTheme.primary,
+    color: Colors.primary,
   },
   bottomBar: {
     position: "absolute",
     bottom: 0,
     left: 0,
     right: 0,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
+    borderTopColor: Colors.borderLight,
     paddingTop: 16,
     paddingHorizontal: 20,
   },
@@ -745,16 +745,16 @@ const styles = StyleSheet.create({
   selectedCount: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: LightTheme.primary,
+    color: Colors.primary,
   },
   selectedLabel: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   addAllButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 14,
     borderRadius: 12,
@@ -767,7 +767,7 @@ const styles = StyleSheet.create({
   },
   previewContainer: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   previewHeader: {
     flexDirection: "row",
@@ -775,27 +775,27 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   previewCloseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
   previewTitle: {
     fontSize: 17,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   addFromPreviewButton: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 14,
     paddingVertical: 8,
     borderRadius: 20,
@@ -835,12 +835,12 @@ const styles = StyleSheet.create({
   previewMinistryName: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 4,
   },
   previewMinistryCategory: {
     fontSize: 14,
-    color: LightTheme.primary,
+    color: Colors.primary,
     fontWeight: "500" as const,
   },
   previewSection: {
@@ -849,14 +849,14 @@ const styles = StyleSheet.create({
   previewSectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginBottom: 12,
   },
   previewSectionContent: {
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
     lineHeight: 22,
   },
   scheduleItem: {
@@ -865,13 +865,13 @@ const styles = StyleSheet.create({
     gap: 10,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 8,
     marginBottom: 8,
   },
   scheduleText: {
     fontSize: 14,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   sectionsList: {
     flexDirection: "row",
@@ -882,14 +882,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
-    backgroundColor: LightTheme.successLight,
+    backgroundColor: Colors.successLight,
     paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 16,
   },
   sectionBadgeText: {
     fontSize: 12,
-    color: LightTheme.success,
+    color: Colors.success,
     fontWeight: "500" as const,
   },
   confirmOverlay: {
@@ -900,7 +900,7 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   confirmModal: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 20,
     padding: 24,
     width: "100%",
@@ -909,19 +909,19 @@ const styles = StyleSheet.create({
   confirmTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 12,
     textAlign: "center",
   },
   confirmMessage: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     lineHeight: 20,
     textAlign: "center",
     marginBottom: 20,
   },
   selectedList: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 12,
     padding: 12,
     marginBottom: 24,
@@ -939,11 +939,11 @@ const styles = StyleSheet.create({
   },
   selectedItemName: {
     fontSize: 14,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   moreText: {
     fontSize: 13,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     marginTop: 4,
   },
   confirmButtons: {
@@ -954,19 +954,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
   },
   cancelButtonText: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   confirmButton: {
     flex: 1,
     paddingVertical: 14,
     borderRadius: 12,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: "center",
   },
   confirmButtonDisabled: {

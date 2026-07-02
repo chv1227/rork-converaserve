@@ -15,7 +15,7 @@ import { Image } from "expo-image";
 import { useLocalSearchParams, useRouter, Stack } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ArrowLeft, Send, Users, User, MoreVertical, CheckCheck, Check } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { supabase } from "@/lib/supabase";
 import { useAuth } from "@/providers/AuthProvider";
 import { Message } from "@/types";
@@ -296,7 +296,7 @@ export default function ChatScreen() {
             style={[
               styles.messageBubble,
               isOwn ? styles.messageBubbleOwn : styles.messageBubbleOther,
-              { backgroundColor: isOwn ? (conversation?.ministryColor ?? LightTheme.primary) : LightTheme.surfaceSecondary },
+              { backgroundColor: isOwn ? (conversation?.ministryColor ?? Colors.primary) : Colors.surfaceSecondary },
               isTemp && styles.messageBubbleTemp,
             ]}
           >
@@ -319,9 +319,9 @@ export default function ChatScreen() {
             {isOwn && status && (
               <View style={styles.statusIcon}>
                 {status === "read" ? (
-                  <CheckCheck size={14} color={LightTheme.primary} />
+                  <CheckCheck size={14} color={Colors.primary} />
                 ) : (
-                  <Check size={14} color={LightTheme.textTertiary} />
+                  <Check size={14} color={Colors.textTertiary} />
                 )}
               </View>
             )}
@@ -335,7 +335,7 @@ export default function ChatScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -352,7 +352,7 @@ export default function ChatScreen() {
     );
   }
 
-  const headerColor = conversation.ministryColor ?? LightTheme.primary;
+  const headerColor = conversation.ministryColor ?? Colors.primary;
 
   return (
     <KeyboardAvoidingView
@@ -376,7 +376,7 @@ export default function ChatScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={LightTheme.textInverse} />
+          <ArrowLeft size={24} color={Colors.textInverse} />
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.headerContent} activeOpacity={0.8}>
@@ -404,7 +404,7 @@ export default function ChatScreen() {
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
-          <MoreVertical size={20} color={LightTheme.textInverse} />
+          <MoreVertical size={20} color={Colors.textInverse} />
         </TouchableOpacity>
       </View>
 
@@ -421,7 +421,7 @@ export default function ChatScreen() {
           <RefreshControl
             refreshing={messagesQuery.isRefetching}
             onRefresh={onRefresh}
-            tintColor={LightTheme.primary}
+            tintColor={Colors.primary}
           />
         }
         ListEmptyComponent={
@@ -433,9 +433,9 @@ export default function ChatScreen() {
               ]}
             >
               {conversation.isGroup ? (
-                <Users size={32} color={LightTheme.textInverse} />
+                <Users size={32} color={Colors.textInverse} />
               ) : (
-                <User size={32} color={LightTheme.textInverse} />
+                <User size={32} color={Colors.textInverse} />
               )}
             </View>
             <Text style={styles.emptyTitle}>
@@ -472,7 +472,7 @@ export default function ChatScreen() {
           <TextInput
             style={styles.textInput}
             placeholder="Type a message..."
-            placeholderTextColor={LightTheme.textTertiary}
+            placeholderTextColor={Colors.textTertiary}
             value={messageText}
             onChangeText={setMessageText}
             multiline
@@ -491,9 +491,9 @@ export default function ChatScreen() {
             activeOpacity={0.7}
           >
             {sendMessageMutation.isPending ? (
-              <ActivityIndicator size="small" color={LightTheme.textInverse} />
+              <ActivityIndicator size="small" color={Colors.textInverse} />
             ) : (
-              <Send size={20} color={LightTheme.textInverse} />
+              <Send size={20} color={Colors.textInverse} />
             )}
           </TouchableOpacity>
         </View>
@@ -505,7 +505,7 @@ export default function ChatScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   centered: {
     justifyContent: "center",
@@ -513,17 +513,17 @@ const styles = StyleSheet.create({
   },
   errorText: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 16,
   },
   backButtonAlt: {
     paddingHorizontal: 24,
     paddingVertical: 12,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     borderRadius: 20,
   },
   backButtonAltText: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
     fontWeight: "600" as const,
   },
   header: {
@@ -560,7 +560,7 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 17,
     fontWeight: "700" as const,
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   headerSubtitleRow: {
     flexDirection: "row",
@@ -608,7 +608,7 @@ const styles = StyleSheet.create({
   messageSenderName: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 4,
     marginLeft: 4,
   },
@@ -631,10 +631,10 @@ const styles = StyleSheet.create({
     lineHeight: 20,
   },
   messageTextOwn: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   messageTextOther: {
-    color: LightTheme.text,
+    color: Colors.text,
   },
   messageFooter: {
     flexDirection: "row",
@@ -650,7 +650,7 @@ const styles = StyleSheet.create({
   },
   messageTime: {
     fontSize: 11,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
   },
   messageTimeOwn: {
     textAlign: "right",
@@ -676,13 +676,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
     textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
   },
   scrollToBottomButton: {
@@ -701,9 +701,9 @@ const styles = StyleSheet.create({
     elevation: 4,
   },
   inputContainer: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
+    borderTopColor: Colors.borderLight,
     paddingHorizontal: 16,
     paddingTop: 12,
   },
@@ -714,13 +714,13 @@ const styles = StyleSheet.create({
   },
   textInput: {
     flex: 1,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 24,
     paddingHorizontal: 18,
     paddingTop: 12,
     paddingBottom: 12,
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
     maxHeight: 120,
   },
   sendButton: {

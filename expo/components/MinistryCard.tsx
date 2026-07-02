@@ -1,7 +1,8 @@
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Users, Music, Heart, Baby, HandHeart, Video, Plus, Check, Clock } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import { Radius } from '@/constants/designTokens';
 import { Ministry } from '@/types';
 import React from "react";
 
@@ -23,6 +24,7 @@ const iconMap: Record<string, React.ComponentType<{ size: number; color: string 
 };
 
 export default function MinistryCard({ ministry, onPress, isMember, isPending, onAction }: MinistryCardProps) {
+  const { colors } = useTheme();
   const IconComponent = iconMap[ministry.icon] || Users;
 
   return (
@@ -37,7 +39,7 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
       <View style={styles.content}>
         <View style={styles.topRow}>
           <View style={[styles.iconContainer, { backgroundColor: ministry.color }]}>
-            <IconComponent size={20} color={LightTheme.textInverse} />
+            <IconComponent size={20} color="#FFFFFF" />
           </View>
           
           {onAction && (
@@ -56,17 +58,17 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
             >
               {isMember ? (
                 <>
-                  <Check size={14} color={LightTheme.primary} />
-                  <Text style={styles.actionTextMember}>Joined</Text>
+                  <Check size={14} color={colors.primary} />
+                  <Text style={[styles.actionTextMember, { color: colors.primary }]}>Joined</Text>
                 </>
               ) : isPending ? (
                 <>
-                  <Clock size={14} color={LightTheme.warning} />
-                  <Text style={styles.actionTextPending}>Pending</Text>
+                  <Clock size={14} color={colors.warning} />
+                  <Text style={[styles.actionTextPending, { color: colors.warning }]}>Pending</Text>
                 </>
               ) : (
                 <>
-                  <Plus size={14} color={LightTheme.textInverse} />
+                  <Plus size={14} color="#FFFFFF" />
                   <Text style={styles.actionTextJoin}>Join</Text>
                 </>
               )}
@@ -79,7 +81,7 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
           <Text style={styles.description} numberOfLines={2}>{ministry.description}</Text>
           
           <View style={styles.footer}>
-            <Users size={14} color={LightTheme.textInverse} style={{ opacity: 0.8 }} />
+            <Users size={14} color="rgba(255,255,255,0.8)" />
             <Text style={styles.memberCount}>{ministry.memberCount} members</Text>
           </View>
         </View>
@@ -91,9 +93,13 @@ export default function MinistryCard({ ministry, onPress, isMember, isPending, o
 const styles = StyleSheet.create({
   container: {
     height: 180,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     overflow: 'hidden',
     marginBottom: 12,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+      android: { elevation: 5 },
+    }),
   },
   image: {
     ...StyleSheet.absoluteFillObject,
@@ -128,30 +134,28 @@ const styles = StyleSheet.create({
     gap: 4,
   },
   actionButtonJoin: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: '#1E40AF',
   },
   actionButtonMember: {
-    backgroundColor: LightTheme.textInverse,
+    backgroundColor: '#FFFFFF',
   },
   actionButtonPending: {
-    backgroundColor: LightTheme.warning + '20',
+    backgroundColor: 'rgba(245,158,11,0.15)',
     borderWidth: 1,
-    borderColor: LightTheme.warning,
+    borderColor: '#F59E0B',
   },
   actionTextJoin: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: LightTheme.textInverse,
+    color: '#FFFFFF',
   },
   actionTextMember: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: LightTheme.primary,
   },
   actionTextPending: {
     fontSize: 13,
     fontWeight: '600' as const,
-    color: LightTheme.warning,
   },
   info: {
     gap: 4,
@@ -159,12 +163,11 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: LightTheme.textInverse,
+    color: '#FFFFFF',
   },
   description: {
     fontSize: 13,
-    color: LightTheme.textInverse,
-    opacity: 0.85,
+    color: 'rgba(255,255,255,0.85)',
     lineHeight: 18,
   },
   footer: {
@@ -175,8 +178,7 @@ const styles = StyleSheet.create({
   },
   memberCount: {
     fontSize: 13,
-    color: LightTheme.textInverse,
-    opacity: 0.85,
+    color: 'rgba(255,255,255,0.85)',
     fontWeight: '500' as const,
   },
 });

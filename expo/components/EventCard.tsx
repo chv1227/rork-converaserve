@@ -1,8 +1,8 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { MapPin, Clock, Users } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
 import { useTheme } from '@/providers/ThemeProvider';
+import { Radius, Shadow } from '@/constants/designTokens';
 import { Event } from '@/types';
 
 interface EventCardProps {
@@ -103,16 +103,15 @@ export default function EventCard({ event, onPress, compact = false }: EventCard
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: LightTheme.surface,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: 16,
     marginBottom: 12,
     flexDirection: 'row',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 2px 10px rgba(0,0,0,0.06)' },
+    }),
   },
   dateColumn: {
     marginRight: 14,
@@ -126,20 +125,20 @@ const styles = StyleSheet.create({
   dayName: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: LightTheme.textInverse,
+    color: '#FFFFFF',
     opacity: 0.9,
     textTransform: 'uppercase',
   },
   dayNum: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: LightTheme.textInverse,
+    color: '#FFFFFF',
     marginVertical: 2,
   },
   month: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: LightTheme.textInverse,
+    color: '#FFFFFF',
     opacity: 0.9,
     textTransform: 'uppercase',
   },
@@ -194,16 +193,16 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   compactContainer: {
-    borderRadius: 12,
+    borderRadius: Radius.md,
     padding: 12,
     marginBottom: 8,
     flexDirection: 'row',
     alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 4 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 1px 4px rgba(0,0,0,0.04)' },
+    }),
   },
   compactDateBox: {
     width: 44,

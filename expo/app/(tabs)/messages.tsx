@@ -27,7 +27,7 @@ import {
 } from "lucide-react-native";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
-import { LightTheme } from "@/constants/colors";
+import Colors from '@/constants/colors';
 import { supabase } from "@/lib/supabase";
 import { Conversation } from "@/types";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -763,14 +763,14 @@ export default function MessagesScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -781,20 +781,20 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   newChatButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
   searchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 12,
     height: 44,
@@ -803,7 +803,7 @@ const styles = StyleSheet.create({
   searchInput: {
     flex: 1,
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   listContent: {
     flexGrow: 1,
@@ -811,14 +811,14 @@ const styles = StyleSheet.create({
   },
   separator: {
     height: 1,
-    backgroundColor: LightTheme.borderLight,
+    backgroundColor: Colors.borderLight,
     marginLeft: 80,
   },
   conversationItem: {
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
   },
   avatarContainer: {
     position: "relative",
@@ -836,7 +836,7 @@ const styles = StyleSheet.create({
     height: 16,
     borderRadius: 8,
     borderWidth: 2,
-    borderColor: LightTheme.surface,
+    borderColor: Colors.surface,
   },
   groupBadge: {
     position: "absolute",
@@ -846,7 +846,7 @@ const styles = StyleSheet.create({
     height: 20,
     borderRadius: 10,
     borderWidth: 2,
-    borderColor: LightTheme.surface,
+    borderColor: Colors.surface,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -863,7 +863,7 @@ const styles = StyleSheet.create({
   conversationName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     flex: 1,
     marginRight: 8,
   },
@@ -872,7 +872,7 @@ const styles = StyleSheet.create({
   },
   conversationTime: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
   },
   conversationPreview: {
     flexDirection: "row",
@@ -881,16 +881,16 @@ const styles = StyleSheet.create({
   },
   lastMessage: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     flex: 1,
     marginRight: 8,
   },
   unreadMessage: {
-    color: LightTheme.text,
+    color: Colors.text,
     fontWeight: "500" as const,
   },
   unreadBadge: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     borderRadius: 10,
     minWidth: 20,
     height: 20,
@@ -914,7 +914,7 @@ const styles = StyleSheet.create({
     width: 80,
     height: 80,
     borderRadius: 40,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -922,13 +922,13 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
     textAlign: "center",
   },
   emptySubtext: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
@@ -938,7 +938,7 @@ const styles = StyleSheet.create({
   },
   modalContainer: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   modalHeader: {
     flexDirection: "row",
@@ -947,16 +947,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
-    backgroundColor: LightTheme.surface,
+    borderBottomColor: Colors.borderLight,
+    backgroundColor: Colors.surface,
   },
   modalTitle: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   createButton: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 16,
@@ -973,7 +973,7 @@ const styles = StyleSheet.create({
   },
   tabContainer: {
     flexDirection: "row",
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 8,
     gap: 8,
@@ -985,33 +985,33 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     paddingVertical: 10,
     borderRadius: 8,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     gap: 6,
   },
   activeTab: {
-    backgroundColor: LightTheme.primary + '15',
+    backgroundColor: Colors.primary + '15',
   },
   tabText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   activeTabText: {
-    color: LightTheme.primary,
+    color: Colors.primary,
   },
   groupNameContainer: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   groupNameInput: {
     fontSize: 16,
-    color: LightTheme.text,
+    color: Colors.text,
     paddingVertical: 8,
     paddingHorizontal: 12,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 8,
   },
   selectedMembersRow: {
@@ -1023,7 +1023,7 @@ const styles = StyleSheet.create({
   selectedMemberChip: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.primary + '15',
+    backgroundColor: Colors.primary + '15',
     borderRadius: 16,
     paddingVertical: 4,
     paddingLeft: 4,
@@ -1037,24 +1037,24 @@ const styles = StyleSheet.create({
   },
   chipName: {
     fontSize: 12,
-    color: LightTheme.primary,
+    color: Colors.primary,
     maxWidth: 60,
   },
   moreChip: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 16,
     paddingHorizontal: 12,
     paddingVertical: 6,
   },
   moreChipText: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     fontWeight: "600" as const,
   },
   memberSearchContainer: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     marginHorizontal: 16,
     marginVertical: 12,
     borderRadius: 12,
@@ -1065,7 +1065,7 @@ const styles = StyleSheet.create({
   memberSearchInput: {
     flex: 1,
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   memberListContent: {
     flexGrow: 1,
@@ -1075,10 +1075,10 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     padding: 16,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
   },
   memberItemSelected: {
-    backgroundColor: LightTheme.primary + '10',
+    backgroundColor: Colors.primary + '10',
   },
   memberAvatar: {
     width: 44,
@@ -1092,11 +1092,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   memberEmail: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   checkbox: {
@@ -1104,13 +1104,13 @@ const styles = StyleSheet.create({
     height: 24,
     borderRadius: 12,
     borderWidth: 2,
-    borderColor: LightTheme.border,
+    borderColor: Colors.border,
     alignItems: "center",
     justifyContent: "center",
   },
   checkboxSelected: {
-    backgroundColor: LightTheme.primary,
-    borderColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
+    borderColor: Colors.primary,
   },
   emptyMembersContainer: {
     padding: 40,
@@ -1118,7 +1118,7 @@ const styles = StyleSheet.create({
   },
   emptyMembersText: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
   },
 });

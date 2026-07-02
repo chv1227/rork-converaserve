@@ -19,7 +19,7 @@ import {
   ArrowRight,
   ChevronRight,
 } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -159,7 +159,7 @@ export default function OnboardingScreen() {
                   {
                     width: dotWidth,
                     opacity: dotOpacity,
-                    backgroundColor: LightTheme.secondary,
+                    backgroundColor: Colors.secondary,
                   },
                 ]}
               />
@@ -195,7 +195,7 @@ export default function OnboardingScreen() {
                 activeOpacity={0.8}
               >
                 <LinearGradient
-                  colors={[LightTheme.secondary, LightTheme.accent]}
+                  colors={[Colors.secondary, Colors.accent]}
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={styles.nextButtonGradient}
@@ -211,7 +211,7 @@ export default function OnboardingScreen() {
               activeOpacity={0.8}
             >
               <LinearGradient
-                colors={[LightTheme.secondary, LightTheme.accent]}
+                colors={[Colors.secondary, Colors.accent]}
                 start={{ x: 0, y: 0 }}
                 end={{ x: 1, y: 0 }}
                 style={styles.getStartedGradient}

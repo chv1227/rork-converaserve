@@ -29,7 +29,7 @@ import {
   Clock,
   XCircle,
 } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { supabase } from '@/lib/supabase';
 import { useQueryClient, useQuery, useMutation } from '@tanstack/react-query';
@@ -290,11 +290,11 @@ export default function ChurchesManagementScreen() {
       case 'super_admin':
         return { label: 'Super Admin', color: '#7C3AED' };
       case 'admin':
-        return { label: 'Admin', color: LightTheme.primary };
+        return { label: 'Admin', color: Colors.primary };
       case 'staff':
-        return { label: 'Staff', color: LightTheme.warning };
+        return { label: 'Staff', color: Colors.warning };
       default:
-        return { label: 'Member', color: LightTheme.textSecondary };
+        return { label: 'Member', color: Colors.textSecondary };
     }
   };
 
@@ -317,7 +317,7 @@ export default function ChurchesManagementScreen() {
       <SafeAreaView style={styles.container}>
         <Stack.Screen options={{ headerShown: false }} />
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={LightTheme.primary} />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Loading churches...</Text>
         </View>
       </SafeAreaView>
@@ -334,7 +334,7 @@ export default function ChurchesManagementScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={LightTheme.text} />
+          <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <View style={styles.headerTitles}>
           <Text style={styles.title}>Manage Churches</Text>
@@ -361,15 +361,15 @@ export default function ChurchesManagementScreen() {
           <RefreshControl
             refreshing={refreshing}
             onRefresh={handleRefresh}
-            colors={[LightTheme.primary]}
-            tintColor={LightTheme.primary}
+            colors={[Colors.primary]}
+            tintColor={Colors.primary}
           />
         }
       >
         {(!churches || churches.length === 0) ? (
           <View style={styles.emptyState}>
             <View style={styles.emptyIconContainer}>
-              <Church size={48} color={LightTheme.textTertiary} />
+              <Church size={48} color={Colors.textTertiary} />
             </View>
             <Text style={styles.emptyTitle}>No Churches Yet</Text>
             <Text style={styles.emptySubtitle}>
@@ -406,7 +406,7 @@ export default function ChurchesManagementScreen() {
                       />
                     ) : (
                       <View style={styles.churchLogoPlaceholder}>
-                        <Church size={24} color={LightTheme.primary} />
+                        <Church size={24} color={Colors.primary} />
                       </View>
                     )}
                     <View style={styles.churchInfo}>
@@ -427,26 +427,26 @@ export default function ChurchesManagementScreen() {
 
                   <View style={styles.churchDetails}>
                     <View style={styles.detailRow}>
-                      <MapPin size={14} color={LightTheme.textSecondary} />
+                      <MapPin size={14} color={Colors.textSecondary} />
                       <Text style={styles.detailText} numberOfLines={1}>
                         {church.city}, {church.state}
                       </Text>
                     </View>
                     {!!church.email && (
                       <View style={styles.detailRow}>
-                        <Mail size={14} color={LightTheme.textSecondary} />
+                        <Mail size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText} numberOfLines={1}>{church.email}</Text>
                       </View>
                     )}
                     {!!church.phone && (
                       <View style={styles.detailRow}>
-                        <Phone size={14} color={LightTheme.textSecondary} />
+                        <Phone size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText}>{church.phone}</Text>
                       </View>
                     )}
                     {!!church.website && (
                       <View style={styles.detailRow}>
-                        <Globe size={14} color={LightTheme.textSecondary} />
+                        <Globe size={14} color={Colors.textSecondary} />
                         <Text style={styles.detailText} numberOfLines={1}>{church.website}</Text>
                       </View>
                     )}
@@ -479,7 +479,7 @@ export default function ChurchesManagementScreen() {
                           activeOpacity={0.7}
                           disabled={approveChurchMutation.isPending}
                         >
-                          <XCircle size={16} color={LightTheme.error} />
+                          <XCircle size={16} color={Colors.error} />
                           <Text style={styles.rejectButtonText}>Reject</Text>
                         </TouchableOpacity>
                       </View>
@@ -493,9 +493,9 @@ export default function ChurchesManagementScreen() {
                         onPress={() => router.push(`/church/${church.id}/settings` as any)}
                         activeOpacity={0.7}
                       >
-                        <Settings size={16} color={LightTheme.primary} />
+                        <Settings size={16} color={Colors.primary} />
                         <Text style={styles.actionButtonText}>Edit</Text>
-                        <ChevronRight size={16} color={LightTheme.textTertiary} />
+                        <ChevronRight size={16} color={Colors.textTertiary} />
                       </TouchableOpacity>
                     )}
                     {canDelete && (
@@ -506,10 +506,10 @@ export default function ChurchesManagementScreen() {
                         disabled={isDeleting}
                       >
                         {isDeleting ? (
-                          <ActivityIndicator size="small" color={LightTheme.error} />
+                          <ActivityIndicator size="small" color={Colors.error} />
                         ) : (
                           <>
-                            <Trash2 size={16} color={LightTheme.error} />
+                            <Trash2 size={16} color={Colors.error} />
                             <Text style={[styles.actionButtonText, styles.deleteButtonText]}>Delete</Text>
                           </>
                         )}
@@ -531,7 +531,7 @@ export default function ChurchesManagementScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -541,22 +541,22 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
     alignItems: 'center',
     paddingHorizontal: 20,
     paddingVertical: 16,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginRight: 12,
@@ -567,18 +567,18 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   addButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -597,7 +597,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 20,
@@ -605,12 +605,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 15,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     lineHeight: 22,
     marginBottom: 24,
@@ -618,7 +618,7 @@ const styles = StyleSheet.create({
   createButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 20,
     paddingVertical: 12,
     borderRadius: 12,
@@ -630,12 +630,12 @@ const styles = StyleSheet.create({
     color: '#FFF',
   },
   churchCard: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
     borderWidth: 1,
-    borderColor: LightTheme.borderLight,
+    borderColor: Colors.borderLight,
   },
   churchHeader: {
     flexDirection: 'row',
@@ -651,7 +651,7 @@ const styles = StyleSheet.create({
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: LightTheme.primary + '15',
+    backgroundColor: Colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -662,11 +662,11 @@ const styles = StyleSheet.create({
   churchName: {
     fontSize: 17,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   churchDenomination: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   roleBadge: {
@@ -684,7 +684,7 @@ const styles = StyleSheet.create({
     fontWeight: '600' as const,
   },
   churchDetails: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 10,
     padding: 12,
     gap: 8,
@@ -698,7 +698,7 @@ const styles = StyleSheet.create({
   detailText: {
     flex: 1,
     fontSize: 13,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   churchActions: {
     flexDirection: 'row',
@@ -709,7 +709,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: LightTheme.primary + '15',
+    backgroundColor: Colors.primary + '15',
     paddingVertical: 12,
     paddingHorizontal: 16,
     borderRadius: 10,
@@ -718,16 +718,16 @@ const styles = StyleSheet.create({
   actionButtonText: {
     fontSize: 14,
     fontWeight: '500' as const,
-    color: LightTheme.primary,
+    color: Colors.primary,
     flex: 1,
     textAlign: 'center',
   },
   deleteButton: {
-    backgroundColor: LightTheme.error + '15',
+    backgroundColor: Colors.error + '15',
     flex: 0.6,
   },
   deleteButtonText: {
-    color: LightTheme.error,
+    color: Colors.error,
   },
   approvalActions: {
     marginBottom: 12,
@@ -772,7 +772,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: LightTheme.error + '15',
+    backgroundColor: Colors.error + '15',
     paddingVertical: 10,
     borderRadius: 10,
     gap: 6,
@@ -780,6 +780,6 @@ const styles = StyleSheet.create({
   rejectButtonText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.error,
+    color: Colors.error,
   },
 });

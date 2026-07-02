@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { MessageCircle, Heart, Pin, User } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import { Radius } from '@/constants/designTokens';
 import { DiscussionPost } from '@/types';
 
 interface DiscussionCardProps {
@@ -12,6 +13,7 @@ interface DiscussionCardProps {
 }
 
 export default function DiscussionCard({ post, onPress, onLike }: DiscussionCardProps) {
+  const { colors } = useTheme();
   const formatDate = (dateString: string) => {
     const date = new Date(dateString);
     const now = new Date();
@@ -27,22 +29,22 @@ export default function DiscussionCard({ post, onPress, onLike }: DiscussionCard
 
   const getRoleBadgeColor = (role: string) => {
     switch (role) {
-      case 'leader': return LightTheme.primary;
-      case 'admin': return LightTheme.tertiary;
-      default: return LightTheme.textTertiary;
+      case 'leader': return colors.primary;
+      case 'admin': return colors.tertiary;
+      default: return colors.textTertiary;
     }
   };
 
   return (
     <TouchableOpacity 
-      style={styles.container} 
+      style={[styles.container, { backgroundColor: colors.surface }]} 
       onPress={onPress}
       activeOpacity={0.7}
     >
       {post.isPinned && (
-        <View style={styles.pinnedBadge}>
-          <Pin size={12} color={LightTheme.warning} />
-          <Text style={styles.pinnedText}>Pinned</Text>
+        <View style={[styles.pinnedBadge, { backgroundColor: colors.warningLight }]}>
+          <Pin size={12} color={colors.warning} />
+          <Text style={[styles.pinnedText, { color: colors.warning }]}>Pinned</Text>
         </View>
       )}
       
@@ -50,13 +52,13 @@ export default function DiscussionCard({ post, onPress, onLike }: DiscussionCard
         {post.authorAvatar ? (
           <Image source={{ uri: post.authorAvatar }} style={styles.avatar} />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <User size={16} color={LightTheme.textTertiary} />
+          <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <User size={16} color={colors.textTertiary} />
           </View>
         )}
         <View style={styles.authorInfo}>
           <View style={styles.authorRow}>
-            <Text style={styles.authorName}>{post.authorName}</Text>
+            <Text style={[styles.authorName, { color: colors.text }]}>{post.authorName}</Text>
             {post.authorRole !== 'member' && (
               <View style={[styles.roleBadge, { backgroundColor: getRoleBadgeColor(post.authorRole) + '20' }]}>
                 <Text style={[styles.roleText, { color: getRoleBadgeColor(post.authorRole) }]}>
@@ -65,21 +67,21 @@ export default function DiscussionCard({ post, onPress, onLike }: DiscussionCard
               </View>
             )}
           </View>
-          <Text style={styles.timestamp}>{formatDate(post.createdAt)}</Text>
+          <Text style={[styles.timestamp, { color: colors.textTertiary }]}>{formatDate(post.createdAt)}</Text>
         </View>
       </View>
 
-      <Text style={styles.title}>{post.title}</Text>
-      <Text style={styles.content} numberOfLines={3}>{post.content}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{post.title}</Text>
+      <Text style={[styles.content, { color: colors.textSecondary }]} numberOfLines={3}>{post.content}</Text>
 
       <View style={styles.footer}>
         <TouchableOpacity style={styles.actionButton} onPress={onLike}>
-          <Heart size={16} color={LightTheme.textSecondary} />
-          <Text style={styles.actionText}>{post.likesCount}</Text>
+          <Heart size={16} color={colors.textSecondary} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.likesCount}</Text>
         </TouchableOpacity>
         <View style={styles.actionButton}>
-          <MessageCircle size={16} color={LightTheme.textSecondary} />
-          <Text style={styles.actionText}>{post.commentsCount}</Text>
+          <MessageCircle size={16} color={colors.textSecondary} />
+          <Text style={[styles.actionText, { color: colors.textSecondary }]}>{post.commentsCount}</Text>
         </View>
       </View>
     </TouchableOpacity>
@@ -88,22 +90,20 @@ export default function DiscussionCard({ post, onPress, onLike }: DiscussionCard
 
 const styles = StyleSheet.create({
   container: {
-    backgroundColor: LightTheme.surface,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.04,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.05, shadowRadius: 8 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 2px 8px rgba(0,0,0,0.05)' },
+    }),
   },
   pinnedBadge: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 4,
     marginBottom: 12,
-    backgroundColor: LightTheme.warningLight,
     alignSelf: 'flex-start',
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -112,7 +112,6 @@ const styles = StyleSheet.create({
   pinnedText: {
     fontSize: 11,
     fontWeight: '600' as const,
-    color: LightTheme.warning,
   },
   header: {
     flexDirection: 'row',
@@ -126,7 +125,6 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatarPlaceholder: {
-    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -141,7 +139,6 @@ const styles = StyleSheet.create({
   authorName: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: LightTheme.text,
   },
   roleBadge: {
     paddingHorizontal: 8,
@@ -155,18 +152,15 @@ const styles = StyleSheet.create({
   },
   timestamp: {
     fontSize: 13,
-    color: LightTheme.textTertiary,
     marginTop: 2,
   },
   title: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: LightTheme.text,
     marginBottom: 6,
   },
   content: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
     lineHeight: 20,
     marginBottom: 12,
   },
@@ -176,7 +170,6 @@ const styles = StyleSheet.create({
     gap: 20,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
   },
   actionButton: {
     flexDirection: 'row',
@@ -185,7 +178,6 @@ const styles = StyleSheet.create({
   },
   actionText: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
     fontWeight: '500' as const,
   },
 });

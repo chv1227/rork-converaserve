@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Crown, Shield, User, Mail, Phone } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
+import { Radius } from '@/constants/designTokens';
 import { MinistryMember, Ministry } from '@/types';
 import { MinistryDots } from '@/components/MinistryIndicators';
 
@@ -14,12 +15,13 @@ interface MemberCardProps {
 }
 
 export default function MemberCard({ member, onPress, compact = false, ministries = [] }: MemberCardProps) {
+  const { colors } = useTheme();
   const getRoleIcon = () => {
     switch (member.role) {
       case 'leader':
-        return <Crown size={14} color={LightTheme.warning} />;
+        return <Crown size={14} color={colors.warning} />;
       case 'admin':
-        return <Shield size={14} color={LightTheme.tertiary} />;
+        return <Shield size={14} color={colors.tertiary} />;
       default:
         return null;
     }
@@ -27,9 +29,9 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
 
   const getRoleColor = () => {
     switch (member.role) {
-      case 'leader': return LightTheme.warning;
-      case 'admin': return LightTheme.tertiary;
-      default: return LightTheme.textTertiary;
+      case 'leader': return colors.warning;
+      case 'admin': return colors.tertiary;
+      default: return colors.textTertiary;
     }
   };
 
@@ -44,8 +46,8 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
           {member.avatar ? (
             <Image source={{ uri: member.avatar }} style={styles.compactAvatar} />
           ) : (
-            <View style={[styles.compactAvatar, styles.avatarPlaceholder]}>
-              <User size={14} color={LightTheme.textTertiary} />
+            <View style={[styles.compactAvatar, styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+              <User size={14} color={colors.textTertiary} />
             </View>
           )}
           {ministries.length > 0 && (
@@ -79,8 +81,8 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
         {member.avatar ? (
           <Image source={{ uri: member.avatar }} style={styles.avatar} />
         ) : (
-          <View style={[styles.avatar, styles.avatarPlaceholder]}>
-            <User size={20} color={LightTheme.textTertiary} />
+          <View style={[styles.avatar, styles.avatarPlaceholder, { backgroundColor: colors.surfaceSecondary }]}>
+            <User size={20} color={colors.textTertiary} />
           </View>
         )}
         {ministries.length > 0 && (
@@ -122,13 +124,13 @@ export default function MemberCard({ member, onPress, compact = false, ministrie
         <View style={styles.contactRow}>
           {member.email && (
             <View style={styles.contactItem}>
-              <Mail size={12} color={LightTheme.textTertiary} />
+              <Mail size={12} color={colors.textTertiary} />
               <Text style={styles.contactText} numberOfLines={1}>{member.email}</Text>
             </View>
           )}
           {!!member.phone && (
             <View style={styles.contactItem}>
-              <Phone size={12} color={LightTheme.textTertiary} />
+              <Phone size={12} color={colors.textTertiary} />
               <Text style={styles.contactText}>{member.phone}</Text>
             </View>
           )}
@@ -142,15 +144,14 @@ const styles = StyleSheet.create({
   container: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LightTheme.surface,
-    borderRadius: 12,
+    borderRadius: Radius.md,
     padding: 12,
     marginBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.03,
-    shadowRadius: 4,
-    elevation: 1,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.04, shadowRadius: 6 },
+      android: { elevation: 2 },
+      web: { boxShadow: '0 1px 6px rgba(0,0,0,0.04)' },
+    }),
   },
   avatarContainer: {
     position: 'relative',
@@ -167,7 +168,6 @@ const styles = StyleSheet.create({
     right: -4,
   },
   avatarPlaceholder: {
-    backgroundColor: LightTheme.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -183,7 +183,6 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: LightTheme.text,
   },
   roleBadge: {
     flexDirection: 'row',
@@ -211,7 +210,6 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
   },
   compactContainer: {
     alignItems: 'center',
@@ -238,7 +236,6 @@ const styles = StyleSheet.create({
   compactName: {
     fontSize: 12,
     fontWeight: '500' as const,
-    color: LightTheme.text,
     textAlign: 'center',
   },
   compactRoleRow: {
@@ -259,6 +256,10 @@ const styles = StyleSheet.create({
     marginBottom: 4,
     flexWrap: 'wrap',
   },
+  moreMinistries: {
+    fontSize: 10,
+    fontWeight: '500' as const,
+  },
   ministryLabel: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -276,9 +277,5 @@ const styles = StyleSheet.create({
     fontSize: 10,
     fontWeight: '600' as const,
   },
-  moreMinistries: {
-    fontSize: 10,
-    color: LightTheme.textTertiary,
-    fontWeight: '500' as const,
-  },
+
 });

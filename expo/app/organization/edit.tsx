@@ -15,7 +15,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ArrowLeft, Building2, Check, Camera, MapPin, Phone, Mail, Globe } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { supabase } from '@/lib/supabase';
@@ -173,7 +173,7 @@ export default function EditOrganizationScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={LightTheme.primary} />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Checking permissions...</Text>
         </View>
       </SafeAreaView>
@@ -185,13 +185,13 @@ export default function EditOrganizationScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Church</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Building2 size={64} color={LightTheme.textTertiary} />
+          <Building2 size={64} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>No Church Selected</Text>
           <Text style={styles.errorText}>Please select a church first</Text>
           <TouchableOpacity
@@ -210,13 +210,13 @@ export default function EditOrganizationScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Church</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Building2 size={64} color={LightTheme.textTertiary} />
+          <Building2 size={64} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Permission Denied</Text>
           <Text style={styles.errorText}>
             Only admins can edit the church profile
@@ -237,7 +237,7 @@ export default function EditOrganizationScreen() {
       >
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Edit Church</Text>
           <TouchableOpacity
@@ -267,7 +267,7 @@ export default function EditOrganizationScreen() {
                 <Image source={{ uri: logo }} style={styles.logoImage} contentFit="cover" />
               ) : (
                 <View style={styles.logoPlaceholder}>
-                  <Building2 size={48} color={LightTheme.textTertiary} />
+                  <Building2 size={48} color={Colors.textTertiary} />
                 </View>
               )}
               <View style={styles.cameraOverlay}>
@@ -300,7 +300,7 @@ export default function EditOrganizationScreen() {
               <TextInput
                 style={styles.input}
                 placeholder="e.g., Grace Community Church"
-                placeholderTextColor={LightTheme.textTertiary}
+                placeholderTextColor={Colors.textTertiary}
                 value={name}
                 onChangeText={setName}
                 autoCapitalize="words"
@@ -312,7 +312,7 @@ export default function EditOrganizationScreen() {
               <TextInput
                 style={[styles.input, styles.textArea]}
                 placeholder="Tell us about your church..."
-                placeholderTextColor={LightTheme.textTertiary}
+                placeholderTextColor={Colors.textTertiary}
                 value={description}
                 onChangeText={setDescription}
                 multiline
@@ -324,11 +324,11 @@ export default function EditOrganizationScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Address</Text>
               <View style={styles.inputWithIcon}>
-                <MapPin size={20} color={LightTheme.textSecondary} />
+                <MapPin size={20} color={Colors.textSecondary} />
                 <TextInput
                   style={styles.inputIcon}
                   placeholder="123 Faith Avenue, City, State"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={address}
                   onChangeText={setAddress}
                 />
@@ -338,11 +338,11 @@ export default function EditOrganizationScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Phone</Text>
               <View style={styles.inputWithIcon}>
-                <Phone size={20} color={LightTheme.textSecondary} />
+                <Phone size={20} color={Colors.textSecondary} />
                 <TextInput
                   style={styles.inputIcon}
                   placeholder="+1 (555) 123-4567"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={phone}
                   onChangeText={setPhone}
                   keyboardType="phone-pad"
@@ -353,11 +353,11 @@ export default function EditOrganizationScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Email</Text>
               <View style={styles.inputWithIcon}>
-                <Mail size={20} color={LightTheme.textSecondary} />
+                <Mail size={20} color={Colors.textSecondary} />
                 <TextInput
                   style={styles.inputIcon}
                   placeholder="info@yourchurch.org"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={email}
                   onChangeText={setEmail}
                   keyboardType="email-address"
@@ -369,11 +369,11 @@ export default function EditOrganizationScreen() {
             <View style={styles.inputGroup}>
               <Text style={styles.label}>Website</Text>
               <View style={styles.inputWithIcon}>
-                <Globe size={20} color={LightTheme.textSecondary} />
+                <Globe size={20} color={Colors.textSecondary} />
                 <TextInput
                   style={styles.inputIcon}
                   placeholder="https://yourchurch.org"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={website}
                   onChangeText={setWebsite}
                   keyboardType="url"
@@ -393,7 +393,7 @@ export default function EditOrganizationScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   keyboardView: {
     flex: 1,
@@ -406,7 +406,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -415,21 +415,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.border,
-    backgroundColor: LightTheme.surface,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   placeholder: {
     width: 44,
@@ -438,7 +438,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -463,17 +463,17 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 24,
     borderWidth: 4,
-    borderColor: LightTheme.surface,
+    borderColor: Colors.surface,
   },
   logoPlaceholder: {
     width: 120,
     height: 120,
     borderRadius: 24,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 4,
-    borderColor: LightTheme.surface,
+    borderColor: Colors.surface,
   },
   cameraOverlay: {
     position: 'absolute',
@@ -482,20 +482,20 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
     borderWidth: 3,
-    borderColor: LightTheme.surface,
+    borderColor: Colors.surface,
   },
   logoHint: {
     fontSize: 14,
-    color: LightTheme.primary,
+    color: Colors.primary,
     marginTop: 8,
     fontWeight: '500' as const,
   },
   logoPicker: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 24,
@@ -503,7 +503,7 @@ const styles = StyleSheet.create({
   pickerTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 12,
   },
   logoGrid: {
@@ -518,7 +518,7 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   logoOptionSelected: {
-    borderColor: LightTheme.primary,
+    borderColor: Colors.primary,
   },
   logoOptionImage: {
     width: 72,
@@ -534,16 +534,16 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   input: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
     fontSize: 16,
-    color: LightTheme.text,
+    color: Colors.text,
     borderWidth: 1,
-    borderColor: LightTheme.border,
+    borderColor: Colors.border,
   },
   textArea: {
     height: 100,
@@ -552,18 +552,18 @@ const styles = StyleSheet.create({
   inputWithIcon: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     paddingHorizontal: 16,
     borderWidth: 1,
-    borderColor: LightTheme.border,
+    borderColor: Colors.border,
     gap: 12,
   },
   inputIcon: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   errorContainer: {
     flex: 1,
@@ -574,18 +574,18 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   errorText: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
   errorButton: {
     marginTop: 24,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 20,

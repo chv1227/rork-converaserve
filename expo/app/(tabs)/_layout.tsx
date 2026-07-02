@@ -1,12 +1,13 @@
 import { Tabs } from "expo-router";
 import { House, MessageCircle, Heart, UserPlus, Church } from "lucide-react-native";
 import React from "react";
-import { Platform, View } from "react-native";
+import { Platform, View, StyleSheet } from "react-native";
+import { BlurView } from "expo-blur";
 
 import { useTheme } from "@/providers/ThemeProvider";
 
 export default function TabLayout() {
-  const { colors } = useTheme();
+  const { colors, isDark } = useTheme();
 
   return (
     <Tabs
@@ -14,39 +15,48 @@ export default function TabLayout() {
         tabBarActiveTintColor: colors.tabIconSelected,
         tabBarInactiveTintColor: colors.tabIconDefault,
         headerShown: false,
+        tabBarBackground: () => (
+          <BlurView
+            tint={isDark ? "dark" : "light"}
+            intensity={80}
+            style={StyleSheet.absoluteFill}
+          />
+        ),
         tabBarStyle: {
           position: "absolute",
           bottom: 0,
-          borderTopLeftRadius: 16,
-          borderTopRightRadius: 16,
-          borderTopWidth: 1,
-          borderTopColor: "rgba(0,0,0,0.06)",
-          paddingTop: 4,
+          borderTopLeftRadius: 20,
+          borderTopRightRadius: 20,
+          borderTopWidth: StyleSheet.hairlineWidth,
+          borderTopColor: isDark ? "rgba(255,255,255,0.08)" : "rgba(0,0,0,0.08)",
+          paddingTop: 6,
           paddingBottom: Platform.OS === "ios" ? 4 : 6,
-          height: Platform.OS === "ios" ? 62 : 56,
-          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          height: Platform.OS === "ios" ? 64 : 58,
+          backgroundColor: "transparent",
+          overflow: "hidden",
           zIndex: 100,
           ...Platform.select({
             ios: {
               shadowColor: "#000",
-              shadowOffset: { width: 0, height: -3 },
-              shadowOpacity: 0.06,
-              shadowRadius: 8,
+              shadowOffset: { width: 0, height: -4 },
+              shadowOpacity: 0.08,
+              shadowRadius: 12,
             },
             android: {
-              elevation: 8,
+              elevation: 10,
             },
             web: {
-              boxShadow: "0 -4px 16px rgba(0, 0, 0, 0.05)",
+              boxShadow: "0 -4px 20px rgba(0, 0, 0, 0.08)",
             },
           }),
         },
         tabBarLabelStyle: {
-          fontSize: 9,
+          fontSize: 10,
           fontWeight: "600" as const,
           marginTop: 0,
-          width: 74,
+          width: 72,
           textAlign: "center",
+          letterSpacing: -0.1,
         },
         tabBarItemStyle: {
           paddingTop: 2,

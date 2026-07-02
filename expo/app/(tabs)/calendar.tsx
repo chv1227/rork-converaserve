@@ -4,7 +4,7 @@ import * as Haptics from "expo-haptics";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { ChevronLeft, ChevronRight, Plus } from "lucide-react-native";
 
-import { LightTheme } from "@/constants/colors";
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useData } from "@/providers/DataProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -235,14 +235,14 @@ export default function CalendarScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -252,13 +252,13 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   createButtonHeader: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -267,7 +267,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   calendarCard: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 20,
     padding: 16,
     marginBottom: 24,
@@ -284,7 +284,7 @@ const styles = StyleSheet.create({
   monthText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   weekDays: {
     flexDirection: "row",
@@ -295,7 +295,7 @@ const styles = StyleSheet.create({
     textAlign: "center",
     fontSize: 12,
     fontWeight: "600" as const,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
   },
   daysGrid: {
     flexDirection: "row",
@@ -310,34 +310,34 @@ const styles = StyleSheet.create({
   },
   dayText: {
     fontSize: 14,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   selectedDay: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     borderRadius: 20,
   },
   selectedDayText: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
     fontWeight: "600" as const,
   },
   todayDay: {
     borderWidth: 2,
-    borderColor: LightTheme.primary,
+    borderColor: Colors.primary,
     borderRadius: 20,
   },
   todayDayText: {
-    color: LightTheme.primary,
+    color: Colors.primary,
     fontWeight: "600" as const,
   },
   eventDot: {
     width: 4,
     height: 4,
     borderRadius: 2,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     marginTop: 2,
   },
   selectedEventDot: {
-    backgroundColor: LightTheme.textInverse,
+    backgroundColor: Colors.textInverse,
   },
   eventsSection: {
     marginBottom: 20,
@@ -345,20 +345,20 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   noEvents: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 24,
     alignItems: "center",
   },
   noEventsText: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   loadingContainer: {
     padding: 40,

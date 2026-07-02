@@ -1,8 +1,9 @@
 import React, { useState, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Modal, Pressable, Platform } from 'react-native';
 import { Info, X } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 import { getMinistryColor, MINISTRY_LEGEND } from '@/constants/ministryColors';
+import { Radius } from '@/constants/designTokens';
 import { Ministry } from '@/types';
 
 interface MinistryDotsProps {
@@ -95,6 +96,7 @@ export function MinistryLegend({
   compact = false,
   onInfoPress 
 }: MinistryLegendProps) {
+  const { colors } = useTheme();
   const legendItems = showAll 
     ? MINISTRY_LEGEND 
     : ministries?.map(m => ({
@@ -109,7 +111,7 @@ export function MinistryLegend({
         <Text style={styles.legendTitle}>Ministry Colors</Text>
         {onInfoPress && (
           <TouchableOpacity onPress={onInfoPress} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-            <Info size={16} color={LightTheme.textTertiary} />
+            <Info size={16} color={colors.textTertiary} />
           </TouchableOpacity>
         )}
       </View>
@@ -173,7 +175,7 @@ export function ProfileMinistryIndicator({ ministries, size = 'medium' }: Profil
                 right: index * (dotSize + 2),
                 bottom: 0,
                 borderWidth: 1.5,
-                borderColor: LightTheme.surface,
+                borderColor: '#FFFFFF',
               },
             ]}
           />
@@ -196,6 +198,7 @@ interface MinistryTooltipModalProps {
 }
 
 function MinistryTooltipModal({ visible, ministries, onClose }: MinistryTooltipModalProps) {
+  const { colors } = useTheme();
   if (!visible) return null;
 
   return (
@@ -206,11 +209,11 @@ function MinistryTooltipModal({ visible, ministries, onClose }: MinistryTooltipM
       onRequestClose={onClose}
     >
       <Pressable style={styles.tooltipOverlay} onPress={onClose}>
-        <View style={styles.tooltipContainer}>
-          <View style={styles.tooltipHeader}>
-            <Text style={styles.tooltipTitle}>Ministry Affiliations</Text>
+        <View style={[styles.tooltipContainer, { backgroundColor: colors.surface, shadowColor: '#000' }]}>
+          <View style={[styles.tooltipHeader, { borderBottomColor: colors.borderLight }]}>
+            <Text style={[styles.tooltipTitle, { color: colors.text }]}>Ministry Affiliations</Text>
             <TouchableOpacity onPress={onClose} hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}>
-              <X size={20} color={LightTheme.textSecondary} />
+              <X size={20} color={colors.textSecondary} />
             </TouchableOpacity>
           </View>
           <View style={styles.tooltipContent}>
@@ -222,7 +225,7 @@ function MinistryTooltipModal({ visible, ministries, onClose }: MinistryTooltipM
                     { backgroundColor: ministry.color || getMinistryColor(ministry.name, ministry.id) },
                   ]}
                 />
-                <Text style={styles.tooltipText}>{ministry.name}</Text>
+                <Text style={[styles.tooltipText, { color: colors.text }]}>{ministry.name}</Text>
               </View>
             ))}
           </View>
@@ -245,16 +248,15 @@ const styles = StyleSheet.create({
     padding: 24,
   },
   tooltipContainer: {
-    backgroundColor: LightTheme.surface,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: 16,
     minWidth: 220,
     maxWidth: 300,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 12,
-    elevation: 8,
+    ...Platform.select({
+      ios: { shadowOffset: { width: 0, height: 4 }, shadowOpacity: 0.15, shadowRadius: 12 },
+      android: { elevation: 8 },
+      web: { boxShadow: '0 4px 12px rgba(0,0,0,0.15)' },
+    }),
   },
   tooltipHeader: {
     flexDirection: 'row',
@@ -263,12 +265,10 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
   },
   tooltipTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: LightTheme.text,
   },
   tooltipContent: {
     gap: 10,
@@ -285,15 +285,14 @@ const styles = StyleSheet.create({
   },
   tooltipText: {
     fontSize: 14,
-    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   dot: {
     borderWidth: 1.5,
-    borderColor: LightTheme.surface,
+    borderColor: '#FFFFFF',
   },
   moreBadge: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: '#F1F5F9',
     borderRadius: 8,
     paddingHorizontal: 4,
     marginLeft: 4,
@@ -301,12 +300,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   moreText: {
-    color: LightTheme.textSecondary,
+    color: '#475569',
     fontWeight: '600' as const,
   },
   legendContainer: {
-    backgroundColor: LightTheme.surface,
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: 16,
     marginBottom: 16,
   },
@@ -323,7 +321,6 @@ const styles = StyleSheet.create({
   legendTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.textSecondary,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
@@ -357,7 +354,6 @@ const styles = StyleSheet.create({
   },
   legendText: {
     fontSize: 13,
-    color: LightTheme.text,
     fontWeight: '500' as const,
   },
   legendTextCompact: {
@@ -368,5 +364,8 @@ const styles = StyleSheet.create({
     width: 50,
     height: 12,
   },
-  profileDot: {},
+  profileDot: {
+    borderWidth: 1.5,
+    borderColor: '#FFFFFF',
+  },
 });

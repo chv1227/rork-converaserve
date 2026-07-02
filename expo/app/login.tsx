@@ -19,7 +19,7 @@ import { useRouter } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Mail, Lock, Eye, EyeOff, ArrowRight, Building2, X, Send, RefreshCw, Cross } from "lucide-react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useButtonPress } from "@/hooks/useAnimations";
 import { supabase } from "@/lib/supabase";
@@ -496,7 +496,7 @@ export default function LoginScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Reset Password</Text>
               <TouchableOpacity onPress={closeResetModal} style={styles.closeBtn}>
-                <X size={22} color={LightTheme.textSecondary} />
+                <X size={22} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -530,11 +530,11 @@ export default function LoginScreen() {
                 ) : null}
 
                 <View style={styles.modalInput}>
-                  <Mail size={20} color={LightTheme.textSecondary} />
+                  <Mail size={20} color={Colors.textSecondary} />
                   <TextInput
                     style={styles.modalInputText}
                     placeholder="Email address"
-                    placeholderTextColor={LightTheme.textTertiary}
+                    placeholderTextColor={Colors.textTertiary}
                     value={resetEmail}
                     onChangeText={setResetEmail}
                     keyboardType="email-address"
@@ -578,7 +578,7 @@ export default function LoginScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Verify Email</Text>
               <TouchableOpacity onPress={closeVerifyModal} style={styles.closeBtn}>
-                <X size={22} color={LightTheme.textSecondary} />
+                <X size={22} color={Colors.textSecondary} />
               </TouchableOpacity>
             </View>
 
@@ -616,7 +616,7 @@ export default function LoginScreen() {
                 ) : null}
 
                 <View style={styles.verifyEmailPill}>
-                  <Mail size={16} color={LightTheme.textSecondary} />
+                  <Mail size={16} color={Colors.textSecondary} />
                   <Text style={styles.verifyEmailPillText}>{verifyEmail}</Text>
                 </View>
 
@@ -892,7 +892,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalSheet: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     padding: 24,
@@ -901,7 +901,7 @@ const styles = StyleSheet.create({
     width: 40,
     height: 4,
     borderRadius: 2,
-    backgroundColor: LightTheme.borderLight,
+    backgroundColor: Colors.borderLight,
     alignSelf: "center",
     marginBottom: 16,
   },
@@ -914,27 +914,27 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   closeBtn: {
     padding: 4,
   },
   modalDesc: {
     fontSize: 15,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 24,
     lineHeight: 22,
   },
   modalErrorBox: {
-    backgroundColor: LightTheme.error + "12",
+    backgroundColor: Colors.error + "12",
     borderWidth: 1,
-    borderColor: LightTheme.error + "30",
+    borderColor: Colors.error + "30",
     borderRadius: 14,
     padding: 14,
     marginBottom: 16,
   },
   modalErrorText: {
-    color: LightTheme.error,
+    color: Colors.error,
     fontSize: 14,
     textAlign: "center",
     fontWeight: "500" as const,
@@ -942,19 +942,19 @@ const styles = StyleSheet.create({
   modalInput: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 16,
     paddingHorizontal: 16,
     marginBottom: 16,
     gap: 12,
     borderWidth: 1,
-    borderColor: LightTheme.borderLight,
+    borderColor: Colors.borderLight,
   },
   modalInputText: {
     flex: 1,
     paddingVertical: 16,
     fontSize: 16,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   modalPrimaryBtn: {
     backgroundColor: "#1B3A5C",
@@ -981,7 +981,7 @@ const styles = StyleSheet.create({
   },
   modalCancelText: {
     fontSize: 15,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     fontWeight: "500" as const,
   },
   successBlock: {
@@ -1000,22 +1000,22 @@ const styles = StyleSheet.create({
   successTitle: {
     fontSize: 22,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 12,
   },
   successBody: {
     fontSize: 15,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 22,
   },
   successHighlight: {
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   successHint: {
     fontSize: 14,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     textAlign: "center",
     marginTop: 16,
     lineHeight: 20,
@@ -1039,14 +1039,14 @@ const styles = StyleSheet.create({
   verifyHeading: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     textAlign: "center",
     marginBottom: 8,
   },
   verifyEmailPill: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 14,
     paddingVertical: 14,
     paddingHorizontal: 16,
@@ -1055,7 +1055,7 @@ const styles = StyleSheet.create({
   },
   verifyEmailPillText: {
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
     fontWeight: "500" as const,
   },
 });

@@ -34,7 +34,7 @@ import {
   X,
   Check,
 } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
@@ -92,7 +92,7 @@ function QuickAction({ icon, title, subtitle, onPress, badge, danger = false, sh
           <Text style={styles.badgeText}>{badge}</Text>
         </View>
       )}
-      <ChevronRight size={18} color={LightTheme.textTertiary} />
+      <ChevronRight size={18} color={Colors.textTertiary} />
     </TouchableOpacity>
   );
 }
@@ -330,7 +330,7 @@ export default function AdminDashboard() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.redirectText}>Checking permissions...</Text>
       </View>
     );
@@ -340,7 +340,7 @@ export default function AdminDashboard() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.redirectText}>Loading dashboard...</Text>
       </View>
     );
@@ -357,14 +357,14 @@ export default function AdminDashboard() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Admin Dashboard</Text>
             <Text style={styles.subtitle}>Welcome back, {user?.name?.split(" ")[0]}</Text>
           </View>
           <View style={styles.adminBadge}>
-            <Shield size={14} color={LightTheme.primary} />
+            <Shield size={14} color={Colors.primary} />
             <Text style={styles.adminBadgeText}>{isSuperAdmin ? "Super" : "Admin"}</Text>
           </View>
         </View>
@@ -407,15 +407,15 @@ export default function AdminDashboard() {
 
         <View style={styles.secondaryStats}>
           <View style={styles.secondaryStat}>
-            <Calendar size={16} color={LightTheme.textSecondary} />
+            <Calendar size={16} color={Colors.textSecondary} />
             <Text style={styles.secondaryStatText}>{stats?.totalEvents || 0} Events</Text>
           </View>
           <View style={styles.secondaryStat}>
-            <Megaphone size={16} color={LightTheme.textSecondary} />
+            <Megaphone size={16} color={Colors.textSecondary} />
             <Text style={styles.secondaryStatText}>{stats?.totalAnnouncements || 0} Announcements</Text>
           </View>
           <View style={styles.secondaryStat}>
-            <UserX size={16} color={LightTheme.textSecondary} />
+            <UserX size={16} color={Colors.textSecondary} />
             <Text style={styles.secondaryStatText}>{stats?.suspendedUsers || 0} Suspended</Text>
           </View>
         </View>
@@ -423,19 +423,19 @@ export default function AdminDashboard() {
         <Text style={styles.sectionTitle}>User Management</Text>
         <View style={styles.quickActionsSection}>
           <QuickAction
-            icon={<Users size={20} color={LightTheme.primary} />}
+            icon={<Users size={20} color={Colors.primary} />}
             title="Manage Users"
             subtitle="View, edit, and manage user accounts"
             onPress={() => router.push("/admin/users" as any)}
           />
           <QuickAction
-            icon={<UserPlus size={20} color={LightTheme.primary} />}
+            icon={<UserPlus size={20} color={Colors.primary} />}
             title="Invite Members"
             subtitle="Send invitations to new members"
             onPress={() => setInviteModalVisible(true)}
           />
           <QuickAction
-            icon={<Shield size={20} color={LightTheme.primary} />}
+            icon={<Shield size={20} color={Colors.primary} />}
             title="Roles & Permissions"
             subtitle="Configure access levels"
             onPress={() => router.push("/admin/users" as any)}
@@ -446,13 +446,13 @@ export default function AdminDashboard() {
         <Text style={styles.sectionTitle}>Content & Ministries</Text>
         <View style={styles.quickActionsSection}>
           <QuickAction
-            icon={<UsersRound size={20} color={LightTheme.primary} />}
+            icon={<UsersRound size={20} color={Colors.primary} />}
             title="Ministry Management"
             subtitle="Create, edit, and manage ministries"
             onPress={() => router.push("/admin/ministries" as any)}
           />
           <QuickAction
-            icon={<ClipboardList size={20} color={LightTheme.primary} />}
+            icon={<ClipboardList size={20} color={Colors.primary} />}
             title="Ministry Requests"
             subtitle="Review pending join requests"
             onPress={() => router.push("/admin/requests" as any)}
@@ -476,12 +476,12 @@ export default function AdminDashboard() {
                   activeOpacity={0.7}
                 >
                   <View style={styles.churchIcon}>
-                    <Church size={20} color={LightTheme.primary} />
+                    <Church size={20} color={Colors.primary} />
                   </View>
                   <View style={styles.quickActionContent}>
                     <Text style={styles.quickActionTitle}>{church.name}</Text>
                     <View style={styles.churchLocationRow}>
-                      <MapPin size={12} color={LightTheme.textTertiary} />
+                      <MapPin size={12} color={Colors.textTertiary} />
                       <Text style={styles.churchLocation}>
                         {church.city}, {church.state}
                       </Text>
@@ -492,12 +492,12 @@ export default function AdminDashboard() {
                       {church.membership?.role === 'super_admin' ? 'Super Admin' : 'Admin'}
                     </Text>
                   </View>
-                  <ChevronRight size={18} color={LightTheme.textTertiary} />
+                  <ChevronRight size={18} color={Colors.textTertiary} />
                 </TouchableOpacity>
               ))}
               {isSuperAdmin && (
                 <QuickAction
-                  icon={<Plus size={20} color={LightTheme.primary} />}
+                  icon={<Plus size={20} color={Colors.primary} />}
                   title="Create New Church"
                   subtitle="Add a new church to the platform"
                   onPress={() => router.push("/church/create" as any)}
@@ -506,7 +506,7 @@ export default function AdminDashboard() {
               )}
               {adminChurches.length === 0 && !isSuperAdmin && (
                 <View style={styles.emptyChurchState}>
-                  <Church size={32} color={LightTheme.textTertiary} />
+                  <Church size={32} color={Colors.textTertiary} />
                   <Text style={styles.emptyChurchText}>No churches to manage</Text>
                 </View>
               )}
@@ -519,14 +519,14 @@ export default function AdminDashboard() {
             <Text style={styles.sectionTitle}>Super Admin</Text>
             <View style={styles.quickActionsSection}>
               <QuickAction
-                icon={<AlertTriangle size={20} color={LightTheme.warning} />}
+                icon={<AlertTriangle size={20} color={Colors.warning} />}
                 title="Content Moderation"
                 subtitle="Review reported content"
                 onPress={() => router.push("/admin/moderation" as any)}
                 badge={stats?.pendingReports}
               />
               <QuickAction
-                icon={<Trash2 size={20} color={LightTheme.error} />}
+                icon={<Trash2 size={20} color={Colors.error} />}
                 title="Danger Zone"
                 subtitle="Reset data, delete organization"
                 onPress={() => {
@@ -568,7 +568,7 @@ export default function AdminDashboard() {
             ))
           ) : (
             <View style={styles.emptyActivity}>
-              <Activity size={32} color={LightTheme.textTertiary} />
+              <Activity size={32} color={Colors.textTertiary} />
               <Text style={styles.emptyText}>No recent activity</Text>
             </View>
           )}
@@ -591,7 +591,7 @@ export default function AdminDashboard() {
                 onPress={() => setInviteModalVisible(false)}
                 style={styles.modalCloseButton}
               >
-                <X size={24} color={LightTheme.text} />
+                <X size={24} color={Colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -601,7 +601,7 @@ export default function AdminDashboard() {
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter full name"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={inviteName}
                   onChangeText={setInviteName}
                 />
@@ -612,7 +612,7 @@ export default function AdminDashboard() {
                 <TextInput
                   style={styles.textInput}
                   placeholder="Enter email address"
-                  placeholderTextColor={LightTheme.textTertiary}
+                  placeholderTextColor={Colors.textTertiary}
                   value={inviteEmail}
                   onChangeText={setInviteEmail}
                   keyboardType="email-address"
@@ -687,7 +687,7 @@ export default function AdminDashboard() {
                 disabled={!inviteName.trim() || !inviteEmail.trim() || inviteMutation.isPending}
               >
                 {inviteMutation.isPending ? (
-                  <ActivityIndicator size="small" color={LightTheme.textInverse} />
+                  <ActivityIndicator size="small" color={Colors.textInverse} />
                 ) : (
                   <Text style={styles.sendInviteButtonText}>Send Invitation</Text>
                 )}
@@ -703,7 +703,7 @@ export default function AdminDashboard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   centered: {
     justifyContent: "center",
@@ -712,14 +712,14 @@ const styles = StyleSheet.create({
   redirectText: {
     marginTop: 16,
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -729,7 +729,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -740,17 +740,17 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   adminBadge: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: LightTheme.primary + "15",
+    backgroundColor: Colors.primary + "15",
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 20,
@@ -759,7 +759,7 @@ const styles = StyleSheet.create({
   adminBadgeText: {
     fontSize: 12,
     fontWeight: "600" as const,
-    color: LightTheme.primary,
+    color: Colors.primary,
   },
   content: {
     flex: 1,
@@ -776,7 +776,7 @@ const styles = StyleSheet.create({
   statCard: {
     flex: 1,
     minWidth: "45%",
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     borderLeftWidth: 4,
@@ -792,17 +792,17 @@ const styles = StyleSheet.create({
   statValue: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   statLabel: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   secondaryStats: {
     flexDirection: "row",
     justifyContent: "space-around",
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 16,
     marginBottom: 24,
@@ -814,18 +814,18 @@ const styles = StyleSheet.create({
   },
   secondaryStatText: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 12,
     textTransform: "uppercase",
     letterSpacing: 0.5,
   },
   quickActionsSection: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: "hidden",
     marginBottom: 24,
@@ -835,7 +835,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   quickActionNoBorder: {
     borderBottomWidth: 0,
@@ -844,13 +844,13 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: LightTheme.primary + "15",
+    backgroundColor: Colors.primary + "15",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
   },
   quickActionIconDanger: {
-    backgroundColor: LightTheme.error + "15",
+    backgroundColor: Colors.error + "15",
   },
   quickActionContent: {
     flex: 1,
@@ -858,18 +858,18 @@ const styles = StyleSheet.create({
   quickActionTitle: {
     fontSize: 15,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   quickActionTitleDanger: {
-    color: LightTheme.error,
+    color: Colors.error,
   },
   quickActionSubtitle: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   badge: {
-    backgroundColor: LightTheme.error,
+    backgroundColor: Colors.error,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 4,
@@ -878,20 +878,20 @@ const styles = StyleSheet.create({
   badgeText: {
     fontSize: 11,
     fontWeight: "700" as const,
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   churchItem: {
     flexDirection: "row" as const,
     alignItems: "center" as const,
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   churchIcon: {
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: LightTheme.primary + "15",
+    backgroundColor: Colors.primary + "15",
     alignItems: "center" as const,
     justifyContent: "center" as const,
     marginRight: 12,
@@ -904,10 +904,10 @@ const styles = StyleSheet.create({
   },
   churchLocation: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   churchRoleBadge: {
-    backgroundColor: LightTheme.primary + "15",
+    backgroundColor: Colors.primary + "15",
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
@@ -916,7 +916,7 @@ const styles = StyleSheet.create({
   churchRoleText: {
     fontSize: 11,
     fontWeight: "600" as const,
-    color: LightTheme.primary,
+    color: Colors.primary,
   },
   emptyChurchState: {
     alignItems: "center" as const,
@@ -926,10 +926,10 @@ const styles = StyleSheet.create({
   },
   emptyChurchText: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   activitySection: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
   },
@@ -938,13 +938,13 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   activityDot: {
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     marginTop: 6,
     marginRight: 12,
   },
@@ -953,12 +953,12 @@ const styles = StyleSheet.create({
   },
   activityDetails: {
     fontSize: 14,
-    color: LightTheme.text,
+    color: Colors.text,
     lineHeight: 20,
   },
   activityMeta: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     marginTop: 4,
   },
   emptyActivity: {
@@ -968,7 +968,7 @@ const styles = StyleSheet.create({
   },
   emptyText: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   modalOverlay: {
     flex: 1,
@@ -976,7 +976,7 @@ const styles = StyleSheet.create({
     justifyContent: "flex-end",
   },
   modalContent: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -991,13 +991,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   modalCloseButton: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -1007,16 +1007,16 @@ const styles = StyleSheet.create({
   inputLabel: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
   },
   textInput: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 15,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   roleSelector: {
     flexDirection: "row",
@@ -1026,19 +1026,19 @@ const styles = StyleSheet.create({
     flex: 1,
     paddingVertical: 12,
     borderRadius: 12,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
   },
   roleOptionActive: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
   },
   roleOptionText: {
     fontSize: 14,
     fontWeight: "500" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   roleOptionTextActive: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   ministriesSelector: {
     flexDirection: "row",
@@ -1052,17 +1052,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 10,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderWidth: 1,
     borderColor: "transparent",
   },
   ministryChipText: {
     fontSize: 13,
     fontWeight: "500" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   sendInviteButton: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     borderRadius: 16,
     paddingVertical: 16,
     alignItems: "center",
@@ -1075,6 +1075,6 @@ const styles = StyleSheet.create({
   sendInviteButtonText: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
 });

@@ -1,9 +1,9 @@
 import React, { useRef, useCallback } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Animated, Platform } from 'react-native';
 import { Image } from 'expo-image';
 import { Pin, ChevronRight } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
 import { useTheme } from '@/providers/ThemeProvider';
+import { Radius, Shadow } from '@/constants/designTokens';
 import { Announcement } from '@/types';
 
 interface AnnouncementCardProps {
@@ -101,14 +101,14 @@ function formatDate(dateString: string): string {
 
 const styles = StyleSheet.create({
   container: {
-    borderRadius: 16,
+    borderRadius: Radius.lg,
     padding: 16,
     marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 8,
-    elevation: 2,
+    ...Platform.select({
+      ios: { shadowColor: '#000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.06, shadowRadius: 10 },
+      android: { elevation: 3 },
+      web: { boxShadow: '0 2px 10px rgba(0,0,0,0.06)' },
+    }),
   },
   pinnedContainer: {
     borderWidth: 1,
@@ -175,7 +175,6 @@ const styles = StyleSheet.create({
     marginTop: 12,
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
   },
   readMore: {
     fontSize: 14,

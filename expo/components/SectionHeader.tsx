@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { ChevronRight } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import { useTheme } from '@/providers/ThemeProvider';
 
 interface SectionHeaderProps {
   title: string;
@@ -10,9 +10,10 @@ interface SectionHeaderProps {
 }
 
 export default function SectionHeader({ title, actionText, onActionPress }: SectionHeaderProps) {
+  const { colors } = useTheme();
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>{title}</Text>
+      <Text style={[styles.title, { color: colors.text }]}>{title}</Text>
       
       {actionText && onActionPress && (
         <TouchableOpacity 
@@ -20,8 +21,8 @@ export default function SectionHeader({ title, actionText, onActionPress }: Sect
           onPress={onActionPress}
           hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
         >
-          <Text style={styles.actionText}>{actionText}</Text>
-          <ChevronRight size={16} color={LightTheme.primary} />
+          <Text style={[styles.actionText, { color: colors.primary }]}>{actionText}</Text>
+          <ChevronRight size={16} color={colors.primary} />
         </TouchableOpacity>
       )}
     </View>
@@ -39,7 +40,6 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: LightTheme.text,
   },
   action: {
     flexDirection: 'row',
@@ -49,6 +49,5 @@ const styles = StyleSheet.create({
   actionText: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.primary,
   },
 });

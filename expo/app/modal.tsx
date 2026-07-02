@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
 import { useLocalSearchParams } from 'expo-router';
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 
 export default function ModalScreen() {
   const params = useLocalSearchParams();
@@ -31,7 +31,7 @@ export default function ModalScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   content: {
     padding: 20,
@@ -39,29 +39,29 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 12,
   },
   description: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     lineHeight: 24,
   },
   paramsContainer: {
     marginTop: 24,
     padding: 16,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
   },
   paramsTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
   },
   paramItem: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
 });

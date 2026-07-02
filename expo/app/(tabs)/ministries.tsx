@@ -36,7 +36,7 @@ import {
   Plus,
   ArrowRight,
 } from "lucide-react-native";
-import { LightTheme } from "@/constants/colors";
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import { supabase } from "@/lib/supabase";
@@ -403,7 +403,7 @@ export default function MinistriesHubScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   centered: {
     justifyContent: "center",
@@ -413,7 +413,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   headerGradient: {
     paddingBottom: 24,
@@ -421,7 +421,7 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 36,
     ...Platform.select({
       ios: {
-        shadowColor: LightTheme.primaryDark,
+        shadowColor: Colors.primaryDark,
         shadowOffset: { width: 0, height: 8 },
         shadowOpacity: 0.25,
         shadowRadius: 20,
@@ -501,13 +501,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   sectionCount: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
-    backgroundColor: LightTheme.surfaceSecondary,
+    color: Colors.textSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 10,
@@ -583,12 +583,12 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     alignItems: "center",
     borderWidth: 1,
-    borderColor: LightTheme.borderLight,
+    borderColor: Colors.borderLight,
   },
   statIcon: {
     width: 44,
@@ -601,26 +601,26 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 22,
     fontWeight: "800" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 2,
   },
   statLabel: {
     fontSize: 11,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     textAlign: "center",
     fontWeight: "500" as const,
   },
   emptyExploreCard: {
     alignItems: "center",
     padding: 24,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     borderWidth: 1,
-    borderColor: LightTheme.borderLight,
+    borderColor: Colors.borderLight,
   },
   emptyExploreText: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 8,
   },
   emptyState: {
@@ -631,7 +631,7 @@ const styles = StyleSheet.create({
     width: 88,
     height: 88,
     borderRadius: 44,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 16,
@@ -639,12 +639,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 18,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
   },
   emptyDescription: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
     paddingHorizontal: 40,
     lineHeight: 20,

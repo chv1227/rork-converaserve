@@ -12,7 +12,7 @@ import { Image } from 'expo-image';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Building2, Plus, ChevronRight, Users, CheckCircle, ArrowLeft, Shield } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { Organization, OrganizationRole } from '@/types';
 import { supabase } from '@/lib/supabase';
@@ -138,11 +138,11 @@ export default function OrganizationSelectScreen() {
   const getRoleBadgeColor = (role: OrganizationRole) => {
     switch (role) {
       case 'super_admin':
-        return LightTheme.error;
+        return Colors.error;
       case 'organization_admin':
-        return LightTheme.warning;
+        return Colors.warning;
       default:
-        return LightTheme.primary;
+        return Colors.primary;
     }
   };
 
@@ -161,7 +161,7 @@ export default function OrganizationSelectScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={LightTheme.primary} />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Loading organizations...</Text>
         </View>
       </SafeAreaView>
@@ -181,14 +181,14 @@ export default function OrganizationSelectScreen() {
           onPress={() => router.back()}
           activeOpacity={0.7}
         >
-          <ArrowLeft size={24} color={LightTheme.text} />
+          <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerBarTitle}>Organizations</Text>
         <View style={styles.headerPlaceholder} />
       </View>
 
       <View style={styles.header}>
-        <Building2 size={32} color={LightTheme.primary} />
+        <Building2 size={32} color={Colors.primary} />
         <Text style={styles.title}>Select Organization</Text>
         <Text style={styles.subtitle}>Choose a church to continue</Text>
       </View>
@@ -230,16 +230,16 @@ export default function OrganizationSelectScreen() {
                   </View>
                 </View>
                 {currentOrganization?.id === org.id ? (
-                  <CheckCircle size={24} color={LightTheme.success} />
+                  <CheckCircle size={24} color={Colors.success} />
                 ) : (
-                  <ChevronRight size={24} color={LightTheme.textSecondary} />
+                  <ChevronRight size={24} color={Colors.textSecondary} />
                 )}
               </TouchableOpacity>
             ))}
           </View>
         ) : (
           <View style={styles.emptyState}>
-            <Building2 size={64} color={LightTheme.textSecondary} />
+            <Building2 size={64} color={Colors.textSecondary} />
             <Text style={styles.emptyTitle}>No Organizations Yet</Text>
             <Text style={styles.emptyDescription}>
               Create a new church organization or join an existing one to get started.
@@ -254,7 +254,7 @@ export default function OrganizationSelectScreen() {
             testID="create-org-button"
           >
             <View style={styles.actionIcon}>
-              <Plus size={24} color={LightTheme.primary} />
+              <Plus size={24} color={Colors.primary} />
             </View>
             <View style={styles.actionInfo}>
               <Text style={styles.actionTitle}>Create New Church</Text>
@@ -262,7 +262,7 @@ export default function OrganizationSelectScreen() {
                 Start a new church organization
               </Text>
             </View>
-            <ChevronRight size={24} color={LightTheme.textSecondary} />
+            <ChevronRight size={24} color={Colors.textSecondary} />
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -271,7 +271,7 @@ export default function OrganizationSelectScreen() {
             testID="join-org-button"
           >
             <View style={styles.actionIcon}>
-              <Users size={24} color={LightTheme.primary} />
+              <Users size={24} color={Colors.primary} />
             </View>
             <View style={styles.actionInfo}>
               <Text style={styles.actionTitle}>Join Existing Church</Text>
@@ -279,7 +279,7 @@ export default function OrganizationSelectScreen() {
                 Request to join a church
               </Text>
             </View>
-            <ChevronRight size={24} color={LightTheme.textSecondary} />
+            <ChevronRight size={24} color={Colors.textSecondary} />
           </TouchableOpacity>
 
           {canAccessAdmin && currentOrganization && (
@@ -288,8 +288,8 @@ export default function OrganizationSelectScreen() {
               onPress={handleAdminPanel}
               testID="admin-panel-button"
             >
-              <View style={[styles.actionIcon, { backgroundColor: LightTheme.warning + '20' }]}>
-                <Shield size={24} color={LightTheme.warning} />
+              <View style={[styles.actionIcon, { backgroundColor: Colors.warning + '20' }]}>
+                <Shield size={24} color={Colors.warning} />
               </View>
               <View style={styles.actionInfo}>
                 <Text style={styles.actionTitle}>Church Admin Panel</Text>
@@ -297,7 +297,7 @@ export default function OrganizationSelectScreen() {
                   Manage members and settings
                 </Text>
               </View>
-              <ChevronRight size={24} color={LightTheme.textSecondary} />
+              <ChevronRight size={24} color={Colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
@@ -309,7 +309,7 @@ export default function OrganizationSelectScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -319,7 +319,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   headerBar: {
     flexDirection: 'row',
@@ -328,20 +328,20 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.border,
+    borderBottomColor: Colors.border,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerBarTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   headerPlaceholder: {
     width: 44,
@@ -354,12 +354,12 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 28,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   subtitle: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 8,
   },
   scrollView: {
@@ -375,13 +375,13 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 12,
   },
   orgCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -389,14 +389,14 @@ const styles = StyleSheet.create({
     borderColor: 'transparent',
   },
   orgCardSelected: {
-    borderColor: LightTheme.primary,
-    backgroundColor: LightTheme.primaryLight,
+    borderColor: Colors.primary,
+    backgroundColor: Colors.primaryLight,
   },
   orgLogo: {
     width: 56,
     height: 56,
     borderRadius: 12,
-    backgroundColor: LightTheme.border,
+    backgroundColor: Colors.border,
   },
   orgInfo: {
     flex: 1,
@@ -405,11 +405,11 @@ const styles = StyleSheet.create({
   orgName: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   orgDescription: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   roleContainer: {
@@ -433,12 +433,12 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   emptyDescription: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
     paddingHorizontal: 32,
@@ -449,7 +449,7 @@ const styles = StyleSheet.create({
   actionButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     width: 48,
     height: 48,
     borderRadius: 12,
-    backgroundColor: LightTheme.primaryLight,
+    backgroundColor: Colors.primaryLight,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -469,11 +469,11 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   actionDescription: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
 });

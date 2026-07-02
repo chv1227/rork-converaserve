@@ -26,7 +26,7 @@ import {
   Settings,
   Heart,
 } from "lucide-react-native";
-import { LightTheme } from "@/constants/colors";
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
 import { supabase } from "@/lib/supabase";
@@ -316,16 +316,16 @@ export default function NotificationsScreen() {
     switch (type) {
       case "join_request":
       case "invitation":
-        return <UserPlus size={20} color={LightTheme.tertiary} />;
+        return <UserPlus size={20} color={Colors.tertiary} />;
       case "event":
       case "reminder":
-        return <Calendar size={20} color={LightTheme.secondary} />;
+        return <Calendar size={20} color={Colors.secondary} />;
       case "message":
-        return <MessageCircle size={20} color={LightTheme.primary} />;
+        return <MessageCircle size={20} color={Colors.primary} />;
       case "announcement":
-        return <AlertCircle size={20} color={LightTheme.warning} />;
+        return <AlertCircle size={20} color={Colors.warning} />;
       case "ministry":
-        return <Users size={20} color={LightTheme.success} />;
+        return <Users size={20} color={Colors.success} />;
       case "prayer":
         return <Heart size={20} color="#EC4899" />;
       case "system":
@@ -334,9 +334,9 @@ export default function NotificationsScreen() {
       case "warning":
       case "error":
       case "other":
-        return <Settings size={20} color={LightTheme.textSecondary} />;
+        return <Settings size={20} color={Colors.textSecondary} />;
       default:
-        return <Bell size={20} color={LightTheme.textSecondary} />;
+        return <Bell size={20} color={Colors.textSecondary} />;
     }
   };
 
@@ -473,14 +473,14 @@ export default function NotificationsScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerTop: {
     flexDirection: "row",
@@ -496,17 +496,17 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
   title: {
     fontSize: 28,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   badge: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     borderRadius: 12,
     paddingHorizontal: 8,
     paddingVertical: 2,
@@ -514,7 +514,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   badgeText: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
     fontSize: 12,
     fontWeight: "600" as const,
   },
@@ -530,7 +530,7 @@ const styles = StyleSheet.create({
   },
   headerButtonText: {
     fontSize: 13,
-    color: LightTheme.primary,
+    color: Colors.primary,
     fontWeight: "500" as const,
   },
   content: {
@@ -552,7 +552,7 @@ const styles = StyleSheet.create({
     width: 100,
     height: 100,
     borderRadius: 50,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginBottom: 20,
@@ -560,26 +560,26 @@ const styles = StyleSheet.create({
   emptyTitle: {
     fontSize: 20,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginBottom: 8,
   },
   emptySubtitle: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: "center",
     lineHeight: 20,
   },
   sectionTitle: {
     fontSize: 13,
     fontWeight: "600" as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textTransform: "uppercase",
     letterSpacing: 0.5,
     marginTop: 16,
     marginBottom: 12,
   },
   notificationCard: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 12,
     padding: 14,
     marginBottom: 10,
@@ -593,9 +593,9 @@ const styles = StyleSheet.create({
     elevation: 1,
   },
   unreadCard: {
-    backgroundColor: LightTheme.surfaceElevated,
+    backgroundColor: Colors.surfaceElevated,
     borderLeftWidth: 3,
-    borderLeftColor: LightTheme.primary,
+    borderLeftColor: Colors.primary,
   },
   notificationContent: {
     flex: 1,
@@ -606,12 +606,12 @@ const styles = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
   unreadIconContainer: {
-    backgroundColor: LightTheme.primaryLight,
+    backgroundColor: Colors.primaryLight,
   },
   textContainer: {
     flex: 1,
@@ -624,7 +624,7 @@ const styles = StyleSheet.create({
   notificationTitle: {
     fontSize: 15,
     fontWeight: "500" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     flex: 1,
   },
   unreadTitle: {
@@ -634,17 +634,17 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
   },
   notificationMessage: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
     lineHeight: 18,
   },
   notificationTime: {
     fontSize: 11,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     marginTop: 6,
   },
   actions: {

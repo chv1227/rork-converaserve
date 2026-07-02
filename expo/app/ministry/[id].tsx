@@ -49,7 +49,7 @@ import {
   Activity,
   Grid3X3,
 } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
 import { useQuery, useMutation } from "@tanstack/react-query";
@@ -236,21 +236,21 @@ export default function MinistryDashboardScreen() {
   const canManage = isAdmin || isSuperAdmin || memberRole === "leader" || memberRole === "admin";
   const canAccess = isMember || isAdmin || isSuperAdmin;
 
-  const color = ministry?.color || LightTheme.primary;
+  const color = ministry?.color || Colors.primary;
   const IconComp = ICON_MAP[ministry?.icon || ""] || Church;
   const coverImage = ministry?.image_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop";
 
   const quickActions: QuickAction[] = [
-    { icon: Megaphone, label: "Announcements", section: "announcements", color: LightTheme.highlight },
-    { icon: MessageCircle, label: "Chat", section: "chat", color: LightTheme.tertiary },
-    { icon: Calendar, label: "Calendar", section: "calendar", color: LightTheme.secondary },
-    { icon: HandHeart, label: "Prayer", section: "prayer", color: LightTheme.coral },
-    { icon: ClipboardList, label: "Tasks", section: "tasks", color: LightTheme.mint },
-    { icon: Users, label: "Members", section: "members", color: LightTheme.primaryLight },
-    { icon: FolderOpen, label: "Files", section: "files", color: LightTheme.sky },
-    { icon: Vote, label: "Polls", section: "polls", color: LightTheme.peach },
-    { icon: MessageSquare, label: "Discussion", section: "discussion", color: LightTheme.highlightLight },
-    { icon: BarChart3, label: "Stats", section: "stats", color: LightTheme.tertiaryLight },
+    { icon: Megaphone, label: "Announcements", section: "announcements", color: Colors.highlight },
+    { icon: MessageCircle, label: "Chat", section: "chat", color: Colors.tertiary },
+    { icon: Calendar, label: "Calendar", section: "calendar", color: Colors.secondary },
+    { icon: HandHeart, label: "Prayer", section: "prayer", color: Colors.coral },
+    { icon: ClipboardList, label: "Tasks", section: "tasks", color: Colors.mint },
+    { icon: Users, label: "Members", section: "members", color: Colors.primaryLight },
+    { icon: FolderOpen, label: "Files", section: "files", color: Colors.sky },
+    { icon: Vote, label: "Polls", section: "polls", color: Colors.peach },
+    { icon: MessageSquare, label: "Discussion", section: "discussion", color: Colors.highlightLight },
+    { icon: BarChart3, label: "Stats", section: "stats", color: Colors.tertiaryLight },
   ];
 
   const onRefresh = useCallback(async () => {
@@ -268,7 +268,7 @@ export default function MinistryDashboardScreen() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading ministry...</Text>
       </View>
     );
@@ -292,7 +292,7 @@ export default function MinistryDashboardScreen() {
 
       {/* Header */}
       <LinearGradient
-        colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", LightTheme.primaryDark]}
+        colors={["rgba(0,0,0,0.3)", "rgba(0,0,0,0.7)", Colors.primaryDark]}
         locations={[0, 0.5, 1]}
         style={[styles.headerBase]}
       >
@@ -343,14 +343,14 @@ export default function MinistryDashboardScreen() {
         contentContainerStyle={[styles.scrollContent, { paddingBottom: insets.bottom + 120 }]}
         showsVerticalScrollIndicator={false}
         refreshControl={
-          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={LightTheme.primary} />
+          <RefreshControl refreshing={isRefreshing} onRefresh={onRefresh} tintColor={Colors.primary} />
         }
       >
         {/* Access Denied Message */}
         {!canAccess && (
           <View style={styles.accessDenied}>
             <View style={styles.accessDeniedIcon}>
-              <Shield size={40} color={LightTheme.error} />
+              <Shield size={40} color={Colors.error} />
             </View>
             <Text style={styles.accessDeniedTitle}>Access Restricted</Text>
             <Text style={styles.accessDeniedText}>
@@ -507,17 +507,17 @@ export default function MinistryDashboardScreen() {
                     <View style={styles.eventInfo}>
                       <Text style={styles.eventTitle}>{event.title}</Text>
                       <View style={styles.eventMeta}>
-                        <Clock size={12} color={LightTheme.textTertiary} />
+                        <Clock size={12} color={Colors.textTertiary} />
                         <Text style={styles.eventTime}>{event.time}</Text>
                         {event.location_name && (
                           <>
-                            <MapPin size={12} color={LightTheme.textTertiary} />
+                            <MapPin size={12} color={Colors.textTertiary} />
                             <Text style={styles.eventTime}>{event.location_name}</Text>
                           </>
                         )}
                       </View>
                     </View>
-                    <ChevronRight size={18} color={LightTheme.textTertiary} />
+                    <ChevronRight size={18} color={Colors.textTertiary} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -536,7 +536,7 @@ export default function MinistryDashboardScreen() {
                 disabled={leaveMutation.isPending}
                 activeOpacity={0.8}
               >
-                <LogOut size={18} color={LightTheme.error} />
+                <LogOut size={18} color={Colors.error} />
                 <Text style={styles.leaveBtnText}>Leave This Ministry</Text>
               </TouchableOpacity>
             )}
@@ -580,11 +580,11 @@ export default function MinistryDashboardScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: LightTheme.background },
+  container: { flex: 1, backgroundColor: Colors.background },
   centered: { justifyContent: "center", alignItems: "center" },
-  loadingText: { marginTop: 12, fontSize: 14, color: LightTheme.textSecondary },
-  errorText: { fontSize: 16, color: LightTheme.error, marginBottom: 16 },
-  backBtn: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: LightTheme.primary, borderRadius: 12 },
+  loadingText: { marginTop: 12, fontSize: 14, color: Colors.textSecondary },
+  errorText: { fontSize: 16, color: Colors.error, marginBottom: 16 },
+  backBtn: { paddingHorizontal: 24, paddingVertical: 12, backgroundColor: Colors.primary, borderRadius: 12 },
   backBtnText: { color: "#fff", fontSize: 14, fontWeight: "600" },
   headerBase: { position: "relative", overflow: "hidden", paddingBottom: 32 },
   headerNav: {
@@ -610,52 +610,52 @@ const styles = StyleSheet.create({
   scrollView: { flex: 1 },
   scrollContent: { paddingTop: 20, paddingHorizontal: 20 },
   accessDenied: { alignItems: "center", paddingVertical: 40 },
-  accessDeniedIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: LightTheme.errorLight, alignItems: "center", justifyContent: "center", marginBottom: 16 },
-  accessDeniedTitle: { fontSize: 20, fontWeight: "700", color: LightTheme.text, marginBottom: 8 },
-  accessDeniedText: { fontSize: 14, color: LightTheme.textSecondary, textAlign: "center", paddingHorizontal: 20, lineHeight: 20, marginBottom: 24 },
+  accessDeniedIcon: { width: 80, height: 80, borderRadius: 40, backgroundColor: Colors.errorLight, alignItems: "center", justifyContent: "center", marginBottom: 16 },
+  accessDeniedTitle: { fontSize: 20, fontWeight: "700", color: Colors.text, marginBottom: 8 },
+  accessDeniedText: { fontSize: 14, color: Colors.textSecondary, textAlign: "center", paddingHorizontal: 20, lineHeight: 20, marginBottom: 24 },
   joinBtn: { flexDirection: "row", alignItems: "center", gap: 10, paddingHorizontal: 28, paddingVertical: 14, borderRadius: 14 },
   joinBtnText: { fontSize: 16, fontWeight: "600", color: "#fff" },
   section: { marginBottom: 28 },
   sectionRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 16 },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: LightTheme.text, marginBottom: 16 },
+  sectionTitle: { fontSize: 18, fontWeight: "700", color: Colors.text, marginBottom: 16 },
   linkText: { fontSize: 14, fontWeight: "600" },
   actionsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   actionCard: {
     width: (SCREEN_WIDTH - 60) / 3, alignItems: "center", paddingVertical: 14,
-    backgroundColor: LightTheme.surface, borderRadius: 14, borderWidth: 1, borderColor: LightTheme.borderLight,
+    backgroundColor: Colors.surface, borderRadius: 14, borderWidth: 1, borderColor: Colors.borderLight,
     ...Platform.select({ ios: { shadowColor: "#000", shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.04, shadowRadius: 6 }, android: { elevation: 2 } }),
   },
   actionIcon: { width: 44, height: 44, borderRadius: 13, alignItems: "center", justifyContent: "center", marginBottom: 8 },
-  actionLabel: { fontSize: 11, fontWeight: "600", color: LightTheme.text, textAlign: "center" },
+  actionLabel: { fontSize: 11, fontWeight: "600", color: Colors.text, textAlign: "center" },
   toolsGrid: { flexDirection: "row", flexWrap: "wrap", gap: 10 },
   toolCard: {
-    width: (SCREEN_WIDTH - 60) / 2, padding: 16, backgroundColor: LightTheme.surface,
-    borderRadius: 14, borderWidth: 1, borderColor: LightTheme.borderLight,
+    width: (SCREEN_WIDTH - 60) / 2, padding: 16, backgroundColor: Colors.surface,
+    borderRadius: 14, borderWidth: 1, borderColor: Colors.borderLight,
   },
   toolIcon: { width: 44, height: 44, borderRadius: 13, alignItems: "center", justifyContent: "center", marginBottom: 10 },
-  toolLabel: { fontSize: 14, fontWeight: "700", color: LightTheme.text, marginBottom: 4 },
-  toolDesc: { fontSize: 12, color: LightTheme.textSecondary, lineHeight: 16 },
-  genericTools: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, backgroundColor: LightTheme.surface, borderRadius: 14, borderWidth: 1, borderColor: LightTheme.borderLight },
-  genericToolsText: { fontSize: 14, color: LightTheme.textSecondary, flex: 1, lineHeight: 20 },
+  toolLabel: { fontSize: 14, fontWeight: "700", color: Colors.text, marginBottom: 4 },
+  toolDesc: { fontSize: 12, color: Colors.textSecondary, lineHeight: 16 },
+  genericTools: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, backgroundColor: Colors.surface, borderRadius: 14, borderWidth: 1, borderColor: Colors.borderLight },
+  genericToolsText: { fontSize: 14, color: Colors.textSecondary, flex: 1, lineHeight: 20 },
   eventCard: {
-    flexDirection: "row", alignItems: "center", backgroundColor: LightTheme.surface,
-    borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: LightTheme.borderLight,
+    flexDirection: "row", alignItems: "center", backgroundColor: Colors.surface,
+    borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: Colors.borderLight,
   },
   eventDateBadge: { paddingHorizontal: 10, paddingVertical: 6, borderRadius: 10, marginRight: 12, minWidth: 50, alignItems: "center" },
   eventDateText: { fontSize: 12, fontWeight: "700" },
   eventInfo: { flex: 1 },
-  eventTitle: { fontSize: 14, fontWeight: "600", color: LightTheme.text, marginBottom: 4 },
+  eventTitle: { fontSize: 14, fontWeight: "600", color: Colors.text, marginBottom: 4 },
   eventMeta: { flexDirection: "row", alignItems: "center", gap: 4, flexWrap: "wrap" },
-  eventTime: { fontSize: 12, color: LightTheme.textTertiary },
+  eventTime: { fontSize: 12, color: Colors.textTertiary },
   leaveBtn: {
     flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8,
-    paddingVertical: 14, borderRadius: 14, backgroundColor: LightTheme.errorLight,
-    borderWidth: 1, borderColor: LightTheme.error + "25", marginTop: 8,
+    paddingVertical: 14, borderRadius: 14, backgroundColor: Colors.errorLight,
+    borderWidth: 1, borderColor: Colors.error + "25", marginTop: 8,
   },
-  leaveBtnText: { fontSize: 15, fontWeight: "600", color: LightTheme.error },
+  leaveBtnText: { fontSize: 15, fontWeight: "600", color: Colors.error },
   bottomBar: {
     position: "absolute", bottom: 0, left: 0, right: 0,
-    backgroundColor: LightTheme.surface, borderTopWidth: 1, borderTopColor: LightTheme.borderLight,
+    backgroundColor: Colors.surface, borderTopWidth: 1, borderTopColor: Colors.borderLight,
     paddingTop: 16, paddingHorizontal: 20,
   },
   joinBtnFull: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10, paddingVertical: 16, borderRadius: 14 },

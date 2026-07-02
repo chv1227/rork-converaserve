@@ -7,7 +7,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { StatusBar } from "expo-status-bar";
 import { View, ActivityIndicator, StyleSheet, Text, Platform } from "react-native";
 
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { AuthProvider, useAuth } from "@/providers/AuthProvider";
 import { DataProvider } from "@/providers/DataProvider";
 import { ErrorBoundary } from "@/components/ErrorBoundary";
@@ -88,7 +88,7 @@ function AuthGate({ children }: { children: ReactNode }) {
   if (isLoading) {
     return (
       <View style={styles.loadingContainer}>
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
         <Text style={styles.loadingText}>Loading...</Text>
       </View>
     );
@@ -141,8 +141,8 @@ function RootLayoutNav() {
           presentation: "modal",
           headerShown: true,
           headerTitle: "Details",
-          headerStyle: { backgroundColor: LightTheme.surface },
-          headerTintColor: LightTheme.textSecondary,
+          headerStyle: { backgroundColor: Colors.surface },
+          headerTintColor: Colors.textSecondary,
         }} 
       />
       <Stack.Screen 
@@ -390,11 +390,11 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   loadingText: {
     marginTop: 12,
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
 });

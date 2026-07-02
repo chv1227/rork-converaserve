@@ -2,7 +2,7 @@ import React from "react";
 import { TouchableOpacity, StyleSheet, ViewStyle } from "react-native";
 import { useRouter } from "expo-router";
 import { ArrowLeft } from "lucide-react-native";
-import { LightTheme } from "@/constants/colors";
+import { useTheme } from "@/providers/ThemeProvider";
 
 interface BackButtonProps {
   onPress?: () => void;
@@ -14,12 +14,14 @@ interface BackButtonProps {
 
 export default function BackButton({
   onPress,
-  color = LightTheme.text,
+  color,
   size = 24,
   style,
   testID = "back-button",
 }: BackButtonProps) {
+  const { colors } = useTheme();
   const router = useRouter();
+  const resolvedColor = color ?? colors.text;
 
   const handlePress = () => {
     if (onPress) {
@@ -36,7 +38,7 @@ export default function BackButton({
       activeOpacity={0.7}
       testID={testID}
     >
-      <ArrowLeft size={size} color={color} />
+      <ArrowLeft size={size} color={resolvedColor} />
     </TouchableOpacity>
   );
 }

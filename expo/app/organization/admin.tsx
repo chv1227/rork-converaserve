@@ -27,7 +27,7 @@ import {
   UserMinus,
   Edit3,
 } from 'lucide-react-native';
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from '@/providers/AuthProvider';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { OrganizationRole } from '@/types';
@@ -59,10 +59,10 @@ const ROLE_LABELS: Record<RoleType, string> = {
 };
 
 const ROLE_COLORS: Record<RoleType, string> = {
-  super_admin: LightTheme.error,
-  organization_admin: LightTheme.warning,
-  leader: LightTheme.secondary,
-  member: LightTheme.primary,
+  super_admin: Colors.error,
+  organization_admin: Colors.warning,
+  leader: Colors.secondary,
+  member: Colors.primary,
 };
 
 export default function OrganizationAdminScreen() {
@@ -302,7 +302,7 @@ export default function OrganizationAdminScreen() {
     return (
       <SafeAreaView style={styles.container}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator size="large" color={LightTheme.primary} />
+          <ActivityIndicator size="large" color={Colors.primary} />
           <Text style={styles.loadingText}>Checking permissions...</Text>
         </View>
       </SafeAreaView>
@@ -314,13 +314,13 @@ export default function OrganizationAdminScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Church Admin</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Building2 size={64} color={LightTheme.textTertiary} />
+          <Building2 size={64} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>No Church Selected</Text>
           <Text style={styles.errorText}>Please select a church first</Text>
           <TouchableOpacity
@@ -339,13 +339,13 @@ export default function OrganizationAdminScreen() {
       <SafeAreaView style={styles.container}>
         <View style={styles.header}>
           <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <Text style={styles.headerTitle}>Church Admin</Text>
           <View style={styles.placeholder} />
         </View>
         <View style={styles.errorContainer}>
-          <Shield size={64} color={LightTheme.textTertiary} />
+          <Shield size={64} color={Colors.textTertiary} />
           <Text style={styles.errorTitle}>Permission Denied</Text>
           <Text style={styles.errorText}>Only admins can access this panel</Text>
           <TouchableOpacity style={styles.errorButton} onPress={() => router.back()}>
@@ -360,14 +360,14 @@ export default function OrganizationAdminScreen() {
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
         <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
-          <ArrowLeft size={24} color={LightTheme.text} />
+          <ArrowLeft size={24} color={Colors.text} />
         </TouchableOpacity>
         <Text style={styles.headerTitle}>Church Admin</Text>
         <TouchableOpacity
           style={styles.editButton}
           onPress={() => router.push('/organization/edit' as any)}
         >
-          <Edit3 size={20} color={LightTheme.primary} />
+          <Edit3 size={20} color={Colors.primary} />
         </TouchableOpacity>
       </View>
 
@@ -394,12 +394,12 @@ export default function OrganizationAdminScreen() {
 
         <View style={styles.statsRow}>
           <View style={styles.statCard}>
-            <Users size={24} color={LightTheme.primary} />
+            <Users size={24} color={Colors.primary} />
             <Text style={styles.statNumber}>{members.length}</Text>
             <Text style={styles.statLabel}>Members</Text>
           </View>
           <View style={styles.statCard}>
-            <UserPlus size={24} color={LightTheme.warning} />
+            <UserPlus size={24} color={Colors.warning} />
             <Text style={styles.statNumber}>{pendingRequests.length}</Text>
             <Text style={styles.statLabel}>Pending</Text>
           </View>
@@ -411,13 +411,13 @@ export default function OrganizationAdminScreen() {
             onPress={() => router.push('/organization/edit' as any)}
           >
             <View style={styles.actionIcon}>
-              <Settings size={20} color={LightTheme.primary} />
+              <Settings size={20} color={Colors.primary} />
             </View>
             <View style={styles.actionContent}>
               <Text style={styles.actionTitle}>Edit Church Profile</Text>
               <Text style={styles.actionSubtitle}>Update name, description, logo</Text>
             </View>
-            <ChevronRight size={20} color={LightTheme.textTertiary} />
+            <ChevronRight size={20} color={Colors.textTertiary} />
           </TouchableOpacity>
         </View>
 
@@ -461,7 +461,7 @@ export default function OrganizationAdminScreen() {
         <Text style={styles.sectionTitle}>Members ({members.length})</Text>
         <View style={styles.membersList}>
           {membersQuery.isLoading ? (
-            <ActivityIndicator size="small" color={LightTheme.primary} />
+            <ActivityIndicator size="small" color={Colors.primary} />
           ) : members.length === 0 ? (
             <Text style={styles.emptyText}>No members yet</Text>
           ) : (
@@ -478,7 +478,7 @@ export default function OrganizationAdminScreen() {
                   <View style={styles.memberNameRow}>
                     <Text style={styles.memberName}>{member.name}</Text>
                     {memberRole === 'super_admin' && (
-                      <Crown size={14} color={LightTheme.warning} />
+                      <Crown size={14} color={Colors.warning} />
                     )}
                   </View>
                   <View style={styles.memberRoleRow}>
@@ -495,13 +495,13 @@ export default function OrganizationAdminScreen() {
                       style={styles.memberActionButton}
                       onPress={() => handleRoleChange(member)}
                     >
-                      <Shield size={18} color={LightTheme.primary} />
+                      <Shield size={18} color={Colors.primary} />
                     </TouchableOpacity>
                     <TouchableOpacity
                       style={styles.memberActionButton}
                       onPress={() => handleRemove(member)}
                     >
-                      <UserMinus size={18} color={LightTheme.error} />
+                      <UserMinus size={18} color={Colors.error} />
                     </TouchableOpacity>
                   </View>
                 )}
@@ -525,7 +525,7 @@ export default function OrganizationAdminScreen() {
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Change Role</Text>
               <TouchableOpacity onPress={() => setShowRoleModal(false)} style={styles.modalClose}>
-                <X size={24} color={LightTheme.text} />
+                <X size={24} color={Colors.text} />
               </TouchableOpacity>
             </View>
 
@@ -568,7 +568,7 @@ export default function OrganizationAdminScreen() {
                     </Text>
                   </View>
                   {selectedMember?.role === role && (
-                    <Check size={20} color={LightTheme.primary} />
+                    <Check size={20} color={Colors.primary} />
                   )}
                 </TouchableOpacity>
               ))}
@@ -583,7 +583,7 @@ export default function OrganizationAdminScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   loadingContainer: {
     flex: 1,
@@ -593,7 +593,7 @@ const styles = StyleSheet.create({
   loadingText: {
     marginTop: 16,
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   header: {
     flexDirection: 'row',
@@ -602,21 +602,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.border,
-    backgroundColor: LightTheme.surface,
+    borderBottomColor: Colors.border,
+    backgroundColor: Colors.surface,
   },
   backButton: {
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
   headerTitle: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   placeholder: {
     width: 44,
@@ -625,7 +625,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -637,7 +637,7 @@ const styles = StyleSheet.create({
   },
   orgCard: {
     flexDirection: 'row',
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 16,
@@ -655,11 +655,11 @@ const styles = StyleSheet.create({
   orgName: {
     fontSize: 18,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   orgDescription: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   statsRow: {
@@ -669,7 +669,7 @@ const styles = StyleSheet.create({
   },
   statCard: {
     flex: 1,
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 20,
     alignItems: 'center',
@@ -678,15 +678,15 @@ const styles = StyleSheet.create({
   statNumber: {
     fontSize: 28,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   statLabel: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textTransform: 'uppercase',
   },
   quickActions: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
@@ -700,7 +700,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 12,
-    backgroundColor: LightTheme.primary + '15',
+    backgroundColor: Colors.primary + '15',
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -711,23 +711,23 @@ const styles = StyleSheet.create({
   actionTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   actionSubtitle: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   sectionTitle: {
     fontSize: 14,
     fontWeight: '600' as const,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginBottom: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
   },
   membersList: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     overflow: 'hidden',
     marginBottom: 24,
@@ -737,7 +737,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   memberAvatar: {
     width: 48,
@@ -756,11 +756,11 @@ const styles = StyleSheet.create({
   memberName: {
     fontSize: 16,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   memberEmail: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   memberRoleRow: {
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -796,7 +796,7 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: LightTheme.success,
+    backgroundColor: Colors.success,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -804,14 +804,14 @@ const styles = StyleSheet.create({
     width: 36,
     height: 36,
     borderRadius: 18,
-    backgroundColor: LightTheme.error,
+    backgroundColor: Colors.error,
     alignItems: 'center',
     justifyContent: 'center',
   },
   emptyText: {
     padding: 24,
     textAlign: 'center',
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   errorContainer: {
     flex: 1,
@@ -822,18 +822,18 @@ const styles = StyleSheet.create({
   errorTitle: {
     fontSize: 20,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   errorText: {
     fontSize: 16,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     textAlign: 'center',
     marginTop: 8,
   },
   errorButton: {
     marginTop: 24,
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
     paddingHorizontal: 24,
     paddingVertical: 12,
     borderRadius: 20,
@@ -849,7 +849,7 @@ const styles = StyleSheet.create({
     justifyContent: 'flex-end',
   },
   modalContent: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderTopLeftRadius: 24,
     borderTopRightRadius: 24,
     padding: 24,
@@ -864,13 +864,13 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: '700' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   modalClose: {
     width: 40,
     height: 40,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -887,7 +887,7 @@ const styles = StyleSheet.create({
   selectedMemberName: {
     fontSize: 18,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   roleOptions: {
     gap: 12,
@@ -896,13 +896,13 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     padding: 16,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     borderRadius: 16,
     borderWidth: 2,
     borderColor: 'transparent',
   },
   roleOptionSelected: {
-    borderColor: LightTheme.primary,
+    borderColor: Colors.primary,
   },
   roleOptionIcon: {
     width: 44,
@@ -918,11 +918,11 @@ const styles = StyleSheet.create({
   roleOptionTitle: {
     fontSize: 15,
     fontWeight: '600' as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   roleOptionDescription: {
     fontSize: 12,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
 });

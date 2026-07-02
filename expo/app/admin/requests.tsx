@@ -21,7 +21,7 @@ import {
   CheckCircle,
   XCircle,
 } from "lucide-react-native";
-import { LightTheme } from '@/constants/colors';
+import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { useQueryClient, useQuery, useMutation } from "@tanstack/react-query";
 
@@ -135,22 +135,22 @@ export default function MinistryRequestsPage() {
   const getStatusColor = (status: RequestStatus) => {
     switch (status) {
       case "approved":
-        return LightTheme.success;
+        return Colors.success;
       case "rejected":
-        return LightTheme.error;
+        return Colors.error;
       default:
-        return LightTheme.warning;
+        return Colors.warning;
     }
   };
 
   const getStatusIcon = (status: RequestStatus) => {
     switch (status) {
       case "approved":
-        return <CheckCircle size={16} color={LightTheme.success} />;
+        return <CheckCircle size={16} color={Colors.success} />;
       case "rejected":
-        return <XCircle size={16} color={LightTheme.error} />;
+        return <XCircle size={16} color={Colors.error} />;
       default:
-        return <Clock size={16} color={LightTheme.warning} />;
+        return <Clock size={16} color={Colors.warning} />;
     }
   };
 
@@ -174,7 +174,7 @@ export default function MinistryRequestsPage() {
     return (
       <View style={[styles.container, styles.centered]}>
         <Stack.Screen options={{ headerShown: false }} />
-        <ActivityIndicator size="large" color={LightTheme.primary} />
+        <ActivityIndicator size="large" color={Colors.primary} />
       </View>
     );
   }
@@ -190,7 +190,7 @@ export default function MinistryRequestsPage() {
             onPress={() => router.back()}
             activeOpacity={0.7}
           >
-            <ArrowLeft size={24} color={LightTheme.text} />
+            <ArrowLeft size={24} color={Colors.text} />
           </TouchableOpacity>
           <View style={styles.headerTitles}>
             <Text style={styles.title}>Ministry Requests</Text>
@@ -226,7 +226,7 @@ export default function MinistryRequestsPage() {
 
       {requestsQuery.isLoading ? (
         <View style={[styles.container, styles.centered]}>
-          <ActivityIndicator size="large" color={LightTheme.primary} />
+          <ActivityIndicator size="large" color={Colors.primary} />
         </View>
       ) : (
         <ScrollView
@@ -236,7 +236,7 @@ export default function MinistryRequestsPage() {
         >
           {requestsQuery.data?.length === 0 ? (
             <View style={styles.emptyState}>
-              <Users size={48} color={LightTheme.textTertiary} />
+              <Users size={48} color={Colors.textTertiary} />
               <Text style={styles.emptyStateText}>No requests found</Text>
               <Text style={styles.emptyStateSubtext}>
                 {selectedStatus === "pending"
@@ -256,7 +256,7 @@ export default function MinistryRequestsPage() {
                       />
                     ) : (
                       <View style={[styles.avatar, styles.avatarPlaceholder]}>
-                        <Users size={20} color={LightTheme.textSecondary} />
+                        <Users size={20} color={Colors.textSecondary} />
                       </View>
                     )}
                     <View style={styles.userInfo}>
@@ -284,7 +284,7 @@ export default function MinistryRequestsPage() {
                     <View
                       style={[
                         styles.ministryDot,
-                        { backgroundColor: request.ministryColor || LightTheme.primary },
+                        { backgroundColor: request.ministryColor || Colors.primary },
                       ]}
                     />
                     <Text style={styles.ministryName}>
@@ -313,10 +313,10 @@ export default function MinistryRequestsPage() {
                       activeOpacity={0.7}
                     >
                       {approveMutation.isPending ? (
-                        <ActivityIndicator size="small" color={LightTheme.textInverse} />
+                        <ActivityIndicator size="small" color={Colors.textInverse} />
                       ) : (
                         <>
-                          <Check size={16} color={LightTheme.textInverse} />
+                          <Check size={16} color={Colors.textInverse} />
                           <Text style={styles.approveButtonText}>Approve</Text>
                         </>
                       )}
@@ -328,10 +328,10 @@ export default function MinistryRequestsPage() {
                       activeOpacity={0.7}
                     >
                       {rejectMutation.isPending ? (
-                        <ActivityIndicator size="small" color={LightTheme.error} />
+                        <ActivityIndicator size="small" color={Colors.error} />
                       ) : (
                         <>
-                          <X size={16} color={LightTheme.error} />
+                          <X size={16} color={Colors.error} />
                           <Text style={styles.rejectButtonText}>Reject</Text>
                         </>
                       )}
@@ -351,18 +351,18 @@ export default function MinistryRequestsPage() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: LightTheme.background,
+    backgroundColor: Colors.background,
   },
   centered: {
     justifyContent: "center",
     alignItems: "center",
   },
   header: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     paddingHorizontal: 20,
     paddingBottom: 16,
     borderBottomWidth: 1,
-    borderBottomColor: LightTheme.borderLight,
+    borderBottomColor: Colors.borderLight,
   },
   headerRow: {
     flexDirection: "row",
@@ -373,7 +373,7 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
     marginRight: 12,
@@ -384,11 +384,11 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: "700" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   subtitle: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   filterRow: {
@@ -398,19 +398,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 8,
     borderRadius: 20,
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     marginRight: 8,
   },
   filterChipActive: {
-    backgroundColor: LightTheme.primary,
+    backgroundColor: Colors.primary,
   },
   filterChipText: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     fontWeight: "500" as const,
   },
   filterChipTextActive: {
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   content: {
     flex: 1,
@@ -426,16 +426,16 @@ const styles = StyleSheet.create({
   emptyStateText: {
     fontSize: 18,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
     marginTop: 16,
   },
   emptyStateSubtext: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 4,
   },
   requestCard: {
-    backgroundColor: LightTheme.surface,
+    backgroundColor: Colors.surface,
     borderRadius: 16,
     padding: 16,
     marginBottom: 12,
@@ -458,7 +458,7 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   avatarPlaceholder: {
-    backgroundColor: LightTheme.surfaceSecondary,
+    backgroundColor: Colors.surfaceSecondary,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -468,11 +468,11 @@ const styles = StyleSheet.create({
   userName: {
     fontSize: 16,
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   userEmail: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 2,
   },
   statusBadge: {
@@ -490,7 +490,7 @@ const styles = StyleSheet.create({
   requestDetails: {
     paddingTop: 12,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
+    borderTopColor: Colors.borderLight,
   },
   ministryRow: {
     flexDirection: "row",
@@ -505,24 +505,24 @@ const styles = StyleSheet.create({
   },
   ministryName: {
     fontSize: 14,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
   },
   ministryNameBold: {
     fontWeight: "600" as const,
-    color: LightTheme.text,
+    color: Colors.text,
   },
   requestDate: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
   },
   reviewerText: {
     fontSize: 12,
-    color: LightTheme.textTertiary,
+    color: Colors.textTertiary,
     marginTop: 4,
   },
   reviewNote: {
     fontSize: 13,
-    color: LightTheme.textSecondary,
+    color: Colors.textSecondary,
     marginTop: 8,
     fontStyle: "italic",
   },
@@ -532,7 +532,7 @@ const styles = StyleSheet.create({
     marginTop: 16,
     paddingTop: 16,
     borderTopWidth: 1,
-    borderTopColor: LightTheme.borderLight,
+    borderTopColor: Colors.borderLight,
   },
   approveButton: {
     flex: 1,
@@ -542,12 +542,12 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: LightTheme.success,
+    backgroundColor: Colors.success,
   },
   approveButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.textInverse,
+    color: Colors.textInverse,
   },
   rejectButton: {
     flex: 1,
@@ -557,11 +557,11 @@ const styles = StyleSheet.create({
     gap: 6,
     paddingVertical: 12,
     borderRadius: 10,
-    backgroundColor: LightTheme.error + "15",
+    backgroundColor: Colors.error + "15",
   },
   rejectButtonText: {
     fontSize: 14,
     fontWeight: "600" as const,
-    color: LightTheme.error,
+    color: Colors.error,
   },
 });
