@@ -360,32 +360,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: LightTheme.textSecondary,
   },
-  setupBanner: {
-    backgroundColor: LightTheme.primary + '10',
-    borderRadius: 12,
-    padding: 16,
-    marginBottom: 20,
-    borderWidth: 1,
-    borderColor: LightTheme.primary + '30',
-  },
-  setupBannerContent: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
-  setupBannerText: {
-    flex: 1,
-  },
-  setupBannerTitle: {
-    fontSize: 16,
-    fontWeight: "600" as const,
-    color: LightTheme.text,
-  },
-  setupBannerSubtitle: {
-    fontSize: 13,
-    color: LightTheme.textSecondary,
-    marginTop: 2,
-  },
   loadingContainer: {
     padding: 40,
     alignItems: "center",

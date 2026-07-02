@@ -410,7 +410,7 @@ export default function HomeScreen() {
   }, [headerAnim, bodyFade]);
 
   // Auto-rotate banner
-  const bannerItemWidth = SCREEN_WIDTH - 40 + 12; // slide width + marginRight
+  const bannerItemWidth = SCREEN_WIDTH - 32 + 12; // slide width + marginRight
   useEffect(() => {
     if (BANNER_SLIDES.length <= 1) return;
     const interval = setInterval(() => {
@@ -690,7 +690,7 @@ export default function HomeScreen() {
           {/* ── Hero Banner Carousel ── */}
           <View style={styles.bannerSection}>
             {isLoading ? (
-              <SkeletonBlock width={SCREEN_WIDTH - 40} height={200} borderRadius={20} />
+              <SkeletonBlock width={SCREEN_WIDTH - 32} height={170} borderRadius={16} />
             ) : (
               <>
                 <FlatList
@@ -1141,24 +1141,24 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   bannerList: {
-    paddingHorizontal: 20,
+    paddingHorizontal: 16,
     gap: 12,
   },
   bannerSlide: {
-    width: SCREEN_WIDTH - 40,
-    height: 200,
-    borderRadius: 20,
+    width: SCREEN_WIDTH - 32,
+    height: 170,
+    borderRadius: 16,
     overflow: "hidden",
     marginRight: 12,
     ...Platform.select({
       ios: {
         shadowColor: "#000",
-        shadowOffset: { width: 0, height: 4 },
-        shadowOpacity: 0.12,
-        shadowRadius: 14,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 8,
       },
-      android: { elevation: 6 },
-      web: { boxShadow: "0 4px 14px rgba(0,0,0,0.12)" },
+      android: { elevation: 2 },
+      web: { boxShadow: "0 2px 8px rgba(0,0,0,0.08)" },
     }),
   },
   bannerImage: {
@@ -1168,31 +1168,31 @@ const styles = StyleSheet.create({
   bannerOverlay: {
     ...StyleSheet.absoluteFillObject,
     justifyContent: "flex-end",
-    padding: 20,
+    padding: 18,
   },
   bannerTitle: {
-    fontSize: 22,
+    fontSize: 20,
     fontWeight: "800" as const,
     color: "#FFFFFF",
-    letterSpacing: -0.3,
-    marginBottom: 4,
+    letterSpacing: -0.2,
+    marginBottom: 3,
   },
   bannerSubtitle: {
-    fontSize: 14,
+    fontSize: 13,
     fontWeight: "500" as const,
-    color: "rgba(255,255,255,0.80)",
+    color: "rgba(255,255,255,0.82)",
     letterSpacing: 0.1,
   },
   dotsContainer: {
     flexDirection: "row",
     justifyContent: "center",
     alignItems: "center",
-    gap: 6,
-    marginTop: 14,
+    gap: 5,
+    marginTop: 12,
   },
   dot: {
-    height: 7,
-    borderRadius: 3.5,
+    height: 6,
+    borderRadius: 3,
   },
 
   // ── Section ──

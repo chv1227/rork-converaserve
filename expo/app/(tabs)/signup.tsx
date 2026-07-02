@@ -38,6 +38,7 @@ import {
   Calendar,
   Sparkles,
 } from "lucide-react-native";
+import Banner from "@/components/Banner";
 import { LinearGradient } from "expo-linear-gradient";
 import { useAuth } from "@/providers/AuthProvider";
 import { useTheme } from "@/providers/ThemeProvider";
@@ -397,18 +398,12 @@ export default function SignupScreen() {
       >
         {/* ── Success Banner ── */}
         {successType && (
-          <View style={[styles.successBanner, { backgroundColor: "#10B981" + "12", borderColor: "#10B981" + "30" }]}>
-            <CheckCircle2 size={20} color="#10B981" />
-            <View style={styles.successContent}>
-              <Text style={styles.successTitle}>Signup Submitted!</Text>
-              <Text style={styles.successSubtitle}>
-                Your {getSignupTypeLabel(successType)} application has been received. We'll review it and get back to you soon.
-              </Text>
-            </View>
-            <TouchableOpacity onPress={() => setSuccessType(null)} activeOpacity={0.7}>
-              <XCircle size={18} color={colors.textTertiary} />
-            </TouchableOpacity>
-          </View>
+          <Banner
+            variant="success"
+            title="Signup Submitted!"
+            subtitle={`Your ${getSignupTypeLabel(successType)} application has been received. We'll review it and get back to you soon.`}
+            onDismiss={() => setSuccessType(null)}
+          />
         )}
 
         {/* ── Signup Categories ── */}
@@ -613,14 +608,6 @@ const styles = StyleSheet.create({
   // Scroll
   scrollView: { flex: 1 },
   scrollContent: { paddingHorizontal: 20, paddingTop: 20 },
-  // Success banner
-  successBanner: {
-    flexDirection: "row", alignItems: "flex-start", gap: 12,
-    borderRadius: 16, padding: 16, borderWidth: 1, marginBottom: 20,
-  },
-  successContent: { flex: 1 },
-  successTitle: { fontSize: 16, fontWeight: "700" as const, color: "#059669" },
-  successSubtitle: { fontSize: 13, color: "#059669", lineHeight: 18, marginTop: 2 },
   // Section
   section: { marginBottom: 24 },
   sectionHeader: {
