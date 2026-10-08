@@ -19,13 +19,6 @@ import { LinearGradient } from "expo-linear-gradient";
 import {
   ArrowLeft,
   Users,
-  Calendar,
-  MessageCircle,
-  FileText,
-  Megaphone,
-  HandHeart,
-  ClipboardList,
-  BarChart3,
   Settings,
   UserPlus,
   Check,
@@ -35,24 +28,31 @@ import {
   Music,
   Shield,
   Video,
-  Search,
-  Bell,
-  FolderOpen,
-  Vote,
-  MessageSquare,
   Clock,
   MapPin,
   Star,
   Sparkles,
   Church,
   Heart,
-  Activity,
-  Grid3X3,
+  HandHeart,
+  Lock,
 } from "lucide-react-native";
 import Colors from '@/constants/colors';
 import { useAuth } from "@/providers/AuthProvider";
 import { supabase } from "@/lib/supabase";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { db } from "@/lib/ministryWorkspace";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { usePlanAccess, PLAN_LABEL } from "@/hooks/usePlanAccess";
+import {
+  MinistryTool,
+  MinistryToolId,
+  MINISTRY_TOOLS,
+  genericTools,
+  quickActions,
+  resolveMinistryKind,
+  toolsForKind,
+} from "@/constants/ministryTools";
+import MinistryDashboardHeader from "@/components/ministry/MinistryDashboardHeader";
 
 const { width: SCREEN_WIDTH } = Dimensions.get("window");
 
@@ -62,30 +62,39 @@ const ICON_MAP: Record<string, IconComp> = {
   Baby, Sparkles, Music, Users, Church, Heart, Shield, Star, HandHeart, Video,
 };
 
+// Quick Action tint colours, in the same order as QUICK_ACTION_IDS (constants/ministryTools.ts).
+const QUICK_ACTION_COLORS = [
+  Colors.highlight,
+  Colors.tertiary,
+  Colors.secondary,
+  Colors.coral,
+  Colors.mint,
+  Colors.primaryLight,
+  Colors.sky,
+  Colors.peach,
+  Colors.tertiaryLight,
+];
+
 interface MinistryInfo {
   id: string;
+  church_id: string;
   name: string;
   description: string;
   color: string;
   icon: string;
   image_url: string | null;
   ministry_type: string | null;
+  template: string | null;
   contact_email: string | null;
   meeting_location: string | null;
   meeting_schedule: string | null;
-}
-
-interface QuickAction {
-  icon: IconComp;
-  label: string;
-  section: string;
-  color: string;
 }
 
 export default function MinistryDashboardScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const queryClient = useQueryClient();
   const { user, isAdmin, isSuperAdmin, currentOrganization } = useAuth();
   const [isRefreshing, setIsRefreshing] = useState(false);
   const scrollY = useRef(new Animated.Value(0)).current;
@@ -94,9 +103,10 @@ export default function MinistryDashboardScreen() {
     queryKey: ["ministry-dashboard", id],
     queryFn: async () => {
       if (!id) return null;
-      const { data, error } = await supabase
+      // `template` holds the ministry type on live data (ministry_type is usually null).
+      const { data, error } = await db
         .from("ministries")
-        .select("id, name, description, color, icon, image_url, ministry_type, contact_email, meeting_location, meeting_schedule")
+        .select("id, church_id, name, description, color, icon, image_url, ministry_type, template, contact_email, meeting_location, meeting_schedule")
         .eq("id", id)
         .single();
       if (error) throw error;
@@ -105,6 +115,7 @@ export default function MinistryDashboardScreen() {
     enabled: !!id,
   });
 
+  const { canUse, loading: planLoading } = usePlanAccess(ministryQuery.data?.church_id);
   const memberCheckQuery = useQuery({
     queryKey: ["ministry-member-check", id, user?.id],
     queryFn: async () => {
@@ -194,6 +205,8 @@ export default function MinistryDashboardScreen() {
     onSuccess: () => {
       memberCheckQuery.refetch();
       memberCountQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ["ministry-context", id] });
+      queryClient.invalidateQueries({ queryKey: ["ministry-roster", id] });
       Alert.alert("Joined!", "You are now a member of this ministry.");
     },
     onError: (err: Error) => {
@@ -212,16 +225,22 @@ export default function MinistryDashboardScreen() {
         .single();
       if (!profileData) throw new Error("Profile not found");
 
-      const { error } = await (supabase
+      // v1 set is_active=false, but ministry_members has no UPDATE policy so it silently
+      // did nothing. The existing "Leave ministries" DELETE policy allows removing your own row.
+      const { data, error } = await (supabase
         .from("ministry_members") as any)
-        .update({ is_active: false })
+        .delete()
         .eq("ministry_id", id)
-        .eq("profile_id", (profileData as any).id);
+        .eq("profile_id", (profileData as any).id)
+        .select("id");
       if (error) throw error;
+      if (!data || data.length === 0) throw new Error("Couldn't leave this ministry. Please try again.");
     },
     onSuccess: () => {
       memberCheckQuery.refetch();
       memberCountQuery.refetch();
+      queryClient.invalidateQueries({ queryKey: ["ministry-context", id] });
+      queryClient.invalidateQueries({ queryKey: ["ministry-roster", id] });
       Alert.alert("Left Ministry", "You have left this ministry.");
     },
     onError: (err: Error) => {
@@ -240,18 +259,32 @@ export default function MinistryDashboardScreen() {
   const IconComp = ICON_MAP[ministry?.icon || ""] || Church;
   const coverImage = ministry?.image_url || "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&h=400&fit=crop";
 
-  const quickActions: QuickAction[] = [
-    { icon: Megaphone, label: "Announcements", section: "announcements", color: Colors.highlight },
-    { icon: MessageCircle, label: "Chat", section: "chat", color: Colors.tertiary },
-    { icon: Calendar, label: "Calendar", section: "calendar", color: Colors.secondary },
-    { icon: HandHeart, label: "Prayer", section: "prayer", color: Colors.coral },
-    { icon: ClipboardList, label: "Tasks", section: "tasks", color: Colors.mint },
-    { icon: Users, label: "Members", section: "members", color: Colors.primaryLight },
-    { icon: FolderOpen, label: "Files", section: "files", color: Colors.sky },
-    { icon: Vote, label: "Polls", section: "polls", color: Colors.peach },
-    { icon: MessageSquare, label: "Discussion", section: "discussion", color: Colors.highlightLight },
-    { icon: BarChart3, label: "Stats", section: "stats", color: Colors.tertiaryLight },
-  ];
+  // ── Config-driven tools (constants/ministryTools.ts) ──
+  const ministryKind = ministry ? resolveMinistryKind(ministry) : "default";
+  const typeTools = toolsForKind(ministryKind);
+  const toolkit = genericTools();
+  const actions = quickActions();
+
+  // While the plan is still loading nothing shows as locked; tool screens gate themselves too.
+  const isToolLocked = useCallback((tool: MinistryTool) => !planLoading && !canUse(tool.minPlan), [canUse, planLoading]);
+
+  const openTool = useCallback(
+    (tool: MinistryTool) => {
+      if (!id) return;
+      if (isToolLocked(tool)) {
+        router.push("/pricing" as any);
+        return;
+      }
+      if (tool.route) {
+        router.push(tool.route(id) as any);
+      } else if (tool.handler) {
+        tool.handler({ ministryId: id, push: (href) => router.push(href as any) });
+      }
+    },
+    [id, isToolLocked, router]
+  );
+
+  const openToolById = useCallback((toolId: MinistryToolId) => openTool(MINISTRY_TOOLS[toolId]), [openTool]);
 
   const onRefresh = useCallback(async () => {
     setIsRefreshing(true);
@@ -260,9 +293,42 @@ export default function MinistryDashboardScreen() {
       memberCheckQuery.refetch(),
       memberCountQuery.refetch(),
       upcomingEventsQuery.refetch(),
+      queryClient.invalidateQueries({ queryKey: ["ministry-dashboard-stats", id] }),
+      queryClient.invalidateQueries({ queryKey: ["church-plan-rank"] }),
     ]);
     setIsRefreshing(false);
-  }, [ministryQuery.refetch, memberCheckQuery.refetch, memberCountQuery.refetch, upcomingEventsQuery.refetch]);
+  }, [ministryQuery.refetch, memberCheckQuery.refetch, memberCountQuery.refetch, upcomingEventsQuery.refetch, queryClient, id]);
+
+  const renderToolCard = (tool: MinistryTool) => {
+    const locked = isToolLocked(tool);
+    return (
+      <TouchableOpacity
+        key={tool.id}
+        style={[styles.toolCard, locked && styles.toolCardLocked]}
+        activeOpacity={0.7}
+        onPress={() => openTool(tool)}
+        accessibilityLabel={locked && tool.minPlan ? `${tool.label}, requires ${PLAN_LABEL[tool.minPlan]} plan` : tool.label}
+      >
+        <View style={styles.toolTopRow}>
+          <View style={[styles.toolIcon, { backgroundColor: (locked ? Colors.textTertiary : color) + "15" }]}>
+            <tool.icon size={24} color={locked ? Colors.textTertiary : color} />
+          </View>
+          {locked && tool.minPlan ? (
+            <View style={styles.lockBadge}>
+              <Lock size={10} color={Colors.textSecondary} />
+              <Text style={styles.lockBadgeText}>{PLAN_LABEL[tool.minPlan]}</Text>
+            </View>
+          ) : tool.comingSoon ? (
+            <View style={styles.soonBadge}>
+              <Text style={styles.soonBadgeText}>Soon</Text>
+            </View>
+          ) : null}
+        </View>
+        <Text style={[styles.toolLabel, locked && { color: Colors.textSecondary }]}>{tool.label}</Text>
+        <Text style={styles.toolDesc}>{tool.comingSoon && !locked ? `Coming soon · ${tool.desc}` : tool.desc}</Text>
+      </TouchableOpacity>
+    );
+  };
 
   if (ministryQuery.isLoading) {
     return (
@@ -376,131 +442,76 @@ export default function MinistryDashboardScreen() {
 
         {canAccess && (
           <>
+
+            {/* Dashboard */}
+            <MinistryDashboardHeader
+              ministryId={ministry.id}
+              color={color}
+              onOpenTool={openToolById}
+              isLocked={(toolId) => isToolLocked(MINISTRY_TOOLS[toolId])}
+            />
+
             {/* Quick Actions Grid */}
             <View style={styles.section}>
               <Text style={styles.sectionTitle}>Quick Actions</Text>
               <View style={styles.actionsGrid}>
-                {quickActions.map((action) => (
-                  <TouchableOpacity
-                    key={action.label}
-                    style={styles.actionCard}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      Alert.alert(action.label, `${action.label} section coming soon for this ministry.`);
-                    }}
-                  >
-                    <View style={[styles.actionIcon, { backgroundColor: action.color + "15" }]}>
-                      <action.icon size={22} color={action.color} />
-                    </View>
-                    <Text style={styles.actionLabel} numberOfLines={1}>
-                      {action.label}
-                    </Text>
-                  </TouchableOpacity>
-                ))}
+                {actions.map((action, index) => {
+                  const locked = isToolLocked(action);
+                  const tint = locked ? Colors.textTertiary : QUICK_ACTION_COLORS[index % QUICK_ACTION_COLORS.length];
+                  return (
+                    <TouchableOpacity
+                      key={action.id}
+                      style={styles.actionCard}
+                      activeOpacity={0.7}
+                      onPress={() => openTool(action)}
+                    >
+                      <View style={[styles.actionIcon, { backgroundColor: tint + "15" }]}>
+                        <action.icon size={22} color={tint} />
+                        {locked ? (
+                          <View style={styles.actionLock}>
+                            <Lock size={9} color="#fff" />
+                          </View>
+                        ) : null}
+                      </View>
+                      <Text style={[styles.actionLabel, locked && { color: Colors.textSecondary }]} numberOfLines={1}>
+                        {action.label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
               </View>
             </View>
 
-            {/* Ministry-Specific Quick Links */}
+            {/* Ministry-Specific Tools */}
+            {typeTools.length > 0 && (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Ministry Tools</Text>
+                <View style={styles.toolsGrid}>{typeTools.map(renderToolCard)}</View>
+              </View>
+            )}
+
+            {/* Team Toolkit (every ministry) */}
             <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Ministry Tools</Text>
-              {ministry.ministry_type === "deacons" || ministry.name.toLowerCase().includes("deacon") ? (
-                <View style={styles.toolsGrid}>
-                  {[
-                    { icon: Heart, label: "Care Visits", desc: "Track hospital & home visits" },
-                    { icon: HandHeart, label: "Benevolence", desc: "Manage assistance requests" },
-                    { icon: Bell, label: "Prayer Assignments", desc: "Confidential prayer follow-up" },
-                    { icon: Clock, label: "Service Schedule", desc: "Greeting & communion rotation" },
-                    { icon: ClipboardList, label: "Meal Coordination", desc: "Organize meal deliveries" },
-                    { icon: Activity, label: "Reports", desc: "Monthly care & visit reports" },
-                  ].map((tool) => (
-                    <TouchableOpacity
-                      key={tool.label}
-                      style={styles.toolCard}
-                      activeOpacity={0.7}
-                      onPress={() => Alert.alert(tool.label, "This ministry tool is available for members.")}
-                    >
-                      <View style={[styles.toolIcon, { backgroundColor: color + "15" }]}>
-                        <tool.icon size={24} color={color} />
-                      </View>
-                      <Text style={styles.toolLabel}>{tool.label}</Text>
-                      <Text style={styles.toolDesc}>{tool.desc}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : ministry.ministry_type === "worship" || ministry.name.toLowerCase().includes("worship") ? (
-                <View style={styles.toolsGrid}>
-                  {[
-                    { icon: Calendar, label: "Schedule", desc: "Band & vocal rotation" },
-                    { icon: Music, label: "Song Library", desc: "Browse & manage songs" },
-                    { icon: Grid3X3, label: "Setlists", desc: "Create & share setlists" },
-                    { icon: Clock, label: "Rehearsals", desc: "Upcoming rehearsal calendar" },
-                    { icon: FileText, label: "Service Plans", desc: "Sunday service planning" },
-                    { icon: Users, label: "Team Roster", desc: "Musicians & vocalists" },
-                  ].map((tool) => (
-                    <TouchableOpacity
-                      key={tool.label}
-                      style={styles.toolCard}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        if (tool.label === "Song Library") router.push("/worship" as any);
-                        else Alert.alert(tool.label, "This worship tool is available for team members.");
-                      }}
-                    >
-                      <View style={[styles.toolIcon, { backgroundColor: color + "15" }]}>
-                        <tool.icon size={24} color={color} />
-                      </View>
-                      <Text style={styles.toolLabel}>{tool.label}</Text>
-                      <Text style={styles.toolDesc}>{tool.desc}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : ministry.ministry_type === "children" || ministry.name.toLowerCase().includes("children") ? (
-                <View style={styles.toolsGrid}>
-                  {[
-                    { icon: Users, label: "Classrooms", desc: "Manage age-group classrooms" },
-                    { icon: Baby, label: "Child Profiles", desc: "View & manage child records" },
-                    { icon: Check, label: "Check-In", desc: "Digital child check-in system" },
-                    { icon: FileText, label: "Lessons", desc: "Weekly curriculum & crafts" },
-                    { icon: Shield, label: "Incident Reports", desc: "Log & track incidents" },
-                    { icon: Bell, label: "Parent Messaging", desc: "Send updates to parents" },
-                  ].map((tool) => (
-                    <TouchableOpacity
-                      key={tool.label}
-                      style={styles.toolCard}
-                      activeOpacity={0.7}
-                      onPress={() => Alert.alert(tool.label, "This children's ministry tool is available for staff.")}
-                    >
-                      <View style={[styles.toolIcon, { backgroundColor: color + "15" }]}>
-                        <tool.icon size={24} color={color} />
-                      </View>
-                      <Text style={styles.toolLabel}>{tool.label}</Text>
-                      <Text style={styles.toolDesc}>{tool.desc}</Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              ) : (
-                <View style={styles.genericTools}>
-                  <View style={[styles.toolIcon, { backgroundColor: color + "15" }]}>
-                    <Grid3X3 size={24} color={color} />
-                  </View>
-                  <Text style={styles.genericToolsText}>
-                    General ministry workspace — all shared tools are available above.
-                  </Text>
-                </View>
-              )}
+              <Text style={styles.sectionTitle}>Team Toolkit</Text>
+              <View style={styles.toolsGrid}>{toolkit.map(renderToolCard)}</View>
             </View>
 
             {/* Upcoming Events */}
             {upcomingEvents.length > 0 && (
               <View style={styles.section}>
                 <View style={styles.sectionRow}>
-                  <Text style={styles.sectionTitle}>Upcoming Events</Text>
-                  <TouchableOpacity>
+                  <Text style={[styles.sectionTitle, { marginBottom: 0 }]}>Upcoming Events</Text>
+                  <TouchableOpacity onPress={() => openToolById("events")}>
                     <Text style={[styles.linkText, { color }]}>View All</Text>
                   </TouchableOpacity>
                 </View>
                 {upcomingEvents.map((event: any) => (
-                  <TouchableOpacity key={event.id} style={styles.eventCard} activeOpacity={0.7}>
+                  <TouchableOpacity
+                    key={event.id}
+                    style={styles.eventCard}
+                    activeOpacity={0.7}
+                    onPress={() => router.push(`/events/${event.id}` as any)}
+                  >
                     <View style={[styles.eventDateBadge, { backgroundColor: color + "15" }]}>
                       <Text style={[styles.eventDateText, { color }]}>{event.date}</Text>
                     </View>
@@ -635,8 +646,13 @@ const styles = StyleSheet.create({
   toolIcon: { width: 44, height: 44, borderRadius: 13, alignItems: "center", justifyContent: "center", marginBottom: 10 },
   toolLabel: { fontSize: 14, fontWeight: "700", color: Colors.text, marginBottom: 4 },
   toolDesc: { fontSize: 12, color: Colors.textSecondary, lineHeight: 16 },
-  genericTools: { flexDirection: "row", alignItems: "center", gap: 14, padding: 16, backgroundColor: Colors.surface, borderRadius: 14, borderWidth: 1, borderColor: Colors.borderLight },
-  genericToolsText: { fontSize: 14, color: Colors.textSecondary, flex: 1, lineHeight: 20 },
+  toolCardLocked: { backgroundColor: Colors.surfaceSecondary },
+  toolTopRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  lockBadge: { flexDirection: "row", alignItems: "center", gap: 3, paddingHorizontal: 7, paddingVertical: 3, borderRadius: 999, backgroundColor: Colors.surface, borderWidth: 1, borderColor: Colors.border },
+  lockBadgeText: { fontSize: 10, fontWeight: "700", color: Colors.textSecondary },
+  soonBadge: { paddingHorizontal: 7, paddingVertical: 3, borderRadius: 999, backgroundColor: Colors.surfaceSecondary },
+  soonBadgeText: { fontSize: 10, fontWeight: "700", color: Colors.textTertiary },
+  actionLock: { position: "absolute", top: -4, right: -4, width: 16, height: 16, borderRadius: 8, backgroundColor: Colors.textTertiary, alignItems: "center", justifyContent: "center" },
   eventCard: {
     flexDirection: "row", alignItems: "center", backgroundColor: Colors.surface,
     borderRadius: 14, padding: 14, marginBottom: 10, borderWidth: 1, borderColor: Colors.borderLight,
